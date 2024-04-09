@@ -36,6 +36,7 @@
                 {"$toString": "$arrayIndex"}
             ]
         },
+        "idx": "$arrayIndex",
         "discount": {
                 "$convert": {
                     "input": "$discount",
