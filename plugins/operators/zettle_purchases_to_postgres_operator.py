@@ -113,7 +113,7 @@ END $$;
             # Base URL path
             base_url = "https://purchase.izettle.com/purchases/v2"
             # Determine the 'start' parameter based on 'last_successful_dagrun_ts'
-            start_param = last_successful_dagrun_ts if last_successful_dagrun_ts else "2021-04-01T00:00:00.000Z"
+            start_param = last_successful_dagrun_ts if last_successful_dagrun_ts else "2021-05-01T00:00:00.000Z"
 
             total_docs_processed = 0
 

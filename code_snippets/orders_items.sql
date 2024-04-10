@@ -8,17 +8,6 @@ DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.completed_order_item_summary CASCA
 {% endif %}
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.completed_order_item_summary AS
 
--- Create index for orders table -- Should this be before (?)
-CREATE INDEX idx_orders_id ON public.orders(id);
-CREATE INDEX idx_orders_brand_name ON public.orders(brand_name);
-CREATE INDEX idx_orders_order_status ON public.orders(order_status);
-CREATE INDEX idx_orders_createdat ON public.orders(createdat);
-
--- Create index for order__items table
-CREATE INDEX idx_order_items_order_id ON order__items(order_id);
-CREATE INDEX idx_order_items_name ON order__items(name);
-CREATE INDEX idx_order_items_order_name ON order__items(order_name);
-
 -- Create CTE 'orders'
 	WITH orders AS (
 		SELECT
