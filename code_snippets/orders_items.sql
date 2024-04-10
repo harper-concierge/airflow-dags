@@ -1,73 +1,94 @@
+-- Create view 'completed order summary'
 -- This view is for:
 -- Viewing individual orders at the item level and their properties
 -- Aggregation for sales data, cancelled and failed orders will be removed
+-- Filtered to completed orders
+{% if is_modified %}
+DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.completed_order_item_summary CASCADE;
+{% endif %}
+CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.completed_order_item_summary AS
+
+-- Create index for orders table -- Should this be before (?)
+CREATE INDEX idx_orders_id ON public.orders(id);
+CREATE INDEX idx_orders_brand_name ON public.orders(brand_name);
+CREATE INDEX idx_orders_order_status ON public.orders(order_status);
+CREATE INDEX idx_orders_createdat ON public.orders(createdat);
+
+-- Create index for order__items table
+CREATE INDEX idx_order_items_order_id ON order__items(order_id);
+CREATE INDEX idx_order_items_name ON order__items(name);
+CREATE INDEX idx_order_items_order_name ON order__items(order_name);
 
 -- Create CTE 'orders'
-WITH orders AS (
-    SELECT
-        id,
-        createdat,
-        appointment__date,
-        order_name,
-        original_order_name,
-        brand_name,
-        link_order__is_child,
-        order_status,
-        order_type,
-        parent_order,
-        ship_direct
-    FROM public.orders
-    WHERE createdat >= '2022-01-01'
-        -- linked_order_is child = 0 for all orders except for ship_direct?? need clarification on this 
-    AND order_status != 'cancelled' AND order_status != 'failed'
-    AND  ((ship_direct = TRUE AND link_order__is_child = TRUE) 
-        OR link_order__is_child = FALSE)
+	WITH orders AS (
+		SELECT
+			id,
+			customer___id AS customer_id,
+			createdat,
+			appointment__date,
+			order_name,
+			original_order_name,
+			brand_name,
+			link_order_child,
+			order_status,
+			order_type,
+			parent_order,
+			ship_direct
+		FROM public.orders
+		WHERE createdat >= '2022-01-01'
+		AND order_status != 'cancelled' AND order_status != 'failed'
+		AND link_order_child = FALSE
 	)
 
-SELECT 
-	o.createdat AS order_created,
-	oi.createdat AS item_created,
-	TO_CHAR(o.createdat, 'Month') AS order_created_month,
-    EXTRACT(YEAR FROM o.createdat) AS order_createdat_year,
-	oi.updatedat,
-	o.appointment__date AS appointment_date,
-	TO_CHAR(o.appointment__date, 'Month') AS appointment_month,
-    EXTRACT(YEAR FROM o.appointment__date) AS appointment_year,
-	o.brand_name,
-	o.original_order_name,
-	o.order_name,
-	oi.order_name AS order_name_item_level,
-	oi.order_id, 
-	o.order_type AS order_type_initial,	
-	oi.order_type AS order_type,
-	CONCAT(o.order_name,oi.sku,ROW_NUMBER() OVER(PARTITION BY o.order_name ORDER BY oi.createdat)) AS unique_item_id,
-	ROW_NUMBER() OVER(PARTITION BY o.order_name ORDER BY oi.createdat) AS order_item_index,
-	ROW_NUMBER() OVER(PARTITION BY o.order_name , oi.original_name ORDER BY oi.createdat) AS product_name_index,	
-	oi.original_name AS product_name, -- need to clean sizes for certain brands 
-	oi.sku,
-	oi.price/100 as item_price,
-	oi.discount/100 AS discount_price,
-	oi.price/100 - oi.discount/100 AS item_value,
-	oi.qty, 
-	oi.purchased,
-	oi.returned,
-    CASE WHEN oi.purchased = TRUE OR oi.returned = TRUE THEN 1 ELSE 0 END AS purchased_originally,
-    CASE WHEN (oi.purchased != TRUE AND oi.returned != TRUE AND o.order_status IN ('returned','completed')) THEN 1 ELSE 0 END AS unpurchased,
-	oi.return_sent_by_customer,
-	oi.received_by_warehouse,
-	oi.initiated_sale__initiated_sale_type, 
-	oi.initiated_sale__user_role,
-	oi.is_initiated_sale,
-	oi.out_of_stock,
-	oi.preorder, 
-	oi.received, 
-	CASE WHEN oi.initiated_sale__user_role like '%remote_sales%' THEN 1 ELSE 0 END AS inspire_me_flag
-FROM orders o
-LEFT JOIN order__items oi
-	ON o.id = oi.order_id
-WHERE 
-	LOWER(oi.name) NOT LIKE '%undefined%' 
-AND oi.name IS NOT NULL AND oi.name != ''
-AND oi.order_name IS NOT NULL AND TRIM(oi.order_name) != ''
-AND o.brand_name != 'Harper Production'
-ORDER BY o.createdat DESC, o.order_name, ROW_NUMBER() OVER(PARTITION BY o.order_name ORDER BY oi.createdat) -- order item index 
+	SELECT
+		o.customer___id,
+		o.createdat AS order_created,
+		oi.createdat AS item_created,
+		TO_CHAR(o.createdat, 'Month') AS order_created_month,
+		EXTRACT(YEAR FROM o.createdat) AS order_createdat_year,
+		oi.updatedat,
+		o.appointment__date AS appointment_date,
+		TO_CHAR(o.appointment__date, 'Month') AS appointment_month,
+		EXTRACT(YEAR FROM o.appointment__date) AS appointment_year,
+		o.brand_name,
+		o.original_order_name,
+		o.order_name,
+		oi.order_name AS order_name_item_level,
+		oi.id AS unique_id,
+		oi.order_id,
+		o.order_type AS order_type_initial,
+		oi.order_type AS order_type,
+		ROW_NUMBER() OVER(PARTITION BY o.order_name ORDER BY oi.createdat) AS order_item_index,
+		ROW_NUMBER() OVER(PARTITION BY o.order_name , oi.original_name ORDER BY oi.createdat) AS product_name_index,
+		oi.original_name AS product_name,
+		oi.sku,
+		oi.price as item_price_prence,
+		oi.discount AS discount_price_pence,
+		oi.price - oi.discount AS item_value_pence,
+		oi.qty,
+		CASE WHEN oi.purchased = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.returned = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.purchased = TRUE OR oi.returned = TRUE THEN 1 ELSE 0 END AS purchased_originally,
+		CASE WHEN (oi.purchased != TRUE AND oi.returned != TRUE AND o.order_status = 'completed') THEN 1 ELSE 0 END AS unpurchased,
+		CASE WHEN oi.return_sent_by_customer = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.received_by_warehouse = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.initiated_sale__initiated_sale_type = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.initiated_sale__user_role = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.is_initiated_sale = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.out_of_stock = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.preorder = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.received = TRUE THEN 1 ELSE 0 END,
+		CASE WHEN oi.initiated_sale__user_role like '%remote_sales%' THEN 1 ELSE 0 END AS inspire_me_flag
+	FROM orders o
+	LEFT JOIN order__items oi
+		ON o.id = oi.order_id
+	WHERE
+		LOWER(oi.name) NOT LIKE '%undefined%'
+		AND oi.name IS NOT NULL AND oi.name != ''
+		AND oi.order_name IS NOT NULL AND TRIM (oi.order_name) != ''
+		AND o.brand_name != 'Harper Production'
+		AND o.order_status = 'completed' -- Does this include ship direct(?)
+	ORDER BY o.createdat DESC, o.order_name, ROW_NUMBER() OVER(PARTITION BY o.order_name ORDER BY oi.createdat) -- order item index
+WITH NO DATA;
+{% if is_modified %}
+REFRESH MATERIALIZED VIEW {{ schema }}.completed_order_item_summary;
