@@ -58,14 +58,14 @@ SELECT
 	CASE WHEN oi.out_of_stock = TRUE THEN 1 ELSE 0 END AS out_of_stock,
 	CASE WHEN oi.preorder = TRUE THEN 1 ELSE 0 END AS preorder,
 	CASE WHEN oi.received = TRUE THEN 1 ELSE 0 END AS received,
-	CASE WHEN oi.initiated_sale__user_role like '%remote_sales%' THEN 1 ELSE 0 END AS inspire_me_flag,
+	CASE WHEN oi.initiated_sale__user_role like '%%remote_sales%%' THEN 1 ELSE 0 END AS inspire_me_flag,
 	{{ dim__time_columns | prefix_columns('cdt', 'createdat')}}
 FROM orders o
 LEFT JOIN order__items oi
 	ON o.id = oi.order_id
 LEFT JOIN dim__time cdt ON o.createdat::date = cdt.dim_date_id
 WHERE
-	LOWER(oi.name) NOT LIKE '%undefined%'
+	LOWER(oi.name) NOT LIKE '%%undefined%%'
 AND oi.name IS NOT NULL AND oi.name != ''
 AND oi.order_name IS NOT NULL AND TRIM (oi.order_name) != ''
 AND o.brand_name != 'Harper Production'
