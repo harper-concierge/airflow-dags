@@ -4,7 +4,7 @@
 -- Aggregation for sales data, cancelled and failed orders will be removed
 -- Filtered to completed orders
 {% if is_modified %}
-DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.completed_order_item_summary CASCADE;
+	DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.completed_order_item_summary CASCADE;
 {% endif %}
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.completed_order_item_summary AS
 -- Create CTE 'orders'
@@ -74,3 +74,4 @@ ORDER BY o.createdat DESC, o.order_name, ROW_NUMBER() OVER(PARTITION BY o.order_
 WITH NO DATA;
 {% if is_modified %}
 REFRESH MATERIALIZED VIEW {{ schema }}.completed_order_item_summary;
+{% endif %}
