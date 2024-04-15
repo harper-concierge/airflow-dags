@@ -29,7 +29,6 @@ WITH orders AS (
 	)
 SELECT
 	o.customer_id AS customer_id,
-	o.createdat AS order_created,
 	oi.createdat AS item_created,
 	oi.updatedat,
 	o.appointment__date AS appointment_date,
@@ -45,7 +44,7 @@ SELECT
 	ROW_NUMBER() OVER(PARTITION BY o.order_name , oi.original_name ORDER BY oi.createdat) AS product_name_index,
 	oi.original_name AS product_name, -- need to clean sizes for certain brands
 	oi.sku,
-	oi.price as item_price_prence,
+	oi.price as item_price_pence,
 	oi.discount AS discount_price_pence,
 	oi.price - oi.discount AS item_value_pence,
 	oi.qty,
