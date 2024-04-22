@@ -36,7 +36,7 @@ SELECT
 	o.original_order_name,
 	o.order_name,
 	oi.order_name AS order_name_item,
-	oi.id AS unique_id,
+	oi.id AS unique_item_id,
 	oi.order_id,
 	o.order_type AS order_type_initial,
 	oi.order_type AS order_type,
