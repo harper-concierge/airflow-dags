@@ -56,7 +56,7 @@ SELECT
 	CASE WHEN oi.preorder = TRUE THEN 1 ELSE 0 END AS preorder,
 	CASE WHEN oi.received = TRUE THEN 1 ELSE 0 END AS received,
 	CASE WHEN oi.initiated_sale__user_role like '%%remote_sales%%' THEN 1 ELSE 0 END AS inspire_me_flag,
-	cdt.*
+	{{ dim__time_columns | prefix_columns('cdt', 'createdat')}}
 FROM orders o
 LEFT JOIN order__items oi
 	ON o.id = oi.order_id
