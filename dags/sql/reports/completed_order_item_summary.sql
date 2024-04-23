@@ -67,7 +67,7 @@ LEFT JOIN dim__time cdt ON o.createdat::date = cdt.dim_date_id
 WHERE
 	LOWER(oi.name) NOT LIKE '%%undefined%%'
 AND oi.name IS NOT NULL AND oi.name != ''
-AND oi.order_name IS NOT NULL AND TRIM (oi.order_name) != ''
+AND oi.order_name IS NOT NULL AND oi.order_name != ''
 AND o.brand_name != 'Harper Production'
 AND o.order_status = 'completed' -- Does this include ship direct(?)
 ORDER BY o.createdat DESC, o.order_name, ROW_NUMBER() OVER(PARTITION BY o.order_name ORDER BY oi.createdat) -- order item index
