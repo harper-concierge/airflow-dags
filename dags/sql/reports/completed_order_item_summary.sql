@@ -3,33 +3,16 @@
 -- Viewing individual orders at the item level and their properties
 -- Aggregation for sales data, cancelled and failed orders will be removed
 -- Filtered to completed orders
+--Filtered to orders from 2022
 {% if is_modified %}
 	DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__completed_order_item_summary CASCADE;
 {% endif %}
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__completed_order_item_summary AS
--- Create CTE 'orders'
-WITH orders AS (
-    SELECT
-        id,
-		customer_id,
-        createdat,
-        appointment__date,
-        order_name,
-        original_order_name,
-        brand_name,
-        link_order_child,
-        order_status,
-        order_type,
-        parent_order,
-        ship_direct
-    FROM public.orders
-    WHERE createdat >= '2022-01-01'
-    AND order_status != 'cancelled' AND order_status != 'failed'
-    AND link_order_child = FALSE
-	)
 SELECT
+	o.idx,
 	o.customer_id AS customer_id,
 	oi.createdat AS item_created,
+	o.ordercreatedat AS order_created,
 	oi.updatedat,
 	o.appointment__date AS appointment_date,
 	o.brand_name,
@@ -40,9 +23,13 @@ SELECT
 	oi.order_id,
 	o.order_type AS order_type_initial,
 	oi.order_type AS order_type,
-	ROW_NUMBER() OVER(PARTITION BY o.order_name ORDER BY oi.createdat) AS order_item_index,
-	ROW_NUMBER() OVER(PARTITION BY o.order_name , oi.original_name ORDER BY oi.createdat) AS product_name_index,
-	oi.original_name AS product_name, -- need to clean sizes for certain brands
+	oi.original_name AS product_name, -- need to clean sizes for certain brands in raw
+	CASE
+        WHEN POSITION('-' IN oi.original_name) > 0 THEN
+            TRIM(SPLIT_PART(oi.original_name, ' - ', 1))
+        ELSE
+            oi.original_name
+    END AS product_name_cleaned,
 	oi.sku,
 	oi.price as item_price_pence,
 	oi.discount AS discount_price_pence,
@@ -66,12 +53,13 @@ LEFT JOIN order__items oi
 LEFT JOIN dim__time cdt ON o.createdat::date = cdt.dim_date_id
 WHERE
 	LOWER(oi.name) NOT LIKE '%%undefined%%'
-AND oi.name IS NOT NULL AND oi.name != ''
-AND oi.order_name IS NOT NULL AND oi.order_name != ''
-AND o.brand_name != 'Harper Production'
-AND o.order_status = 'completed' -- Does this include ship direct(?)
-ORDER BY o.createdat DESC, o.order_name, ROW_NUMBER() OVER(PARTITION BY o.order_name ORDER BY oi.createdat) -- order item index
-WITH NO DATA;
+	AND oi.name IS NOT NULL AND oi.name != ''
+	AND oi.order_name IS NOT NULL AND oi.order_name != ''
+	AND o.brand_name != 'Harper Production'
+	AND o.order_status IN ['completed','returned','unpurchased_processed']
+	AND o.link_order_child = FALSE
+	AND oi.createdat >= '2022-01-01';
+
 {% if is_modified %}
-REFRESH MATERIALIZED VIEW {{ schema }}.rep__completed_order_item_summary;
+	REFRESH MATERIALIZED VIEW {{ schema }}.rep__completed_order_item_summary;
 {% endif %}
