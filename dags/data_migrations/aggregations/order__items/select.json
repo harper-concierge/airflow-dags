@@ -37,6 +37,7 @@
             ]
         },
         "idx": "$arrayIndex",
+        "item_id": "$_id",
         "discount": {
                 "$convert": {
                     "input": "$discount",
