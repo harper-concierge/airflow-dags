@@ -9,7 +9,8 @@
 {% endif %}
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__completed_order_item_summary AS
 SELECT
-	o.idx,
+	oi.id,
+	oi.idx,
 	o.customer_id AS customer_id,
 	oi.createdat AS item_created,
 	o.createdat AS order_created,
@@ -21,7 +22,6 @@ SELECT
 	oi.order_id,
 	oi.original_order_name AS partner_order_name,
 	oi.order_name AS harper_order_name,
-	oi.id AS item_id,
 	oi.original_name AS product_name, -- need to clean sizes for certain brands in raw
 	CASE
         WHEN POSITION('-' IN oi.original_name) > 0 THEN
@@ -45,7 +45,7 @@ SELECT
 	CASE WHEN oi.preorder = TRUE THEN 1 ELSE 0 END AS preorder,
 	CASE WHEN oi.received = TRUE THEN 1 ELSE 0 END AS received,
 	CASE WHEN oi.is_initiated_sale = TRUE THEN 1 ELSE 0 END AS is_initiated_sale,
-	CASE WHEN oi.initiated_sale__user_role like '%%remote_sales%%' THEN 1 ELSE 0 END AS inspire_me_flag,
+	CASE WHEN (oi.initiated_sale__user_role like '%%remote_sales%%' OR oi.order_type = 'inspire_me') THEN 1 ELSE 0 END AS is_inspire_me,
 	{{ dim__time_columns | prefix_columns('cdt', 'createdat')}}
 FROM orders o
 LEFT JOIN order__items oi
@@ -56,10 +56,10 @@ WHERE
 	AND oi.name IS NOT NULL AND oi.name != ''
 	AND oi.order_name IS NOT NULL AND oi.order_name != ''
 	AND o.brand_name != 'Harper Production'
-	AND o.order_status IN ('completed','returned','unpurchased_processed')
 	AND o.link_order_child = FALSE
 	AND oi.createdat >= '2022-01-01';
 
 {% if is_modified %}
-	REFRESH MATERIALIZED VIEW {{ schema }}.rep__completed_order_item_summary;
+CREATE UNIQUE INDEX IF NOT EXISTS order_item_summary_idx ON {{ schema }}.rep__completed_item_summary (order_id);
 {% endif %}
+REFRESH MATERIALIZED VIEW {{ schema }}.rep__completed_order_item_summary;
