@@ -6,5 +6,8 @@
     "customer_id": [
       "string"
     ]
-  }
+  },
+  "discard_fields": [
+    "recipient"
+  ]
 }
