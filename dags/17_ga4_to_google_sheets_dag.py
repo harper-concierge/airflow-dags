@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime, timedelta
 
 from airflow import DAG
@@ -7,7 +8,6 @@ from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
 
-from plugins.utils.load_sheet_configs import load_sheet_configs
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
 
 from plugins.operators.ga4_to_google_sheet_operator import GA4ToGoogleSheetOperator
@@ -30,7 +30,7 @@ def is_latest_dagrun(**kwargs):
 
 
 with DAG(
-    "ga4_to_google_sheets",
+    "17_ga4_to_google_sheets_dag",
     catchup=False,
     default_args=default_args,
     max_active_runs=1,
@@ -52,22 +52,28 @@ with DAG(
         allowed_states=["success"],
     )
 
-    sheets_abspath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sheets")
-    sheets_configs = load_sheet_configs(sheets_abspath)
+    # Path to the ga4_sheets folder
+    ga4_sheets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ga4_sheets")
 
-    ga4_tasks = []
-    for config in sheets_configs:
-        task = GA4ToGoogleSheetOperator(
-            task_id=f"ga4_to_sheets_{config['table']}",
-            property_id="347125794",  # GA4 property ID
-            spreadsheet_id=config["spreadsheet_id"],
-            worksheet=config["worksheet"],
-            google_conn_id="google_sheet_account",
-            start_date="{{ ds }}",
-            end_date="{{ ds }}",
-        )
-        ga4_tasks.append(task)
+    # Path to the specific JSON file
+    ga4_config_path = os.path.join(ga4_sheets_dir, "ga4_config.json")
+
+    # Read the JSON file
+    with open(ga4_config_path, "r") as config_file:
+        ga4_config = json.load(config_file)
+
+    # Create the GA4 task
+    ga4_task = GA4ToGoogleSheetOperator(
+        task_id="17_ga4_to_google_sheets_dag",
+        property_id="347125794",  # GA4 property ID
+        spreadsheet_id=ga4_config["spreadsheet_id"],
+        worksheet=ga4_config["worksheet"],
+        google_conn_id="google_sheet_account",
+        start_date="{{ ds }}",
+        end_date="{{ ds }}",
+        dag=dag,
+    )
 
     end = DummyOperator(task_id="end", trigger_rule=TriggerRule.ALL_DONE)
 
-    start >> is_latest_dagrun_task >> wait_for_migrations >> ga4_tasks >> end
+    start >> is_latest_dagrun_task >> wait_for_migrations >> ga4_task >> end
