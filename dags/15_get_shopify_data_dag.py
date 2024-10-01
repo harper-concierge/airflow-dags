@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.operators.dummy import DummyOperator
+from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
@@ -41,8 +41,8 @@ dag = DAG(
     template_searchpath="/usr/local/airflow/dags",
 )
 
-base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
-# is_latest_dagrun_task = DummyOperator(task_id="start", dag=dag)
+base_tables_completed = EmptyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
+# is_latest_dagrun_task = EmptyOperator(task_id="start", dag=dag)
 doc = """
 Skip the subsequent tasks if
     a) the execution_date is in past

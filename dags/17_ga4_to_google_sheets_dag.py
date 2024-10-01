@@ -1,9 +1,10 @@
 import os
+import sys
 import json
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.operators.dummy import DummyOperator
+from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
@@ -11,6 +12,10 @@ from airflow.sensors.external_task import ExternalTaskSensor
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
 
 from plugins.operators.ga4_to_google_sheet_operator import GA4ToGoogleSheetOperator
+
+# Add the parent directory of your DAGs to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 default_args = {
     "owner": "airflow",
@@ -37,7 +42,7 @@ with DAG(
     template_searchpath="/usr/local/airflow/dags",
 ) as dag:
 
-    start = DummyOperator(task_id="start")
+    start = EmptyOperator(task_id="start")
 
     is_latest_dagrun_task = ShortCircuitOperator(
         task_id="skip_check",
@@ -74,6 +79,6 @@ with DAG(
         dag=dag,
     )
 
-    end = DummyOperator(task_id="end", trigger_rule=TriggerRule.ALL_DONE)
+    end = EmptyOperator(task_id="end", trigger_rule=TriggerRule.ALL_DONE)
 
     start >> is_latest_dagrun_task >> wait_for_migrations >> ga4_task >> end
