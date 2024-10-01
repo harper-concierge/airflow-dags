@@ -1,10 +1,9 @@
 import os
 
 import pandas as pd
+from google.oauth2 import service_account
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
-
-# from google.oauth2.credentials import Credentials
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import Metric, DateRange, Dimension, RunReportRequest
 from airflow.providers.google.suite.hooks.sheets import GSheetsHook
@@ -20,6 +19,7 @@ class GA4ToGoogleSheetOperator(BaseOperator):
         google_conn_id,
         start_date,
         end_date="today",
+        service_account_path=None,
         *args,
         **kwargs,
     ):
@@ -30,10 +30,17 @@ class GA4ToGoogleSheetOperator(BaseOperator):
         self.google_conn_id = google_conn_id
         self.start_date = start_date
         self.end_date = end_date
+        self.service_account_path = service_account_path
 
     def conn_ga4(self):
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "service_account.json"
-        return BetaAnalyticsDataClient()
+        if self.service_account_path:
+            credentials = service_account.Credentials.from_service_account_file(
+                self.service_account_path, scopes=["https://www.googleapis.com/auth/analytics.readonly"]
+            )
+            return BetaAnalyticsDataClient(credentials=credentials)
+        else:
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "service_account.json"
+            return BetaAnalyticsDataClient()
 
     def run_ga4_report(self, client, start_date, end_date):
         request = RunReportRequest(
