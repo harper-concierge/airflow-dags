@@ -1,5 +1,4 @@
 import os
-import sys
 import json
 from datetime import datetime, timedelta
 
@@ -12,10 +11,6 @@ from airflow.sensors.external_task import ExternalTaskSensor
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
 
 from plugins.operators.ga4_to_google_sheet_operator import GA4ToGoogleSheetOperator
-
-# Add the parent directory of your DAGs to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 
 default_args = {
     "owner": "airflow",
