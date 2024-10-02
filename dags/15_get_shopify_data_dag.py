@@ -126,6 +126,17 @@ for partner in partners:
         dag=dag,
         pool="shopify_import_pool",
     )
+
+    """bulk_export_task = ShopifyBulkExportOperator(
+    task_id='shopify_bulk_export_2023',
+    shopify_shop_url='your-shop-url',
+    access_token='your-access-token',
+    start_date='2023-01-01',
+    end_date='2023-12-31',  # Or use a more recent date if you want up to current data
+    postgres_conn_id='your_postgres_conn_id',
+    destination_table='shopify_orders_2023',
+    dag=dag,
+)"""
     # append_transient_table_data >> base_tables_completed
     # Do this so that the first task can run and create the "transient_data.destination_table"
     # and avoid a race condition whereby to df.to_sql try to create the table simultaneously.
