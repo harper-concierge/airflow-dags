@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import shopify
 from pandas import DataFrame
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
 # from tenacity import wait_exponential
 from sqlalchemy import create_engine
@@ -24,6 +25,13 @@ from plugins.utils.render_template import render_template
 
 from plugins.operators.mixins.flatten_json import FlattenJsonDictMixin
 from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
+
+# from airflow.utils.decorators import apply_defaults
+# from concurrent.futures import ThreadPoolExecutor, as_completed
+
+
+# from shopify.base import ShopifyResource
+
 
 required_columns = [
     "partner__name",
@@ -251,56 +259,30 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
             start_param = last_successful_dagrun_ts if last_successful_dagrun_ts else "2024-05-01T00:00:00.000Z"
 
             # self.log.info(f"Fetching orders from {start_param} to {lte}")
+            # Fetch orders using the new `fetch_orders` function
+            all_records, total_docs_processed = self.fetch_orders(start_param, lte, next_page_url, allowed_regions)
 
             # page_count = 0
 
-            while True:
-                if next_page_url:
-                    orders = shopify.Order.find(from_=next_page_url)
-                else:
-                    query = {
-                        "created_at_min": start_param,  # Use start_param to fetch orders from a start date
-                        "created_at_max": lte,
-                        "limit": 250,
-                        "status": "any",
-                    }
+            if all_records:
+                df = DataFrame(all_records)
+                df = self._preprocess_dataframe(df, ds)
+                df = self._process_additional_fields(df)
+                df = self.align_to_schema(df)
 
-                    # Make the API call with the constructed query parameters
-                    orders = shopify.Order.find(**query)
-
-                self.log.info(f"Processing batch with {len(orders)} orders, next page url: {next_page_url}")
-
-                records = [
-                    order.to_dict() for order in orders if self._check_province_code(order.to_dict(), allowed_regions)
-                ]
-
-                self.log.info(f"Filtered orders in this batch: {len(records)}")
-                total_docs_processed += len(records)
-
-                if records:
-                    df = DataFrame(records)
-                    df = self._preprocess_dataframe(df, ds)
-                    df = self._process_additional_fields(df)
-                    # self.log.debug("Type of DataFrame: %s", type(df).__name__)
-                    df = self.align_to_schema(df)
-
-                    try:
-                        df.to_sql(
-                            self.destination_table,
-                            conn,
-                            if_exists="append",
-                            schema=self.destination_schema,
-                            index=False,
-                            chunksize=1000,
-                        )
-                    except Exception as e:
-                        self.log.error(f"Failed to write DataFrame to SQL: {e}")
-                        raise
-                # Update the next_page_url
-                next_page_url = orders.next_page_url
-                self.set_next_page_url(conn, context, next_page_url)
-                if not next_page_url:
-                    break
+                try:
+                    # Write DataFrame to the SQL database
+                    df.to_sql(
+                        self.destination_table,
+                        conn,
+                        if_exists="append",
+                        schema=self.destination_schema,
+                        index=False,
+                        chunksize=1000,
+                    )
+                except Exception as e:
+                    self.log.error(f"Failed to write DataFrame to SQL: {e}")
+                    raise
 
             self.log.info(f"Total orders processed: {total_docs_processed}")
 
@@ -310,16 +292,9 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
                     f"ON {self.destination_schema}.{self.destination_table} (id);"
                 )
             self.clear_task_vars(conn, context)
-
-            # context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
-
-            # context["ti"].xcom_push(
-            # key=self.last_successful_dagrun_xcom_key,
-            # value=context["data_interval_end"].to_iso8601_string(),
-            # )
+            context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
 
         self.set_last_successful_dagrun_ts(context, context["data_interval_end"].int_timestamp)
-        context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
         self.log.info("Shopify Data Written to transient table successfully.")
 
     def get_next_page_url(self, conn, context):
@@ -499,6 +474,56 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
 
         # Push the timestamp string to XCom
         context["ti"].xcom_push(key=self.last_successful_dagrun_xcom_key, value={"timestamp": timestamp_str})
+
+    # Define the retry logic for API calls
+    @retry(
+        stop=stop_after_attempt(5),  # Retry up to 5 times
+        wait=wait_exponential(multiplier=1, min=4, max=60),  # Exponential backoff: min 4s, max 60s
+        retry=retry_if_exception_type((Exception, ConnectionError, TimeoutError)),
+    )
+    def fetch_orders(self, start_param, lte, next_page_url, allowed_regions):
+        total_docs_processed = 0
+        all_records = []  # List to store all records
+
+        while True:
+            try:
+                if next_page_url:
+                    # If there's a next page URL, fetch orders from there
+                    orders = shopify.Order.find(from_=next_page_url)
+                else:
+                    # Construct the query for the initial request
+                    query = {
+                        "created_at_min": start_param,  # Use start_param to fetch orders from a start date
+                        "created_at_max": lte,
+                        "limit": 250,
+                        "status": "any",
+                    }
+                    # Make the API call with the constructed query parameters
+                    orders = shopify.Order.find(**query)
+
+                self.log.info(f"Processing batch with {len(orders)} orders, next page url: {next_page_url}")
+
+                # Process the orders and filter based on allowed regions
+                records = [
+                    order.to_dict() for order in orders if self._check_province_code(order.to_dict(), allowed_regions)
+                ]
+
+                self.log.info(f"Filtered orders in this batch: {len(records)}")
+                total_docs_processed += len(records)
+
+                # Store all records collected in this batch
+                all_records.extend(records)
+
+                # Update the next_page_url
+                next_page_url = orders.next_page_url
+                if not next_page_url:
+                    break  # Exit the loop if there are no more pages
+
+            except Exception as e:
+                self.log.error(f"Error during Shopify API call: {e}. Retrying...")
+                raise  # Raise the exception to trigger a retry
+
+        return all_records, total_docs_processed
 
     def _preprocess_dataframe(self, df: pd.DataFrame, ds: str) -> pd.DataFrame:
         df.insert(0, "partner__name", self.partner_name)
