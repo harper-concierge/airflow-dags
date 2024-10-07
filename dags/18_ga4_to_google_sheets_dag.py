@@ -24,7 +24,7 @@ default_args = {
 
 # Define the DAG
 dag = DAG(
-    "17_ga4_to_google_sheets_dag",
+    "18_ga4_to_google_sheets_dag",
     catchup=False,
     default_args=default_args,
     max_active_runs=1,
@@ -44,12 +44,6 @@ wait_for_task = ExternalTaskSensor(
 ga4_sheets = "ga4_sheets"
 ga4_sheets_abspath = os.path.join(os.path.dirname(os.path.abspath(__file__)), ga4_sheets)
 ga4_config_path = os.path.join(ga4_sheets_abspath, "ga4_conversion_data.json")
-
-# Hard-coded path to the configuration file
-
-# Print the directory and config path for debugging
-# print("DAG Directory:", ga4_sheets_abspath)
-# print("GA4 Config Path:", ga4_config_path)
 
 # Load the configuration file
 with open(ga4_config_path, "r") as config_file:
