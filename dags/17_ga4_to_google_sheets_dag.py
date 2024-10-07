@@ -45,6 +45,12 @@ ga4_sheets = "ga4_sheets"
 ga4_sheets_abspath = os.path.join(os.path.dirname(os.path.abspath(__file__)), ga4_sheets)
 ga4_config_path = os.path.join(ga4_sheets_abspath, "ga4_conversion_data.json")
 
+# Hard-coded path to the configuration file
+
+# Print the directory and config path for debugging
+# print("DAG Directory:", ga4_sheets_abspath)
+# print("GA4 Config Path:", ga4_config_path)
+
 # Load the configuration file
 with open(ga4_config_path, "r") as config_file:
     config = json.load(config_file)
