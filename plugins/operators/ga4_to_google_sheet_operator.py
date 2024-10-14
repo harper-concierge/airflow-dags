@@ -42,18 +42,25 @@ class GA4ToGoogleSheetOperator(BaseOperator):
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "service_account.json"
             return BetaAnalyticsDataClient()
 
-    def run_ga4_report(self, client, start_date, end_date):
+    def run_ga4_report(self, client, start_date, end_date, offset=0):
         request = RunReportRequest(
             property=f"properties/{self.property_id}",
             dimensions=[
                 Dimension(name="date"),
                 Dimension(name="city"),
+                Dimension(name="sessionSourceMedium"),
+                Dimension(name="customEvent:partner_reference"),
+                Dimension(name="customEvent:service_type"),
             ],
             metrics=[
                 Metric(name="activeUsers"),
                 Metric(name="sessions"),
+                Metric(name="totalUsers"),
+                Metric(name="checkouts"),
             ],
             date_ranges=[DateRange(start_date=start_date, end_date=end_date)],
+            limit=100000,
+            offset=offset,
         )
         return client.run_report(request)
 
@@ -87,20 +94,40 @@ class GA4ToGoogleSheetOperator(BaseOperator):
 
     def execute(self, context):
         client = self.conn_ga4()
-        response = self.run_ga4_report(client, self.start_date, self.end_date)
+        all_data = []
+        offset = 0
+        total_rows = 0
 
-        data = []
-        for row in response.rows:
-            data.append(
-                {
-                    "Date": row.dimension_values[0].value,
-                    "City": row.dimension_values[1].value,
-                    "Active Users": row.metric_values[0].value,
-                    "Sessions": row.metric_values[1].value,
-                }
-            )
+        while True:
+            response = self.run_ga4_report(client, self.start_date, self.end_date, offset)
 
-        df = pd.DataFrame(data)
+            if not response.rows:
+                break
+
+            for row in response.rows:
+                all_data.append(
+                    {
+                        "Date": row.dimension_values[0].value,
+                        "City": row.dimension_values[1].value,
+                        "Source/Medium": row.dimension_values[2].value,
+                        "Partner Reference": row.dimension_values[3].value,
+                        "Service Type": row.dimension_values[4].value,
+                        "Active Users": row.metric_values[0].value,
+                        "Sessions": row.metric_values[1].value,
+                        "Total Users": row.metric_values[2].value,
+                        "Checkouts": row.metric_values[3].value,
+                    }
+                )
+
+            total_rows += len(response.rows)
+            self.log.info(f"Fetched {len(response.rows)} rows. Total rows: {total_rows}")
+
+            if len(response.rows) < 100000:
+                break
+
+            offset += len(response.rows)
+
+        df = pd.DataFrame(all_data)
 
         if df.empty:
             self.log.info("No data to write to Google Sheet.")
@@ -113,3 +140,30 @@ class GA4ToGoogleSheetOperator(BaseOperator):
             self.write_to_sheets(sheets_hook, sheet_data)
 
             self.log.info("GA4 data written to Google Sheet successfully.")
+
+            # Create monthly summary
+            monthly_summary = df.groupby([df["Date"].dt.to_period("M"), "Partner Reference"]).agg(
+                {"Active Users": "sum", "Total Users": "sum", "Sessions": "sum", "Checkouts": "sum"}
+            )
+            monthly_summary.reset_index(inplace=True)
+            monthly_summary["Date"] = monthly_summary["Date"].dt.to_timestamp()
+
+            # Create weekly summary
+            weekly_summary = df.groupby([df["Date"].dt.to_period("W-MON"), "Partner Reference"]).agg(
+                {"Active Users": "sum", "Total Users": "sum", "Sessions": "sum", "Checkouts": "sum"}
+            )
+            weekly_summary.reset_index(inplace=True)
+            weekly_summary["Date"] = weekly_summary["Date"].dt.to_timestamp()
+            weekly_summary["Week Beginning"] = weekly_summary["Date"].dt.strftime("%Y-%m-%d")
+            weekly_summary = weekly_summary[
+                ["Week Beginning", "Partner Reference", "Active Users", "Total Users", "Sessions", "Checkouts"]
+            ]
+
+            # Write summaries to separate sheets
+            monthly_sheet_data = [monthly_summary.columns.tolist()] + monthly_summary.values.tolist()
+            weekly_sheet_data = [weekly_summary.columns.tolist()] + weekly_summary.values.tolist()
+
+            self.write_to_sheets(sheets_hook, monthly_sheet_data)
+            self.write_to_sheets(sheets_hook, weekly_sheet_data)
+
+            self.log.info("Monthly and weekly summaries written to Google Sheet successfully.")
