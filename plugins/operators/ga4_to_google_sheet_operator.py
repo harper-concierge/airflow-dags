@@ -1,12 +1,10 @@
-import os
-
 import pandas as pd
-from google.oauth2 import service_account
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import Metric, DateRange, Dimension, RunReportRequest
 from airflow.providers.google.suite.hooks.sheets import GSheetsHook
+from airflow.providers.google.common.hooks.base_google import GoogleBaseHook
 
 
 class GA4ToGoogleSheetOperator(BaseOperator):
@@ -16,10 +14,10 @@ class GA4ToGoogleSheetOperator(BaseOperator):
         property_id,
         spreadsheet_id,
         worksheet,
-        google_conn_id,
+        google_sheets_conn_id,
+        google_analytics_conn_id,
         start_date,
-        end_date="today",
-        service_account_path=None,
+        end_date,
         *args,
         **kwargs,
     ):
@@ -27,20 +25,10 @@ class GA4ToGoogleSheetOperator(BaseOperator):
         self.property_id = property_id
         self.spreadsheet_id = spreadsheet_id
         self.worksheet = worksheet
-        self.google_conn_id = google_conn_id
+        self.google_sheets_conn_id = google_sheets_conn_id
+        self.google_analytics_conn_id = google_analytics_conn_id
         self.start_date = start_date
         self.end_date = end_date
-        self.service_account_path = service_account_path
-
-    def conn_ga4(self):
-        if self.service_account_path:
-            credentials = service_account.Credentials.from_service_account_file(
-                self.service_account_path, scopes=["https://www.googleapis.com/auth/analytics.readonly"]
-            )
-            return BetaAnalyticsDataClient(credentials=credentials)
-        else:
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "service_account.json"
-            return BetaAnalyticsDataClient()
 
     def run_ga4_report(self, client, start_date, end_date, offset=0):
         request = RunReportRequest(
@@ -93,7 +81,10 @@ class GA4ToGoogleSheetOperator(BaseOperator):
         )
 
     def execute(self, context):
-        client = self.conn_ga4()
+        ga4_hook = GoogleBaseHook(gcp_conn_id=self.google_analytics_conn_id)
+        ga4_credentials = ga4_hook._get_credentials()
+        client = BetaAnalyticsDataClient(credentials=ga4_credentials)
+
         all_data = []
         offset = 0
         total_rows = 0
@@ -136,8 +127,8 @@ class GA4ToGoogleSheetOperator(BaseOperator):
             df = df.sort_values(by="Date", ascending=False)
             sheet_data = [df.columns.tolist()] + df.values.tolist()
 
-            sheets_hook = GSheetsHook(gcp_conn_id=self.google_conn_id)
-            self.write_to_sheets(sheets_hook, sheet_data)
+            sheets_hook = GSheetsHook(gcp_conn_id=self.google_sheets_conn_id)
+            self.write_to_sheets(sheets_hook, sheet_data, self.worksheet)
 
             self.log.info("GA4 data written to Google Sheet successfully.")
 
@@ -147,6 +138,8 @@ class GA4ToGoogleSheetOperator(BaseOperator):
             )
             monthly_summary.reset_index(inplace=True)
             monthly_summary["Date"] = monthly_summary["Date"].dt.to_timestamp()
+            monthly_sheet_data = [monthly_summary.columns.tolist()] + monthly_summary.values.tolist()
+            self.write_to_sheets(sheets_hook, monthly_sheet_data, f"{self.worksheet}_Monthly")
 
             # Create weekly summary
             weekly_summary = df.groupby([df["Date"].dt.to_period("W-MON"), "Partner Reference"]).agg(
@@ -158,12 +151,7 @@ class GA4ToGoogleSheetOperator(BaseOperator):
             weekly_summary = weekly_summary[
                 ["Week Beginning", "Partner Reference", "Active Users", "Total Users", "Sessions", "Checkouts"]
             ]
-
-            # Write summaries to separate sheets
-            monthly_sheet_data = [monthly_summary.columns.tolist()] + monthly_summary.values.tolist()
             weekly_sheet_data = [weekly_summary.columns.tolist()] + weekly_summary.values.tolist()
-
-            self.write_to_sheets(sheets_hook, monthly_sheet_data)
-            self.write_to_sheets(sheets_hook, weekly_sheet_data)
+            self.write_to_sheets(sheets_hook, weekly_sheet_data, f"{self.worksheet}_Weekly")
 
             self.log.info("Monthly and weekly summaries written to Google Sheet successfully.")

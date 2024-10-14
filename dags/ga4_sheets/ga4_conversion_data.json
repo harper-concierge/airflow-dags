@@ -1,7 +1,7 @@
 {
   "table": "ga4_conversion_data",
-  "property_id": "your_property_id",
-  "spreadsheet_id": "your_spreadsheet_id",
+  "property_id": "347125794",
+  "spreadsheet_id": "1uTyYK3sTP22DUk6c4QMeY9YKWEibbOg7CVayCATrMeE",
   "worksheet": "Daily Data",
   "monthly_worksheet": "Monthly Summary",
   "weekly_worksheet": "Weekly Summary"

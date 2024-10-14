@@ -55,8 +55,9 @@ ga4_task = GA4ToGoogleSheetOperator(
     property_id=config.get("property_id", "default_property_id"),  # Default value if not present
     spreadsheet_id=config["spreadsheet_id"],
     worksheet=config["worksheet"],
-    google_conn_id="google_sheet_account",
-    start_date=datetime(2023, 1, 1),
+    google_sheets_conn_id="google_sheet_account",
+    google_analytics_conn_id="google_sheet_ga4",
+    # start_date=datetime(2023, 1, 1),
     end_date="{{ ds }}",
     dag=dag,
 )
