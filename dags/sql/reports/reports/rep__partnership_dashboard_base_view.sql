@@ -27,6 +27,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_b
             i.order_type AS item___order_type,
             o.order_name AS order__name,
             i.order_name AS item__order_name,
+            o.order_status AS order__status,
             i.createdat AS item__createdat,
             o.createdat AS order__createdat,
             o.createdat__dim_date AS order__createdat__dim_date,
@@ -58,6 +59,11 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_b
         MAX(appointment__date__dim_month) AS appointment__date__dim_month,
         MAX(appointment__date__dim_year) AS appointment__date__dim_year,
         brand_name,
+        CASE
+            WHEN order_cancelled_status LIKE 'Cancelled%%' THEN 1
+            WHEN order__status = 'cancelled'THEN 1
+            ELSE 0
+        END AS cancelled,
         CASE
         WHEN order__type = 'harper_try' THEN
             CASE
@@ -95,6 +101,12 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_b
                 WHEN item_is_inspire_me = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0
             END)/100,2) AS inspire_me_items_purchased_value,
         SUM(CASE
+                WHEN item_is_inspire_me = 1 AND returned = 1 THEN 1 ELSE 0
+            END) AS inspire_me_items_returned,
+        ROUND(SUM(CASE
+                WHEN item_is_inspire_me = 1 AND returned = 1 THEN item__item_value_pence ELSE 0
+            END)/100,2) AS inspire_me_items_returned_value,
+        SUM(CASE
                 WHEN item_is_initiated_sale = 1 THEN 1 ELSE 0
             END) AS initiated_sale_ordered,
         ROUND(SUM(CASE
@@ -106,11 +118,19 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_b
         ROUND(SUM(CASE
                 WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0
             END)/100,2) AS initiated_sale_purchased_value,
+        SUM(CASE
+                WHEN item_is_initiated_sale = 1 AND returned = 1 THEN 1 ELSE 0
+            END) AS initiated_sale_items_returned,
+        ROUND(SUM(CASE
+                WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0
+            END)/100,2) AS initiated_sale_returned_value,
         MAX(time_in_appointment) AS time_in_appointment,
         MAX(time_to_appointment) AS time_to_appointment,
         order__createdat__dim_date AS order_created_date,
         order__createdat__dim_yearmonth,
         order__type,
+        order__name,
+        order__status,
         original_order_name_merge,
         shipping_address__postcode,
         SUM(missing) AS number_items_missing,
@@ -151,7 +171,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_b
         harper_product_type,
         order__createdat__dim_date,
         order__createdat__dim_yearmonth,
-        order_status,
+        order__name,
+        order__status,
         customer_id,
         discount_total,
         shipping_address__postcode,
@@ -169,7 +190,11 @@ WITH NO DATA;
 {% if is_modified %}
 --CREATE UNIQUE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_idx ON {{ schema }}.rep__partnership_dashboard_base_view (id_merge);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_original_order_name_idx ON {{ schema }}.rep__partnership_dashboard_base_view (original_order_name_merge);
-CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_contains_initiated_sale_idx ON {{ schema }}.rep__partnership_dashboard_base_view (contains_initiated_sale);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_brand_name_idx ON {{ schema }}.rep__partnership_dashboard_base_view (brand_name);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__type_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__type);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__status_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__status);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__order_created_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order_created_date);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_completion_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (completion_date);
 
 {% endif %}
 
