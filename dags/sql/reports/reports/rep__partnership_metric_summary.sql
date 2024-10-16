@@ -94,10 +94,29 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_metric_summ
         SUM(itemsummary__initiated_sale__total_value_purchased) AS initiated_sale__total_value_purchased,
         SUM(itemsummary__initiated_sale__total_value_returned) AS initiated_sale__total_value_returned,
         SUM(itemsummary__initiated_sale__total_value_received) AS initiated_sale__total_value_received,
-        SUM(itemsummary__initiated_sale__total_value_received_by_warehouse) AS initiated_sale__total_value_received_by_warehouse
+        SUM(itemsummary__initiated__total_value_received_wh) AS initiated__total_value_received_wh,
+                -- Inspire Me Summary
+        SUM(itemsummary__inspire_me__num_ordered) AS inspire_me__num_ordered,
+        SUM(itemsummary__inspire_me__num_items_fulfilled) AS inspire_me__num_items_fulfilled,
+        SUM(itemsummary__inspire_me__num_purchased) AS inspire_me__num_purchased,
+        SUM(itemsummary__inspire_me__num_returned) AS inspire_me__num_returned,
+        SUM(itemsummary__inspire_me__num_actually_purchased) AS inspire_me__num_actually_purchased,
+        SUM(itemsummary__inspire_me__num_preorder) AS inspire_me__num_preorder,
+        SUM(itemsummary__inspire_me__num_received_by_harper_warehouse) AS inspire_me__num_received_by_harper_warehouse,
+        SUM(itemsummary__inspire_me__num_received_by_partner_warehouse) AS inspire_me__num_received_by_partner_warehouse,
+        SUM(itemsummary__inspire_me__num_return_requested_by_customer) AS inspire_me__num_return_requested_by_customer,
+        SUM(itemsummary__inspire_me__num_return_sent_by_customer) AS inspire_me__num_return_sent_by_customer,
+
+        -- Inspire Me Value Summary
+        SUM(itemsummary__inspire_me__total_value_ordered) AS inspire_me__total_value_ordered,
+        SUM(itemsummary__inspire_me__total_value_purchased) AS inspire_me__total_value_purchased,
+        SUM(itemsummary__inspire_me__total_value_returned) AS inspire_me__total_value_returned,
+        SUM(itemsummary__inspire_me__total_value_received) AS inspire_me__total_value_received,
+        SUM(itemsummary__inspire_me__total_value_received_wh) AS inspire_me__total_value_received_wh
+
 
     FROM
-        order_items o
+        orders o
     GROUP BY
         appointment__date__dim_month,
         appointment__date__dim_year,
