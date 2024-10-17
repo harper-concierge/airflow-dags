@@ -40,6 +40,24 @@ CREATE VIEW {{ schema }}.clean__order__item__summary AS
 		SUM(CASE WHEN oi.is_initiated_sale = 1 AND oi.returned = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS initiated_sale__total_value_returned,
 		SUM(CASE WHEN oi.is_initiated_sale = 1 AND oi.received = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS initiated_sale__total_value_received,
 		SUM(CASE WHEN oi.is_initiated_sale = 1 AND oi.received_by_warehouse = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS initiated__total_value_received_wh, --renamed since too long
+		-- item summary for inspire me
+		COUNT(DISTINCT CASE WHEN (oi.is_inspire_me = 1) THEN oi.id ELSE NULL END) AS inspire_me__num_ordered,
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.fulfilled ELSE 0 END) AS inspire_me__num_items_fulfilled,
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.purchased ELSE 0 END) AS inspire_me__num_purchased,
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.returned ELSE 0 END) AS inspire_me__num_returned,
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.purchased ELSE 0 END) AS inspire_me__num_actually_purchased,
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.preorder ELSE 0 END) AS inspire_me__num_preorder,
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.received ELSE 0 END) AS inspire_me__num_received_by_harper_warehouse,
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.received_by_warehouse ELSE 0 END) AS inspire_me__num_received_by_partner_warehouse,
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.return_requested_by_customer ELSE 0 END) AS inspire_me__num_return_requested_by_customer,
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.return_sent_by_customer ELSE 0 END) AS inspire_me__num_return_sent_by_customer,
+		-- value summary for inspire me
+		SUM(CASE WHEN oi.is_inspire_me = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS inspire_me__total_value_ordered,
+		SUM(CASE WHEN oi.is_inspire_me = 1 AND oi.purchased = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS inspire_me__total_value_purchased,
+		SUM(CASE WHEN oi.is_inspire_me = 1 AND oi.returned = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS inspire_me__total_value_returned,
+		SUM(CASE WHEN oi.is_inspire_me = 1 AND oi.received = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS inspire_me__total_value_received,
+		SUM(CASE WHEN oi.is_inspire_me = 1 AND oi.received_by_warehouse = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS inspire_me__total_value_received_wh, --renamed since too long
+
         array_agg(DISTINCT(oi.tracking_url)) AS delivery_tracking_urls
     FROM
         {{ schema }}.orders o
