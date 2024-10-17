@@ -1,0 +1,45 @@
+{
+    "title": "IPartnerReboundSchema",
+    "type": "object",
+    "bsonType": [
+        "object"
+    ],
+    "properties": {
+        "login": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "api_key": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "base_api_url": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    },
+    "additionalProperties": false,
+    "required": [
+        "login",
+        "api_key",
+        "base_api_url"
+    ]
+}

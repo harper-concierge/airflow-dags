@@ -2392,6 +2392,28 @@
                             ]
                         }
                     }
+                },
+                "newsletter_signup_function": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "bsonType": "boolean",
+                            "default": false
+                        },
+                        "function": {
+                            "type": "string",
+                            "bsonType": "string",
+                            "enum": [
+                                "klaviyo/subscribe",
+                                "ometria/subscribe"
+                            ]
+                        }
+                    }
                 }
             }
         },
@@ -2400,6 +2422,23 @@
             "bsonType": [
                 "string"
             ]
+        },
+        "plugins": {
+            "type": "object",
+            "bsonType": "object",
+            "properties": {
+                "klaviyo": {
+                    "type": "object",
+                    "bsonType": "object",
+                    "tsType": "IPartnerKlaviyoSchema"
+                },
+                "rebound": {
+                    "type": "object",
+                    "bsonType": "object",
+                    "tsType": "IPartnerReboundSchema"
+                }
+            },
+            "additionalProperties": false
         },
         "__v": {
             "bsonType": [
