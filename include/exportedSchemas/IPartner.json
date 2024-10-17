@@ -1764,6 +1764,18 @@
                 "bool"
             ]
         },
+        "blocked_discount_codes": {
+            "type": "array",
+            "bsonType": [
+                "array"
+            ],
+            "items": {
+                "type": "string",
+                "bsonType": [
+                    "string"
+                ]
+            }
+        },
         "add_background_color": {
             "type": "boolean",
             "bsonType": [
