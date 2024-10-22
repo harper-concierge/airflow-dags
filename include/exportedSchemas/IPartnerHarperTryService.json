@@ -383,6 +383,10 @@
                     "bsonType": "int",
                     "type": "number"
                 },
+                "max_active_orders": {
+                    "bsonType": "int",
+                    "type": "number"
+                },
                 "__v": {
                     "bsonType": [
                         "int"

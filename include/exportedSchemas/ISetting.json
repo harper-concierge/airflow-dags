@@ -255,12 +255,6 @@
                 "string"
             ]
         },
-        "max_active_try_orders": {
-            "type": "integer",
-            "bsonType": [
-                "int"
-            ]
-        },
         "customer_service": {
             "title": "customer_service",
             "type": "object",

@@ -1,17 +1,25 @@
 {
-    "title": "IPartnerHarperTrySettingsSchema",
+    "title": "IPartnerOmetriaSchema",
     "type": "object",
     "bsonType": [
         "object"
     ],
     "properties": {
-        "max_basket_size": {
-            "bsonType": "int",
-            "type": "number"
+        "private_api_key": {
+            "bsonType": "string",
+            "type": "string"
         },
-        "max_active_orders": {
-            "bsonType": "int",
-            "type": "number"
+        "base_api_url": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "list_id": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "collection_id": {
+            "bsonType": "string",
+            "type": "string"
         },
         "__v": {
             "bsonType": [
@@ -33,5 +41,9 @@
         }
     },
     "additionalProperties": false,
-    "required": []
+    "required": [
+        "base_api_url",
+        "list_id",
+        "private_api_key"
+    ]
 }

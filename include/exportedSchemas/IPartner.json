@@ -2448,6 +2448,11 @@
                     "type": "object",
                     "bsonType": "object",
                     "tsType": "IPartnerReboundSchema"
+                },
+                "ometria": {
+                    "type": "object",
+                    "bsonType": "object",
+                    "tsType": "IPartnerOmetriaSchema"
                 }
             },
             "additionalProperties": false
