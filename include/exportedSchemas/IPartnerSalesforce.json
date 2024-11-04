@@ -1,0 +1,117 @@
+{
+    "title": "IPartnerSalesforceSchema",
+    "type": "object",
+    "bsonType": [
+        "object"
+    ],
+    "properties": {
+        "partner_api_type": {
+            "bsonType": "string",
+            "type": "string",
+            "enum": [
+                "ocapi",
+                "scapi"
+            ]
+        },
+        "scapi": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "api_endpoint": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "short_code": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "realm_id": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "instance_id": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "oauth_client_id": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "oauth_client_secret": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "checkout_api_token": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "organization_id": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "site_id": {
+                    "bsonType": "string",
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "api_endpoint",
+                "short_code",
+                "realm_id",
+                "instance_id",
+                "oauth_client_id",
+                "oauth_client_secret",
+                "checkout_api_token",
+                "organization_id",
+                "site_id"
+            ]
+        },
+        "ocapi": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "api_endpoint": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "store_id": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "api_version": {
+                    "bsonType": "string",
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "api_endpoint",
+                "store_id",
+                "api_version"
+            ]
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    },
+    "required": [
+        "partner_api_type"
+    ],
+    "additionalProperties": false
+}

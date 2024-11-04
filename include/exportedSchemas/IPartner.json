@@ -2330,6 +2330,11 @@
                     "type": "object",
                     "bsonType": "object",
                     "tsType": "IPartnerCentra"
+                },
+                "salesforce": {
+                    "type": "object",
+                    "bsonType": "object",
+                    "tsType": "IPartnerSalesforce"
                 }
             },
             "additionalProperties": false
@@ -2424,6 +2429,32 @@
                                 "klaviyo/subscribe",
                                 "ometria/subscribe"
                             ]
+                        }
+                    }
+                },
+                "delivery_service_fee_override": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "bsonType": "boolean",
+                            "default": false
+                        },
+                        "function": {
+                            "type": "string",
+                            "bsonType": "string",
+                            "enum": [
+                                "deliveryServiceFeeOverride"
+                            ]
+                        },
+                        "values": {
+                            "type": "object",
+                            "bsonType": "object",
+                            "additionalProperties": true
                         }
                     }
                 }

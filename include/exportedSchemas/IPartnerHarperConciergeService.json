@@ -381,6 +381,42 @@
                     "bsonType": "int",
                     "type": "number"
                 },
+                "item_block_list": {
+                    "type": "array",
+                    "bsonType": [
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    }
+                },
+                "item_preorder_block_list": {
+                    "type": "array",
+                    "bsonType": [
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    }
+                },
+                "item_partially_block_list": {
+                    "type": "array",
+                    "bsonType": [
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    }
+                },
                 "__v": {
                     "bsonType": [
                         "int"

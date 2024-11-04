@@ -716,6 +716,23 @@
                             "bool"
                         ]
                     },
+                    "services": {
+                        "type": "object",
+                        "bsonType": "object",
+                        "properties": {
+                            "harper_try": {
+                                "type": "object",
+                                "bsonType": "object",
+                                "tsType": "IItemHarperTryServiceSchema"
+                            },
+                            "harper_concierge": {
+                                "type": "object",
+                                "bsonType": "object",
+                                "tsType": "IItemHarperConciergeServiceSchema"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
                     "__v": {
                         "bsonType": [
                             "int"
@@ -740,7 +757,8 @@
                     "_id",
                     "price",
                     "qty",
-                    "variant_id"
+                    "variant_id",
+                    "services"
                 ]
             }
         },
@@ -1376,6 +1394,23 @@
                             "bool"
                         ]
                     },
+                    "services": {
+                        "type": "object",
+                        "bsonType": "object",
+                        "properties": {
+                            "harper_try": {
+                                "type": "object",
+                                "bsonType": "object",
+                                "tsType": "IItemHarperTryServiceSchema"
+                            },
+                            "harper_concierge": {
+                                "type": "object",
+                                "bsonType": "object",
+                                "tsType": "IItemHarperConciergeServiceSchema"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
                     "__v": {
                         "bsonType": [
                             "int"
@@ -1400,7 +1435,8 @@
                     "_id",
                     "price",
                     "qty",
-                    "variant_id"
+                    "variant_id",
+                    "services"
                 ]
             }
         },
@@ -2030,6 +2066,23 @@
                             "bool"
                         ]
                     },
+                    "services": {
+                        "type": "object",
+                        "bsonType": "object",
+                        "properties": {
+                            "harper_try": {
+                                "type": "object",
+                                "bsonType": "object",
+                                "tsType": "IItemHarperTryServiceSchema"
+                            },
+                            "harper_concierge": {
+                                "type": "object",
+                                "bsonType": "object",
+                                "tsType": "IItemHarperConciergeServiceSchema"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
                     "__v": {
                         "bsonType": [
                             "int"
@@ -2054,7 +2107,8 @@
                     "_id",
                     "price",
                     "qty",
-                    "variant_id"
+                    "variant_id",
+                    "services"
                 ]
             }
         },
@@ -2697,6 +2751,23 @@
                             "bool"
                         ]
                     },
+                    "services": {
+                        "type": "object",
+                        "bsonType": "object",
+                        "properties": {
+                            "harper_try": {
+                                "type": "object",
+                                "bsonType": "object",
+                                "tsType": "IItemHarperTryServiceSchema"
+                            },
+                            "harper_concierge": {
+                                "type": "object",
+                                "bsonType": "object",
+                                "tsType": "IItemHarperConciergeServiceSchema"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
                     "__v": {
                         "bsonType": [
                             "int"
@@ -2721,7 +2792,8 @@
                     "_id",
                     "price",
                     "qty",
-                    "variant_id"
+                    "variant_id",
+                    "services"
                 ]
             },
             "additionalProperties": false
