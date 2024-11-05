@@ -179,6 +179,7 @@
                 "triggerModuleFunction",
                 "orderFinalised",
                 "triggerPlatformOrderFunction",
+                "orderStatusLogEvent",
                 ""
             ]
         },
