@@ -1,12 +1,13 @@
 import re
 import json
+import time
 
-# import time
 # import random
 from datetime import datetime, timezone
 
 import pandas as pd
 import shopify
+import requests.exceptions
 from pandas import DataFrame
 
 # from tenacity import wait_exponential
@@ -16,8 +17,6 @@ from airflow.models import XCom, BaseOperator
 # from sqlalchemy.exc import OperationalError
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
-
-# from requests.exceptions import HTTPError
 from airflow.utils.session import provide_session
 
 from plugins.utils.render_template import render_template
@@ -25,6 +24,7 @@ from plugins.utils.render_template import render_template
 from plugins.operators.mixins.flatten_json import FlattenJsonDictMixin
 from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
 
+# Filter output
 required_columns = [
     "partner__name",
     "id",
@@ -61,12 +61,13 @@ required_columns = [
     "payment_gateway_names",
     "processed_at",
     "reference",
-    # "referring_site",
+    "referring_site",
     "source_name",
-    # "source_url",
+    "source_url",
     "subtotal_price",
     "subtotal_price_set__presentment_money__amount",
     "subtotal_price_set__presentment_money__currency_code",
+    "test",
     "tags",
     "taxes_included",
     "test",
@@ -90,13 +91,13 @@ required_columns = [
     "customer__id",
     "customer__created_at",
     "customer__updated_at",
-    # "customer__state",
+    "customer__state",
     "customer__tags",
     "customer__currency",
-    # "discount_applications",
-    # "line_items",
+    "discount_applications",
+    "line_items",
     # "payment_terms",
-    # "refunds",
+    "refunds",
     "shipping_address__city",
     "shipping_address__province",
     "shipping_address__country",
@@ -115,9 +116,91 @@ required_columns = [
     "fulfilled_at",
     # "year_month",
 ]
+# Reduce load for API
+api_field_filter = [
+    "id",
+    "cancel_reason",
+    "cancelled_at",
+    "checkout_id",
+    # 'checkout_token',
+    "client_details",
+    "closed_at",
+    "confirmation_number",
+    "confirmed",
+    "contact_email",
+    "created_at",
+    "currency",
+    "current_subtotal_price",
+    "current_subtotal_price_set",
+    "current_total_additional_fees_set",
+    "current_total_discounts",
+    "current_total_discounts_set",
+    "current_total_duties_set",
+    "current_total_price",
+    "current_total_price_set",
+    "current_total_tax",
+    "current_total_tax_set",
+    "discount_codes",
+    "email",
+    "estimated_taxes",
+    "financial_status",
+    "fulfillment_status",
+    "landing_site",
+    "location_id",
+    "name",
+    "number",
+    "order_number",
+    "order_status_url",
+    "original_total_additional_fees_set",
+    "original_total_duties_set",
+    "payment_gateway_names",
+    "phone",
+    "po_number",
+    "presentment_currency",
+    "processed_at",
+    "reference",
+    "referring_site",
+    "source_identifier",
+    "source_name",
+    "source_url",
+    "subtotal_price",
+    "subtotal_price_set",
+    "tags",
+    "tax_exempt",
+    "tax_lines",
+    "taxes_included",
+    "test",
+    # 'token',
+    "total_discounts",
+    "total_discounts_set",
+    "total_line_items_price",
+    "total_line_items_price_set",
+    "total_outstanding",
+    "total_price",
+    "total_price_set",
+    "total_shipping_price_set",
+    "total_tax",
+    "total_tax_set",
+    "total_tip_received",
+    "updated_at",
+    "user_id",
+    "billing_address",
+    "customer",
+    "discount_applications",
+    "fulfillments",
+    "line_items",
+    "payment_terms",
+    "refunds",
+    "shipping_address",
+    "shipping_lines",
+]
 
 
 class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin, BaseOperator):
+
+    # Shopify API allows 2 requests per second for non-Plus plans
+    MAX_REQUESTS_PER_SECOND = 2
+    REQUEST_INTERVAL = 1 / MAX_REQUESTS_PER_SECOND  # Time interval between requests
 
     region_lookup = {"england": "ENG", "wales": "WLS", "scotland": "SCT", "northern ireland": "NIR"}
 
@@ -252,33 +335,58 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
 
             # self.log.info(f"Fetching orders from {start_param} to {lte}")
 
-            # page_count = 0
+            # List to store filtered-out orders for debugging
+            filtered_out_orders = []
 
             while True:
-                if next_page_url:
-                    orders = shopify.Order.find(from_=next_page_url)
-                else:
-                    query = {
-                        "created_at_min": start_param,  # Use start_param to fetch orders from a start date
-                        "created_at_max": lte,
-                        "limit": 250,
-                        "status": "any",
-                    }
+                try:
+                    # Apply rate limiting by sleeping between requests
+                    time.sleep(self.REQUEST_INTERVAL)
 
-                    # Make the API call with the constructed query parameters
-                    orders = shopify.Order.find(**query)
+                    if next_page_url:
+                        orders = shopify.Order.find(from_=next_page_url)
+                    else:
+                        query = {
+                            "created_at_min": start_param,  # Use start_param to fetch orders from a start date
+                            "created_at_max": lte,
+                            "limit": 250,
+                            "status": "any",
+                            "fields": ",".join(api_field_filter),
+                        }
+
+                        # Make the API call with the constructed query parameters
+                        orders = shopify.Order.find(**query)
+                except requests.exceptions.HTTPError as e:
+                    if e.response.status_code == 429:  # Rate limit exceeded
+                        retry_after = int(e.response.headers.get("Retry-After", 5))  # Retry after specified seconds
+                        self.log.warning(f"Rate limit exceeded. Retrying after {retry_after} seconds.")
+                        time.sleep(retry_after)
+                        continue  # Retry the request after waiting
+                    else:
+                        self.log.error(f"HTTP error occurred: {e}")
+                        raise e
+
+                except Exception as e:
+                    self.log.error(f"An error occurred: {e}")
+                    raise e
 
                 self.log.info(f"Processing batch with {len(orders)} orders, next page url: {next_page_url}")
 
-                records = [
-                    order.to_dict() for order in orders if self._check_province_code(order.to_dict(), allowed_regions)
-                ]
+                # Separate lists for filtered and non-filtered orders
+                valid_records = []
 
-                self.log.info(f"Filtered orders in this batch: {len(records)}")
-                total_docs_processed += len(records)
+                for order in orders:
+                    order_dict = order.to_dict()
+                    if self._check_province_code(order_dict, allowed_regions):
+                        valid_records.append(order_dict)  # Orders that pass the filter
+                    else:
+                        filtered_out_orders.append(order_dict)  # Orders that are filtered out
 
-                if records:
-                    df = DataFrame(records)
+                self.log.info(f"Filtered valid orders in this batch: {len(valid_records)}")
+                total_docs_processed += len(valid_records)
+
+                if valid_records:
+                    df = DataFrame(valid_records)
                     df = self._preprocess_dataframe(df, ds)
                     df = self._process_additional_fields(df)
                     # self.log.debug("Type of DataFrame: %s", type(df).__name__)
@@ -296,27 +404,26 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
                     except Exception as e:
                         self.log.error(f"Failed to write DataFrame to SQL: {e}")
                         raise
+
                 # Update the next_page_url
                 next_page_url = orders.next_page_url
+                self.log.info(f"Next page URL: {next_page_url}")
                 self.set_next_page_url(conn, context, next_page_url)
                 if not next_page_url:
                     break
+                # Log or process filtered-out orders
 
-            self.log.info(f"Total orders processed: {total_docs_processed}")
+            if filtered_out_orders:
+                self.log.info(f"Total filtered-out orders: {len(filtered_out_orders)}")
 
-            if total_docs_processed > 0:
-                conn.execute(
-                    f"CREATE UNIQUE INDEX IF NOT EXISTS {self.destination_table}_idx "
-                    f"ON {self.destination_schema}.{self.destination_table} (id);"
-                )
-            self.clear_task_vars(conn, context)
+                self.log.info(f"Total valid orders processed: {total_docs_processed}")
 
-            # context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
-
-            # context["ti"].xcom_push(
-            # key=self.last_successful_dagrun_xcom_key,
-            # value=context["data_interval_end"].to_iso8601_string(),
-            # )
+                if total_docs_processed > 0:
+                    conn.execute(
+                        f"CREATE UNIQUE INDEX IF NOT EXISTS {self.destination_table}_idx "
+                        f"ON {self.destination_schema}.{self.destination_table} (id);"
+                    )
+                self.clear_task_vars(conn, context)
 
         self.set_last_successful_dagrun_ts(context, context["data_interval_end"].int_timestamp)
         context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
