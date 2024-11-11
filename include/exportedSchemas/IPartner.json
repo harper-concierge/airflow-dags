@@ -2457,6 +2457,34 @@
                             "additionalProperties": true
                         }
                     }
+                },
+                "return_plugin": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "bsonType": "boolean",
+                            "default": false
+                        },
+                        "function": {
+                            "type": "string",
+                            "bsonType": "string",
+                            "enum": [
+                                "createWebhooks"
+                            ]
+                        },
+                        "value": {
+                            "type": "string",
+                            "bsonType": "string",
+                            "enum": [
+                                "zigzag"
+                            ]
+                        }
+                    }
                 }
             }
         },
@@ -2484,6 +2512,11 @@
                     "type": "object",
                     "bsonType": "object",
                     "tsType": "IPartnerOmetriaSchema"
+                },
+                "zigzag": {
+                    "type": "object",
+                    "bsonType": "object",
+                    "tsType": "IPartnerZigzagSchema"
                 }
             },
             "additionalProperties": false
