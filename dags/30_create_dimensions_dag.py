@@ -26,7 +26,7 @@ dag = DAG(
     template_searchpath="/usr/local/airflow/dags",
 )
 
-wait_for_task = ExternalTaskSensor(
+wait_for_financials_task = ExternalTaskSensor(
     task_id="wait_for_financial_transactions_dag",
     external_dag_id="20_import_financial_transactions_dag",  # The ID of the DAG you're waiting for
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
@@ -34,4 +34,12 @@ wait_for_task = ExternalTaskSensor(
     dag=dag,
 )
 
-run_dynamic_sql_task(dag, wait_for_task, sql_type, check_entity_pattern=False)
+wait_for_stripe_task = ExternalTaskSensor(
+    task_id="wait_for_stripe_data_dag",
+    external_dag_id="21_import_stripe_data",  # The ID of the DAG you're waiting for
+    external_task_id=None,  # Set to None to wait for the entire DAG to complete
+    allowed_states=["success"],  # You might need to customize this part
+    dag=dag,
+)
+
+run_dynamic_sql_task(dag, [wait_for_financials_task, wait_for_stripe_task], sql_type, check_entity_pattern=False)
