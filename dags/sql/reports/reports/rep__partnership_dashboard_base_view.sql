@@ -122,7 +122,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_b
                 WHEN item_is_initiated_sale = 1 AND returned = 1 THEN 1 ELSE 0
             END) AS initiated_sale_items_returned,
         ROUND(SUM(CASE
-                WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0
+                WHEN item_is_initiated_sale = 1 AND returned = 1 THEN item__item_value_pence ELSE 0
             END)/100,2) AS initiated_sale_returned_value,
         MAX(time_in_appointment) AS time_in_appointment,
         MAX(time_to_appointment) AS time_to_appointment,
