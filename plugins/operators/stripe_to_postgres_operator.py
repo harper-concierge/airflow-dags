@@ -35,7 +35,7 @@ class StripeToPostgresOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin, BaseO
         self.stripe_conn_id = stripe_conn_id
         self.discard_fields = ["payment_method_details", "source"]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
-        self.last_successful_transaction_key = "last_successful_transaction_id"
+        self.last_successful_item_key = "last_successful_transaction_id"
         self.separator = "__"
 
         self.context = {
@@ -72,7 +72,7 @@ END $$;
 
         with engine.connect() as conn:
             self.ensure_task_comms_table_exists(conn)
-            starting_after = self.get_last_successful_transaction_id(conn, context)
+            starting_after = self.get_last_successful_item_id(conn, context)
             extra_context = {
                 **context,
                 **self.context,
@@ -150,7 +150,7 @@ END $$;
                     schema=self.destination_schema,
                     index=False,
                 )
-                self.set_last_successful_transaction_id(conn, context, starting_after)
+                self.set_last_successful_item_id(conn, context, starting_after)
 
             # Check how many Docs total
             if total_docs_processed > 0:
@@ -193,11 +193,11 @@ END $$;
         conn_uri = re.sub(r"\?.*$", "", conn_uri)
         return create_engine(conn_uri, **engine_kwargs)
 
-    def set_last_successful_transaction_id(self, conn, context, starting_after):
-        return self.set_task_var(conn, context, self.last_successful_transaction_key, starting_after)
+    def set_last_successful_item_id(self, conn, context, starting_after):
+        return self.set_task_var(conn, context, self.last_successful_item_key, starting_after)
 
-    def get_last_successful_transaction_id(self, conn, context):
-        return self.get_task_var(conn, context, self.last_successful_transaction_key)
+    def get_last_successful_item_id(self, conn, context):
+        return self.get_task_var(conn, context, self.last_successful_item_key)
 
     def set_last_successful_dagrun_ts(self, context, value):
         context["ti"].xcom_push(key=self.last_successful_dagrun_xcom_key, value=value)

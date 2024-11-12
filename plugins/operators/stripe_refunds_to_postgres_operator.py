@@ -14,10 +14,8 @@ from plugins.utils.render_template import render_template
 from plugins.operators.mixins.flatten_json import FlattenJsonDictMixin
 from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
 
-# YOU MUST CREATE THE DESTINATION SPREADSHEET IN ADVANCE MANUALLY IN ORDER FOR THIS TO WORK
 
-
-class StripeInvoicesToPostgresOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin, BaseOperator):
+class StripeRefundsToPostgresOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin, BaseOperator):
     @apply_defaults
     def __init__(
         self,
@@ -28,14 +26,14 @@ class StripeInvoicesToPostgresOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
         *args,
         **kwargs,
     ):
-        super(StripeInvoicesToPostgresOperator, self).__init__(*args, **kwargs)
+        super(StripeRefundsToPostgresOperator, self).__init__(*args, **kwargs)
         self.destination_schema = destination_schema
         self.destination_table = destination_table
         self.postgres_conn_id = postgres_conn_id
         self.stripe_conn_id = stripe_conn_id
-        self.discard_fields = ["payment_method_details", "source"]
+        self.discard_fields = ["source"]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
-        self.last_successful_item_key = "last_successful_invoice_id"
+        self.last_successful_item_key = "last_successful_refund_id"
         self.separator = "__"
 
         self.context = {
@@ -54,8 +52,7 @@ END $$;
 """
 
     def execute(self, context):
-
-        # Fetch data from the database
+        # Initialize Stripe and database connections
         hook = BaseHook.get_hook(self.postgres_conn_id)
         stripe_conn = Connection.get_connection_from_secrets(self.stripe_conn_id)
         stripe.api_key = stripe_conn.password
@@ -75,18 +72,16 @@ END $$;
             }
 
             self.log.info(
-                f"Executing StripeInvoicesToPostgresOperator since last successful dagrun {last_successful_dagrun_ts}"  # noqa
+                f"Executing StripeRefundsToPostgresOperator since last successful dagrun {last_successful_dagrun_ts}"
             )
 
             if starting_after:
                 self.log.info(
-                    f"StripeInvoicesToPostgresOperator Restarting task for this Dagrun from the last successful invoice_id {starting_after} after last successful dagrun {last_successful_dagrun_ts}"  # noqa
+                    f"Restarting task for this Dagrun from the last successful refund_id {starting_after} after last successful dagrun {last_successful_dagrun_ts}"  # noqa
                 )
             else:
-                self.log.info(
-                    f"StripeInvoicesToPostgresOperator Starting Task Fresh for this dagrun from {last_successful_dagrun_ts}"  # noqa
-                )
-                self.log.info("StripeInvoicesToPostgresOperator Deleting previous Data from this Dagrun")  # noqa
+                self.log.info(f"Starting Task Fresh for this dagrun from {last_successful_dagrun_ts}")
+                self.log.info("Deleting previous Data for this Dagrun")
                 self.delete_sql = render_template(self.delete_template, context=extra_context)
                 self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
                 conn.execute(self.delete_sql)
@@ -102,12 +97,8 @@ END $$;
 
             while has_more:
                 print(created, starting_after, limit)
-                result = stripe.Invoice.list(
-                    limit=limit,
-                    starting_after=starting_after,
-                    status="paid",
-                    created=created,
-                    expand=[],
+                result = stripe.Refund.list(
+                    limit=limit, starting_after=starting_after, created=created, expand=["data.balance_transaction"]
                 )
 
                 records = result.data
@@ -117,23 +108,23 @@ END $$;
                 df = DataFrame(records)
 
                 if df.empty:
-                    self.log.info("UNEXPECTED EMPTY Balance invoices to process.")
+                    self.log.info("UNEXPECTED EMPTY Balance refunds to process.")
                     break
 
                 starting_after = records[-1].id
                 self.log.info(f"Processing ResultSet {total_docs_processed} - {starting_after}.")
                 df["airflow_sync_ds"] = ds
-                print(records[0])
 
                 if self.discard_fields:
-                    # keep this because if we're dropping any problematic fields
-                    # from the top level we might want to do this before Flattenning
+                    # Drop any unwanted fields before flattening
                     existing_discard_fields = [col for col in self.discard_fields if col in df.columns]
                     df.drop(existing_discard_fields, axis=1, inplace=True)
 
+                # Flatten JSON structure using the mixin method
                 df = self.flatten_dataframe_columns_precisely(df)
                 df.columns = df.columns.str.lower()
 
+                # Write processed data to PostgreSQL
                 df.to_sql(
                     self.destination_table,
                     conn,
@@ -143,7 +134,7 @@ END $$;
                 )
                 self.set_last_successful_item_id(conn, context, starting_after)
 
-            # Check how many Docs total
+            # Ensure primary key constraint exists if records processed
             if total_docs_processed > 0:
                 conn.execute(
                     f"""
@@ -155,9 +146,9 @@ BEGIN
         JOIN pg_class c ON c.oid = i.indrelid
         JOIN pg_namespace n ON n.oid = c.relnamespace
         JOIN pg_class ic ON ic.oid = i.indexrelid
-        WHERE n.nspname = '{self.destination_schema}'  -- Schema name
-        AND c.relname = '{self.destination_table}'  -- Table name
-        AND ic.relname = '{self.destination_table}_idx'  -- Index name
+        WHERE n.nspname = '{self.destination_schema}'
+        AND c.relname = '{self.destination_table}'
+        AND ic.relname = '{self.destination_table}_idx'
     ) THEN
         ALTER TABLE {self.destination_schema}.{self.destination_table}
             ADD CONSTRAINT {self.destination_table}_idx PRIMARY KEY (id);
@@ -166,18 +157,13 @@ END $$;
 """
                 )
 
+            # Final task communication updates
             self.clear_task_vars(conn, context)
         context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
         self.set_last_successful_dagrun_ts(context, context["data_interval_end"].int_timestamp)
-        self.log.info("Stripe Charges written to Datalake successfully.")
+        self.log.info("Stripe Refunds written to Datalake successfully.")
 
     def get_postgres_sqlalchemy_engine(self, hook, engine_kwargs=None):
-        """
-        Get an sqlalchemy_engine object.
-
-        :param engine_kwargs: Kwargs used in :func:`~sqlalchemy.create_engine`.
-        :return: the created engine.
-        """
         if engine_kwargs is None:
             engine_kwargs = {}
         conn_uri = hook.get_uri().replace("postgres:/", "postgresql:/")
@@ -208,5 +194,4 @@ END $$;
         xcom = query.first()
         if xcom:
             return xcom.value
-
         return None
