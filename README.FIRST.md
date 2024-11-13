@@ -61,3 +61,24 @@ bson_pandas_numpy_mapping = {
           "decimal": "Float64",  # BSON Decimal128 maps to pandas/numpy float64 (considerations for precision apply)
       }
 ```
+
+### Shopify Import Pool in Airflow
+
+Our Airflow deployment utilizes a custom 'pool' called shopify_import_pool to manage the concurrency of tasks that import data from Shopify. This pool has a maximum capacity of 5 slots.
+
+Here's where it is used in the 15_get_shopify_data_dag.py:
+
+for partner in partners:
+    task_id = f"get_{partner}_shopify_data_task"
+    shopify_task = ImportShopifyPartnerDataOperator(
+        task_id=task_id,
+        postgres_conn_id="postgres_datalake_conn_id",
+        schema="public",
+        destination_schema="transient_data",
+        destination_table=destination_table,
+        partner_ref=partner,
+        dag=dag,
+        pool="shopify_import_pool",
+    )
+
+Add this to the 'pools' tab in your local environment.
