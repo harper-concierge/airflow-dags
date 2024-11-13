@@ -98,7 +98,10 @@ END $$;
             while has_more:
                 print(created, starting_after, limit)
                 result = stripe.Charge.list(
-                    limit=limit, starting_after=starting_after, created=created, expand=["data.payment_method_details"]
+                    limit=limit,
+                    starting_after=starting_after,
+                    created=created,
+                    expand=["data.payment_method_details", "data.balance_transaction"],
                 )
 
                 records = result.data
