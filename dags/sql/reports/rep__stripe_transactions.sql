@@ -55,7 +55,7 @@ FROM stripe__refunds r
 JOIN stripe__charges c ON c.id = r.charge
 JOIN stripe__invoices i ON c.invoice = i.id
 
-ORDER BY invoice_id, charge_id, refund_id;
+ORDER BY invoice_id, charge_id, refund_id
 
 WITH NO DATA;
 
