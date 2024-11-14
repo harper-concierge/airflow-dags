@@ -4,7 +4,8 @@ DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__stripe_transactions CASCADE;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__stripe_transactions AS
     SELECT
-
+  i.metadata__order AS order_id,
+  i.metadata__internal_order_id AS internal_order_id,
   c.invoice AS invoice_id,
   'CHARGE' as transaction_type,
   c.id AS charge_id,
@@ -24,13 +25,17 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__stripe_transactions AS
   c.disputed,
   i.customer_email,
   i.customer_name,
-  i.hosted_invoice_url
+  i.hosted_invoice_url,
+  i.metadata__harper_invoice_type AS invoice_type,
+  i.metadata__harper_invoice_subtype AS invoice_subtype
 FROM stripe__charges c
 LEFT JOIN stripe__invoices i ON c.invoice = i.id
 
 UNION ALL
 
 SELECT
+  i.metadata__order AS order_id,
+  i.metadata__internal_order_id AS internal_order_id,
   c.invoice AS invoice_id,
   'REFUND' AS transaction_type,
   c.id AS charge_id,
@@ -50,12 +55,14 @@ SELECT
   c.disputed,
   i.customer_email,
   i.customer_name,
-  i.hosted_invoice_url
+  i.hosted_invoice_url,
+  i.metadata__harper_invoice_type AS invoice_type,
+  i.metadata__harper_invoice_subtype AS invoice_subtype
 FROM stripe__refunds r
 JOIN stripe__charges c ON c.id = r.charge
 JOIN stripe__invoices i ON c.invoice = i.id
 
-ORDER BY invoice_id, charge_id, refund_id
+ORDER BY internal_order_id, invoice_id, charge_id, refund_id
 
 WITH NO DATA;
 
