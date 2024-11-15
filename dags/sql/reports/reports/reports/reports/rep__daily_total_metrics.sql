@@ -6,7 +6,7 @@ WITH
 purchases AS (
 	SELECT
 		transaction_info__payment_at__dim_date AS metric_date,
-		COUNT(DISTINCT harper_order_name) AS num_orders_paid,
+		COUNT(DISTINCT harper_order_name)::INTEGER AS num_orders_paid, -- Cast to integer
 		SUM(transaction_info__item_count) AS total_items_purchased,
 		SUM(transaction_info__payment_invoiced_amount) AS total_amount_purchased
 	FROM
