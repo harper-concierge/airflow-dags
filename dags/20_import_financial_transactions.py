@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python import ShortCircuitOperator
-from airflow.sensors.external_task import ExternalTaskSensor
 
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 from plugins.utils.found_records_to_process import found_records_to_process
@@ -17,6 +16,9 @@ from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDa
 from plugins.operators.zettle_finance_to_postgres_operator import ZettleFinanceToPostgresOperator
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
 from plugins.operators.zettle_purchases_to_postgres_operator import ZettlePurchasesToPostgresOperator
+
+# from airflow.sensors.external_task import ExternalTaskSensor
+
 
 default_args = {
     "owner": "airflow",
@@ -44,13 +46,13 @@ is_latest_dagrun_task = ShortCircuitOperator(
     dag=dag,
 )
 
-wait_for_migrations = ExternalTaskSensor(
-    task_id="wait_for_shopify_to_complete",
-    external_dag_id="15_get_shopify_data_dag",  # The ID of the DAG you're waiting for
-    external_task_id=None,  # Set to None to wait for the entire DAG to complete
-    allowed_states=["success"],  # You might need to customize this part
-    dag=dag,
-)
+# wait_for_migrations = ExternalTaskSensor(
+#     task_id="wait_for_shopify_to_complete",
+#     external_dag_id="15_get_shopify_data_dag",  # The ID of the DAG you're waiting for
+#     external_task_id=None,  # Set to None to wait for the entire DAG to complete
+#     allowed_states=["success"],  # You might need to customize this part
+#     dag=dag,
+# )
 
 transient_schema_exists = EnsurePostgresSchemaExistsOperator(
     task_id="ensure_transient_schema_exists",
@@ -311,8 +313,8 @@ zettle_purchases_ensure_table_view_exists = EnsurePostgresDatalakeTableViewExist
 
 
 (
-    wait_for_migrations
-    >> is_latest_dagrun_task
+    # wait_for_migrations
+    is_latest_dagrun_task
     >> transient_schema_exists
     >> public_schema_exists
     >> ensure_missing_columns_function_exists
