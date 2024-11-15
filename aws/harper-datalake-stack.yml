@@ -13,13 +13,13 @@ Parameters:
   InitalVolumeSize:
     Description: Initial database volume size
     Type: String
-    Default: 10
+    Default: 20
     AllowedValues:
       - 10
   MaxVolumeSize:
     Description: Database maximum volume size
     Type: String
-    Default: 40
+    Default: 100
     AllowedValues:
       - 20
       - 30
