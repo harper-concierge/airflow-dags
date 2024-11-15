@@ -81,10 +81,10 @@ partners = [
     "kitri",
     "live-unlimited",
     "needle-thread",
-    "nobodys-child",
-    "fcuk",
+    # "nobodys-child",
+    # "fcuk",
     # "pangaia",
-    "represent",
+    # "represent",
     # "harper_production",
 ]
 
