@@ -15,7 +15,7 @@ Parameters:
     Type: String
     Default: 20
     AllowedValues:
-      - 10
+      - 20
   MaxVolumeSize:
     Description: Database maximum volume size
     Type: String
