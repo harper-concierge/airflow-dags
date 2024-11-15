@@ -28,7 +28,9 @@ default_args = {
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),  # airflows retry mechanism
-    "retries": 0,
+    "retries": 3,  # Increased from 0 to 3
+    "retry_exponential_backoff": True,
+    "max_retry_delay": timedelta(minutes=30),
     # "on_failure_callback": [send_harper_failure_notification()],
 }
 

@@ -277,7 +277,8 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
             SELECT FROM pg_tables WHERE schemaname = '{{destination_schema}}'
             AND tablename = '{{destination_table}}') THEN
             DELETE FROM {{ destination_schema }}.{{destination_table}}
-                -- WHERE airflow_sync_ds = '{{ ds }}'
+            WHERE partner__name = '{{partner_ref}}'
+            AND airflow_sync_ds = '{{ds}}'
             ;
         END IF;
         END $$;
@@ -295,139 +296,181 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
         engine = self.get_postgres_sqlalchemy_engine(hook)
         ds = context["ds"]
         run_id = context["run_id"]
-        last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
+        total_docs_processed = 0
+        filtered_out_orders = []
 
-        with engine.connect() as conn:
-            self.ensure_task_comms_table_exists(conn)
-            next_page_url = self.get_next_page_url(conn, context)
+        try:
+            with engine.connect() as conn:
+                # Initial setup
+                last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
+                self.ensure_task_comms_table_exists(conn)
+                next_page_url = self.get_next_page_url(conn, context)
 
-            extra_context = {
-                **context,
-                **self.context,
-                f"{self.last_successful_dagrun_xcom_key}": last_successful_dagrun_ts,
-            }
+                self.log.info(
+                    f"Starting import for partner {self.partner_ref} from {last_successful_dagrun_ts}"
+                    f" with next_page_url: {next_page_url}"
+                )
 
-            self.log.info(
-                f"Executing ImportShopifyPartnerDataOperator since last successful dagrun {last_successful_dagrun_ts} "
-                f"(type: {type(last_successful_dagrun_ts)}), next_page_url: {next_page_url}."
-            )
+                # Handle data cleanup if not continuing from previous run
+                if not next_page_url:
+                    self._clean_existing_partner_data(conn, ds)
 
-            # if next page url then don't delete sql
-            if next_page_url:
-                self.log.info(f"Restarting task for this Dagrun from the next_page_url {next_page_url}")
-            else:
-                self.log.info(f"Starting Task Fresh for this dagrun from {last_successful_dagrun_ts}")
-                self.log.info("Deleting previous Data from this Dagrun")
-                self.delete_sql = render_template(self.delete_template, context=extra_context)
-                self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
+                # Get partner configuration and setup Shopify session
+                partner_config = self._get_partner_config(conn, context)
+                self._setup_shopify_session(partner_config)
+                allowed_regions = partner_config["allowed_region_for_harper"]
+
+                # Set up date range for data fetch
+                lte = context["data_interval_end"].to_iso8601_string()
+                start_param = last_successful_dagrun_ts if last_successful_dagrun_ts else "2024-01-01T00:00:00.000Z"
+
+                # Main processing loop
+                while True:
+                    # Fetch orders from Shopify
+                    orders = self._fetch_shopify_orders(next_page_url, start_param, lte)
+
+                    # Get next page URL before processing current batch
+                    new_next_page_url = orders.next_page_url
+                    self.log.info(f"Retrieved new next_page_url: {new_next_page_url}")
+                    self.set_next_page_url(conn, context, new_next_page_url)
+
+                    # Process current batch
+                    valid_records = self._process_orders_batch(orders, allowed_regions, filtered_out_orders)
+
+                    if valid_records:
+                        self._write_records_to_database(valid_records, conn, ds)
+                        total_docs_processed += len(valid_records)
+
+                    # Check if we're done
+                    if not new_next_page_url:
+                        self.log.info("No more pages to process")
+                        break
+
+                    next_page_url = new_next_page_url
+
+                # Final cleanup and index creation
+                self._handle_completion(conn, total_docs_processed, filtered_out_orders, context)
+
+            # Update task state
+            self.set_last_successful_dagrun_ts(context, context["data_interval_end"].int_timestamp)
+            context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
+            self.log.info(f"Successfully completed import for partner {self.partner_ref}")
+
+        except Exception as e:
+            self.log.error(f"Error processing partner {self.partner_ref}: {str(e)}")
+            raise
+
+    def _clean_existing_partner_data(self, conn, ds):
+        """Clean existing data for the partner before fresh import."""
+        try:
+            # Check if table exists first
+            table_exists = conn.execute(
+                f"""
+                SELECT EXISTS (
+                    SELECT FROM pg_tables
+                    WHERE schemaname = '{self.destination_schema}'
+                    AND tablename = '{self.destination_table}'
+                );
+                """
+            ).scalar()
+
+            if table_exists:
+                before_count = conn.execute(
+                    f"SELECT COUNT(*) FROM {self.destination_schema}.{self.destination_table} "
+                    f"WHERE partner__name = '{self.partner_ref}'"
+                ).scalar()
+                self.log.info(f"Records for {self.partner_ref} before delete: {before_count}")
+
+                self.delete_sql = render_template(self.delete_template, context={"ds": ds, **self.context})
+                self.log.info(f"Executing delete SQL: {self.delete_sql}")
                 conn.execute(self.delete_sql)
 
-            partner_config = self._get_partner_config(conn, context)
-            self._setup_shopify_session(partner_config)
+                after_count = conn.execute(
+                    f"SELECT COUNT(*) FROM {self.destination_schema}.{self.destination_table} "
+                    f"WHERE partner__name = '{self.partner_ref}'"
+                ).scalar()
+                self.log.info(f"Records for {self.partner_ref} after delete: {after_count}")
+            else:
+                self.log.info(
+                    f"Table {self.destination_schema}.{self.destination_table} does not exist yet. No cleanup needed."
+                )
 
-            lte = context["data_interval_end"].to_iso8601_string()
-            total_docs_processed = 0
+        except Exception as e:
+            self.log.warning(f"Error during cleanup for partner {self.partner_ref}: {str(e)}")
+            # Continue execution since the table will be created during data write if it doesn't exist
 
-            allowed_regions = partner_config["allowed_region_for_harper"]
+    def _fetch_shopify_orders(self, next_page_url, start_param, lte):
+        """Fetch orders from Shopify with retry logic."""
+        while True:
+            try:
+                time.sleep(self.REQUEST_INTERVAL)
 
-            # Determine the 'start' parameter based on 'last_successful_dagrun_ts'
-            start_param = last_successful_dagrun_ts if last_successful_dagrun_ts else "2024-05-01T00:00:00.000Z"
+                if next_page_url:
+                    return shopify.Order.find(from_=next_page_url)
+                else:
+                    query = {
+                        "created_at_min": start_param,
+                        "created_at_max": lte,
+                        "limit": 100,
+                        "status": "any",
+                        "fields": ",".join(api_field_filter),
+                    }
+                    return shopify.Order.find(**query)
 
-            # self.log.info(f"Fetching orders from {start_param} to {lte}")
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 429:
+                    retry_after = int(e.response.headers.get("Retry-After", 5))
+                    self.log.warning(f"Rate limit exceeded. Retrying after {retry_after} seconds.")
+                    time.sleep(retry_after)
+                    continue
+                raise
 
-            # List to store filtered-out orders for debugging
-            filtered_out_orders = []
+    def _process_orders_batch(self, orders, allowed_regions, filtered_out_orders):
+        """Process a batch of orders and return valid records."""
+        self.log.info(f"Processing batch of {len(orders)} orders")
+        valid_records = []
 
-            while True:
-                try:
-                    # Apply rate limiting by sleeping between requests
-                    time.sleep(self.REQUEST_INTERVAL)
+        for order in orders:
+            order_dict = order.to_dict()
+            if self._check_province_code(order_dict, allowed_regions):
+                valid_records.append(order_dict)
+            else:
+                filtered_out_orders.append(order_dict)
 
-                    if next_page_url:
-                        orders = shopify.Order.find(from_=next_page_url)
-                    else:
-                        query = {
-                            "created_at_min": start_param,  # Use start_param to fetch orders from a start date
-                            "created_at_max": lte,
-                            "limit": 250,
-                            "status": "any",
-                            "fields": ",".join(api_field_filter),
-                        }
+        self.log.info(f"Found {len(valid_records)} valid orders in batch")
+        return valid_records
 
-                        # Make the API call with the constructed query parameters
-                        orders = shopify.Order.find(**query)
-                except requests.exceptions.HTTPError as e:
-                    if e.response.status_code == 429:  # Rate limit exceeded
-                        retry_after = int(e.response.headers.get("Retry-After", 5))  # Retry after specified seconds
-                        self.log.warning(f"Rate limit exceeded. Retrying after {retry_after} seconds.")
-                        time.sleep(retry_after)
-                        continue  # Retry the request after waiting
-                    else:
-                        self.log.error(f"HTTP error occurred: {e}")
-                        raise e
+    def _write_records_to_database(self, valid_records, conn, ds):
+        """Transform and write records to database."""
+        df = DataFrame(valid_records)
+        df = self._preprocess_dataframe(df, ds)
+        df = self._process_additional_fields(df)
+        df = self.align_to_schema(df)
 
-                except Exception as e:
-                    self.log.error(f"An error occurred: {e}")
-                    raise e
+        self.log.info(f"Writing {len(df)} records to database")
+        self.log.info(f"Sample of records: {df[['partner__name', 'id', 'created_at']].head()}")
 
-                self.log.info(f"Processing batch with {len(orders)} orders, next page url: {next_page_url}")
+        df.to_sql(
+            self.destination_table,
+            conn,
+            if_exists="append",
+            schema=self.destination_schema,
+            index=False,
+            chunksize=500,
+        )
 
-                # Separate lists for filtered and non-filtered orders
-                valid_records = []
+    def _handle_completion(self, conn, total_docs_processed, filtered_out_orders, context):
+        """Handle completion tasks like creating indexes and logging summaries."""
+        if filtered_out_orders:
+            self.log.info(f"Total filtered-out orders: {len(filtered_out_orders)}")
+        self.log.info(f"Total valid orders processed: {total_docs_processed}")
 
-                for order in orders:
-                    order_dict = order.to_dict()
-                    if self._check_province_code(order_dict, allowed_regions):
-                        valid_records.append(order_dict)  # Orders that pass the filter
-                    else:
-                        filtered_out_orders.append(order_dict)  # Orders that are filtered out
-
-                self.log.info(f"Filtered valid orders in this batch: {len(valid_records)}")
-                total_docs_processed += len(valid_records)
-
-                if valid_records:
-                    df = DataFrame(valid_records)
-                    df = self._preprocess_dataframe(df, ds)
-                    df = self._process_additional_fields(df)
-                    # self.log.debug("Type of DataFrame: %s", type(df).__name__)
-                    df = self.align_to_schema(df)
-
-                    try:
-                        df.to_sql(
-                            self.destination_table,
-                            conn,
-                            if_exists="append",
-                            schema=self.destination_schema,
-                            index=False,
-                            chunksize=1000,
-                        )
-                    except Exception as e:
-                        self.log.error(f"Failed to write DataFrame to SQL: {e}")
-                        raise
-
-                # Update the next_page_url
-                next_page_url = orders.next_page_url
-                self.log.info(f"Next page URL: {next_page_url}")
-                self.set_next_page_url(conn, context, next_page_url)
-                if not next_page_url:
-                    break
-                # Log or process filtered-out orders
-
-            if filtered_out_orders:
-                self.log.info(f"Total filtered-out orders: {len(filtered_out_orders)}")
-
-                self.log.info(f"Total valid orders processed: {total_docs_processed}")
-
-                if total_docs_processed > 0:
-                    conn.execute(
-                        f"CREATE UNIQUE INDEX IF NOT EXISTS {self.destination_table}_idx "
-                        f"ON {self.destination_schema}.{self.destination_table} (id);"
-                    )
-                self.clear_task_vars(conn, context)
-
-        self.set_last_successful_dagrun_ts(context, context["data_interval_end"].int_timestamp)
-        context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
-        self.log.info("Shopify Data Written to transient table successfully.")
+        if total_docs_processed > 0:
+            conn.execute(
+                f"CREATE UNIQUE INDEX IF NOT EXISTS {self.destination_table}_idx "
+                f"ON {self.destination_schema}.{self.destination_table} (id);"
+            )
+        self.clear_task_vars(conn, context)
 
     def get_next_page_url(self, conn, context):
         return self.get_task_var(conn, context, self.next_page_url_key)
@@ -515,6 +558,11 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
             raise AirflowException("No partner details found.")
 
     def _setup_shopify_session(self, partner_config):
+        self.log.info(f"Setting up Shopify session for partner: {partner_config['name']}")
+        self.log.info(f"Using base URL: {partner_config['partner_platform_base_url']}")
+        self.log.info(f"API Version: {partner_config['partner_platform_api_version']}")
+        self.log.info(f"App Type: {partner_config['partner_shopify_app_type']}")
+
         if partner_config is None:
             raise AirflowException("Partner configuration is missing or invalid")
 
@@ -609,6 +657,7 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
 
     def _preprocess_dataframe(self, df: pd.DataFrame, ds: str) -> pd.DataFrame:
         df.insert(0, "partner__name", self.partner_name)
+        df.insert(1, "partner__reference", self.partner_reference)
         df["airflow_sync_ds"] = ds
         if self.discard_fields:
             df = df.drop(columns=[col for col in self.discard_fields if col in df.columns])
