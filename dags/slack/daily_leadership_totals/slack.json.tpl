@@ -1,5 +1,5 @@
 {
-  "channel": "C0813M16410",
+  "channel": "C06FN4911LP",
   "blocks": [
     {
       "type": "header",

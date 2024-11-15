@@ -3,6 +3,7 @@ import json
 from typing import TYPE_CHECKING, Any, Mapping, Iterable, Sequence
 
 from tabulate import tabulate
+from airflow.models import Variable
 from airflow.exceptions import AirflowException
 from airflow.providers.slack.hooks.slack import SlackHook
 from airflow.providers.slack.transfers.base_sql_to_slack import BaseSqlToSlackOperator
@@ -99,7 +100,11 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
             raise AirflowException("Slack config must include either 'blocks' or 'text'.")
 
         # Extract channel if present
-        channel = slack_json.get("channel")
+        try:
+            channel = Variable.get("SLACK_SUCCESS_CHANNEL")
+            channel = slack_json.get("channel")
+        except KeyError:
+            channel = "#alerts-dev-airflow"  # Default value
 
         # Send the Slack message
         self._send_slack_message(channel, blocks=blocks, text=text)

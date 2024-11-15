@@ -35,12 +35,12 @@ orders AS (
 combined_data AS (
     SELECT
         COALESCE(o.metric_date, p.metric_date) AS date,
-        o.num_appointments_booked,
-        o.num_try_orders_created,
-	    p.num_orders_paid,
-	    o.total_items_ordered,
+        (o.num_appointments_booked)::INTEGER,
+        (o.num_try_orders_created)::INTEGER,
+	    (p.num_orders_paid)::INTEGER,
+	    (o.total_items_ordered)::INTEGER,
 	    o.total_value_ordered,
-	    p.total_items_purchased,
+	    (p.total_items_purchased)::INTEGER,
 	    p.total_amount_purchased
     FROM
         orders o
