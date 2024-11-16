@@ -45,8 +45,7 @@ BEGIN
    IF EXISTS (
     SELECT FROM pg_tables WHERE schemaname = '{{destination_schema}}'
     AND tablename = '{{destination_table}}') THEN
-      DELETE FROM {{ destination_schema }}.{{destination_table}}
-        WHERE airflow_sync_ds = '{{ ds }}';
+      DROP TABLE {{ destination_schema }}.{{destination_table}};
    END IF;
 END $$;
 """
