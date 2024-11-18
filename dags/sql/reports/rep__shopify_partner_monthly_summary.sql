@@ -71,3 +71,5 @@ CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_partner_idx ON {
 CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_source_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(source);
 
 {% endif %}
+
+REFRESH MATERIALIZED VIEW {{ schema }}.rep__shopify_partner_monthly_summary;

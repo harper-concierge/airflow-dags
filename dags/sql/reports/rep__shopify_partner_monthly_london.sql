@@ -73,3 +73,5 @@ CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_partner_idx ON {{
 CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_source_idx ON {{ schema }}.rep__shopify_partner_monthly_london(source);
 
 {% endif %}
+
+REFRESH MATERIALIZED VIEW {{ schema }}.rep__shopify_partner_monthly_london;
