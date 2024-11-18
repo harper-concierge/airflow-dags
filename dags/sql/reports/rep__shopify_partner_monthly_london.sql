@@ -5,7 +5,7 @@ DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__shopify_partner_monthly_londo
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__shopify_partner_monthly_london AS
     WITH
 orders AS (
-		SELECT
+	SELECT
         CASE
             WHEN order_type = 'harper_try' then 'harper_try'
             WHEN (order_type  != 'harper_try' AND co.order_name IS NOT NULL) THEN 'harper_concierge'
@@ -32,39 +32,39 @@ orders AS (
     WHERE LOWER(po.shipping_address__city) LIKE '%%london%%'
             )
 
-    SELECT
-        TO_CHAR(created_at, 'YYYY-MM') AS month,
-        partner__name,
-        partner__reference,
-        source,
-        harper__product,
-        COUNT(DISTINCT name) AS orders,
-        COALESCE(SUM(items_ordered), 0) AS total_items_ordered,
-        COALESCE(SUM(items_returned), 0) AS total_items_returned,
-        COALESCE(SUM(items_ordered) - SUM(items_returned), 0) AS total_items_kept,
-        COALESCE((ROUND(SUM(value_ordered)::decimal, 2))::decimal, 0) AS total_value_ordered,
-        COALESCE((ROUND(SUM(value_returned)::decimal, 2))::decimal, 0) AS total_value_returned,
-        COALESCE((ROUND((SUM(value_ordered) - SUM(value_returned))::decimal, 2))::decimal, 0) AS total_value_kept,
-        COALESCE((ROUND((SUM(value_ordered)/NULLIF(COUNT(DISTINCT name), 0))::decimal, 2))::decimal, 0) AS gross_AOV,
-        COALESCE((ROUND(((SUM(value_ordered) - SUM(value_returned))/NULLIF(COUNT(DISTINCT CASE WHEN cancelled_at IS NULL THEN name ELSE NULL END), 0))::decimal, 2))::decimal, 0) AS net_ATV,
-        COALESCE((ROUND((SUM(items_ordered)/NULLIF(COUNT(DISTINCT name), 0))::decimal, 2))::decimal, 0) AS gross_UPT,
-        COALESCE((ROUND(((SUM(items_ordered) - SUM(items_returned))/NULLIF(COUNT(DISTINCT CASE WHEN cancelled_at IS NULL THEN name ELSE NULL END), 0))::decimal, 2))::decimal, 0) AS net_UPT,
-        COALESCE((ROUND((SUM(value_ordered)/NULLIF(SUM(items_ordered), 0))::decimal, 2))::decimal, 0) AS gross_ASP,
-        COALESCE((ROUND(((SUM(value_ordered) - SUM(value_returned))/NULLIF((SUM(items_ordered) - SUM(items_returned)), 0))::decimal, 2))::decimal, 0) AS net_ASP,
-        COALESCE((ROUND(((SUM(items_ordered) - SUM(items_returned))/NULLIF(SUM(items_ordered), 0))::decimal, 2))::decimal, 0) AS purchase_rate_items,
-        COALESCE((ROUND(((SUM(value_ordered) - SUM(value_returned))/NULLIF(SUM(value_ordered), 0))::decimal, 2))::decimal, 0) AS purchase_rate_value,
-        COALESCE((ROUND((SUM(items_returned)/NULLIF(SUM(items_ordered), 0))::decimal, 2))::decimal, 0) AS return_rate_items,
-        COALESCE((ROUND((SUM(value_returned)/NULLIF(SUM(value_ordered), 0))::decimal, 2))::decimal, 0) AS return_rate_value,
-        ROUND((SUM(keep)::numeric/NULLIF(COUNT(DISTINCT name), 0)),2) AS keep_rate
-    FROM
-        orders
-    WHERE source IN ('Web','Harper')
-    GROUP BY
-        partner__name,
-        partner__reference,
-        TO_CHAR(created_at, 'YYYY-MM'),
-        source,
-        harper__product
+SELECT
+    TO_CHAR(created_at, 'YYYY-MM') AS month,
+    partner__name,
+    partner__reference,
+    source,
+    harper__product,
+    COUNT(DISTINCT name) AS orders,
+    COALESCE(SUM(items_ordered), 0) AS total_items_ordered,
+    COALESCE(SUM(items_returned), 0) AS total_items_returned,
+    COALESCE(SUM(items_ordered) - SUM(items_returned), 0) AS total_items_kept,
+    COALESCE((ROUND(SUM(value_ordered)::decimal, 2))::decimal, 0) AS total_value_ordered,
+    COALESCE((ROUND(SUM(value_returned)::decimal, 2))::decimal, 0) AS total_value_returned,
+    COALESCE((ROUND((SUM(value_ordered) - SUM(value_returned))::decimal, 2))::decimal, 0) AS total_value_kept,
+    COALESCE((ROUND((SUM(value_ordered)/NULLIF(COUNT(DISTINCT name), 0))::decimal, 2))::decimal, 0) AS gross_AOV,
+    COALESCE((ROUND(((SUM(value_ordered) - SUM(value_returned))/NULLIF(COUNT(DISTINCT CASE WHEN cancelled_at IS NULL THEN name ELSE NULL END), 0))::decimal, 2))::decimal, 0) AS net_ATV,
+    COALESCE((ROUND((SUM(items_ordered)/NULLIF(COUNT(DISTINCT name), 0))::decimal, 2))::decimal, 0) AS gross_UPT,
+    COALESCE((ROUND(((SUM(items_ordered) - SUM(items_returned))/NULLIF(COUNT(DISTINCT CASE WHEN cancelled_at IS NULL THEN name ELSE NULL END), 0))::decimal, 2))::decimal, 0) AS net_UPT,
+    COALESCE((ROUND((SUM(value_ordered)/NULLIF(SUM(items_ordered), 0))::decimal, 2))::decimal, 0) AS gross_ASP,
+    COALESCE((ROUND(((SUM(value_ordered) - SUM(value_returned))/NULLIF((SUM(items_ordered) - SUM(items_returned)), 0))::decimal, 2))::decimal, 0) AS net_ASP,
+    COALESCE((ROUND(((SUM(items_ordered) - SUM(items_returned))/NULLIF(SUM(items_ordered), 0))::decimal, 2))::decimal, 0) AS purchase_rate_items,
+    COALESCE((ROUND(((SUM(value_ordered) - SUM(value_returned))/NULLIF(SUM(value_ordered), 0))::decimal, 2))::decimal, 0) AS purchase_rate_value,
+    COALESCE((ROUND((SUM(items_returned)/NULLIF(SUM(items_ordered), 0))::decimal, 2))::decimal, 0) AS return_rate_items,
+    COALESCE((ROUND((SUM(value_returned)/NULLIF(SUM(value_ordered), 0))::decimal, 2))::decimal, 0) AS return_rate_value,
+    ROUND((SUM(keep)::numeric/NULLIF(COUNT(DISTINCT name), 0)),2) AS keep_rate
+FROM
+    orders
+WHERE source IN ('Web','Harper')
+GROUP BY
+    partner__name,
+    partner__reference,
+    TO_CHAR(created_at, 'YYYY-MM'),
+    source,
+    harper__product
     ;
 
 {% if is_modified %}
