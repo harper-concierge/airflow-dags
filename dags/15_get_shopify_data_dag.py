@@ -11,11 +11,9 @@ from plugins.utils.found_records_to_process import found_records_to_process
 
 from plugins.operators.drop_table import DropPostgresTableOperator
 from plugins.operators.analyze_table import RefreshPostgresTableStatisticsOperator
-from plugins.operators.ensure_schema_exists import EnsurePostgresSchemaExistsOperator
 from plugins.operators.ensure_missing_columns import EnsureMissingPostgresColumnsOperator
 from plugins.operators.ensure_datalake_table_exists import EnsurePostgresDatalakeTableExistsOperator
 from plugins.operators.import_shopify_data_operator import ImportShopifyPartnerDataOperator
-from plugins.operators.ensure_missing_columns_function import EnsureMissingColumnsPostgresFunctionOperator
 from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDatalakeTableViewExistsOperator
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
 
@@ -58,9 +56,9 @@ is_latest_dagrun_task = ShortCircuitOperator(
 )
 is_latest_dagrun_task.doc = doc
 
-wait_for_migrations = ExternalTaskSensor(
-    task_id="wait_for_migrations_to_complete",
-    external_dag_id="10_mongo_migrations_dag",  # The ID of the DAG you're waiting for
+wait_for_things_to_exist = ExternalTaskSensor(
+    task_id="wait_for_things_to_exist",
+    external_dag_id="01_ensure_things_exist",  # The ID of the DAG you're waiting for
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
     allowed_states=["success"],  # You might need to customize this part
     dag=dag,
@@ -87,27 +85,6 @@ partners = [
     # "represent",
     # "harper_production",
 ]
-
-transient_schema_exists = EnsurePostgresSchemaExistsOperator(
-    task_id="ensure_transient_schema_exists",
-    schema="transient_data",
-    postgres_conn_id="postgres_datalake_conn_id",
-    dag=dag,
-)
-public_schema_exists = EnsurePostgresSchemaExistsOperator(
-    task_id="ensure_public_schema_exists",
-    schema="public",
-    postgres_conn_id="postgres_datalake_conn_id",
-    dag=dag,
-)
-
-ensure_missing_columns_function_exists = EnsureMissingColumnsPostgresFunctionOperator(
-    task_id="ensure_missing_columns_function",
-    postgres_conn_id="postgres_datalake_conn_id",
-    source_schema="transient_data",
-    destination_schema="public",
-    dag=dag,
-)
 
 destination_table = "shopify_partner_orders"
 drop_transient_table = DropPostgresTableOperator(
@@ -213,11 +190,8 @@ ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsOperator(
 )
 
 (
-    wait_for_migrations
+    wait_for_things_to_exist
     >> is_latest_dagrun_task
-    >> transient_schema_exists
-    >> public_schema_exists
-    >> ensure_missing_columns_function_exists
     >> drop_transient_table
     >> first_task
     >> migration_tasks

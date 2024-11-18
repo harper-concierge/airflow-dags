@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
+from airflow.sensors.external_task import ExternalTaskSensor
 
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 from plugins.utils.found_records_to_process import found_records_to_process
@@ -13,10 +14,8 @@ from plugins.utils.send_harper_slack_notification import send_harper_failure_not
 from plugins.operators.drop_table import DropPostgresTableOperator
 from plugins.operators.analyze_table import RefreshPostgresTableStatisticsOperator
 from plugins.operators.mongodb_to_postgres import MongoDBToPostgresViaDataframeOperator
-from plugins.operators.ensure_schema_exists import EnsurePostgresSchemaExistsOperator
 from plugins.operators.ensure_missing_columns import EnsureMissingPostgresColumnsOperator
 from plugins.operators.ensure_datalake_table_exists import EnsurePostgresDatalakeTableExistsOperator
-from plugins.operators.ensure_missing_columns_function import EnsureMissingColumnsPostgresFunctionOperator
 from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDatalakeTableViewExistsOperator
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
 
@@ -44,6 +43,15 @@ dag = DAG(
     template_searchpath="/usr/local/airflow/dags",
 )
 
+wait_for_things_to_exist = ExternalTaskSensor(
+    task_id="wait_for_things_to_exist",
+    external_dag_id="01_ensure_things_exist",  # The ID of the DAG you're waiting for
+    external_task_id=None,  # Set to None to wait for the entire DAG to complete
+    allowed_states=["success"],  # You might need to customize this part
+    dag=dag,
+)
+
+
 # start_task = DummyOperator(task_id="start", dag=dag)
 doc = """
 Skip the subsequent tasks if
@@ -62,26 +70,6 @@ base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, 
 exported_schemas_path = "../include/exportedSchemas/"
 exported_schemas_abspath = os.path.join(os.path.dirname(os.path.abspath(__file__)), exported_schemas_path)
 
-transient_schema_exists = EnsurePostgresSchemaExistsOperator(
-    task_id="ensure_transient_schema_exists",
-    schema="transient_data",
-    postgres_conn_id="postgres_datalake_conn_id",
-    dag=dag,
-)
-public_schema_exists = EnsurePostgresSchemaExistsOperator(
-    task_id="ensure_public_schema_exists",
-    schema="public",
-    postgres_conn_id="postgres_datalake_conn_id",
-    dag=dag,
-)
-
-ensure_missing_columns_function_exists = EnsureMissingColumnsPostgresFunctionOperator(
-    task_id="ensure_missing_columns_function",
-    postgres_conn_id="postgres_datalake_conn_id",
-    source_schema="transient_data",
-    destination_schema="public",
-    dag=dag,
-)
 migration_tasks = []
 for config in migrations:
     schema_path = os.path.join(exported_schemas_abspath, config["jsonschema"])
@@ -196,10 +184,4 @@ for config in migrations:
     # append_transient_table_data >> base_tables_completed
     migration_tasks.append(drop_transient_table)
 
-(
-    start_task
-    >> transient_schema_exists
-    >> public_schema_exists
-    >> ensure_missing_columns_function_exists
-    >> migration_tasks
-)
+(wait_for_things_to_exist >> start_task >> migration_tasks)
