@@ -2,16 +2,15 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python import ShortCircuitOperator
+from airflow.sensors.external_task import ExternalTaskSensor
 
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 from plugins.utils.found_records_to_process import found_records_to_process
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
 
-from plugins.operators.ensure_schema_exists import EnsurePostgresSchemaExistsOperator
 from plugins.operators.ensure_missing_columns import EnsureMissingPostgresColumnsOperator
 from plugins.operators.stripe_invoices_to_postgres import StripeInvoicesToPostgresOperator
 from plugins.operators.ensure_datalake_table_exists import EnsurePostgresDatalakeTableExistsOperator
-from plugins.operators.ensure_missing_columns_function import EnsureMissingColumnsPostgresFunctionOperator
 from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDatalakeTableViewExistsOperator
 from plugins.operators.stripe_charges_to_postgres_operator import StripeChargesToPostgresOperator
 from plugins.operators.stripe_refunds_to_postgres_operator import StripeRefundsToPostgresOperator
@@ -43,35 +42,13 @@ is_latest_dagrun_task = ShortCircuitOperator(
     dag=dag,
 )
 
-# wait_for_migrations = ExternalTaskSensor(
-#     task_id="wait_for_shopify_to_complete",
-#     external_dag_id="15_get_shopify_data_dag",  # The ID of the DAG you're waiting for
-#     external_task_id=None,  # Set to None to wait for the entire DAG to complete
-#     allowed_states=["success"],  # You might need to customize this part
-#     dag=dag,
-# )
-
-transient_schema_exists = EnsurePostgresSchemaExistsOperator(
-    task_id="ensure_transient_schema_exists",
-    schema="transient_data",
-    postgres_conn_id="postgres_datalake_conn_id",
+wait_for_things_to_exist = ExternalTaskSensor(
+    task_id="wait_for_things_to_exist",
+    external_dag_id="01_ensure_things_exist",  # The ID of the DAG you're waiting for
+    external_task_id=None,  # Set to None to wait for the entire DAG to complete
+    allowed_states=["success"],  # You might need to customize this part
     dag=dag,
 )
-public_schema_exists = EnsurePostgresSchemaExistsOperator(
-    task_id="ensure_public_schema_exists",
-    schema="public",
-    postgres_conn_id="postgres_datalake_conn_id",
-    dag=dag,
-)
-
-ensure_missing_columns_function_exists = EnsureMissingColumnsPostgresFunctionOperator(
-    task_id="ensure_missing_columns_function",
-    postgres_conn_id="postgres_datalake_conn_id",
-    source_schema="transient_data",
-    destination_schema="public",
-    dag=dag,
-)
-
 
 stripe_invoices_task = StripeInvoicesToPostgresOperator(
     task_id="import_stripe_invoices_to_datalake",
@@ -286,10 +263,4 @@ stripe_refunds_ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsO
     >> stripe_refunds_ensure_table_view_exists
 )
 
-(
-    is_latest_dagrun_task
-    >> transient_schema_exists
-    >> public_schema_exists
-    >> ensure_missing_columns_function_exists
-    >> [stripe_invoices_task, stripe_charges_task, stripe_refunds_task]
-)
+(wait_for_things_to_exist >> is_latest_dagrun_task >> [stripe_invoices_task, stripe_charges_task, stripe_refunds_task])

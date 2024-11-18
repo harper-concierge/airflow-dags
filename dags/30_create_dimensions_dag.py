@@ -42,4 +42,17 @@ wait_for_stripe_task = ExternalTaskSensor(
     dag=dag,
 )
 
-run_dynamic_sql_task(dag, [wait_for_financials_task, wait_for_stripe_task], sql_type, check_entity_pattern=False)
+wait_for_mongo_migrations = ExternalTaskSensor(
+    task_id="wait_for_mongo_migrations",
+    external_dag_id="10_mongo_migrations_dag",  # The ID of the DAG you're waiting for
+    external_task_id=None,  # Set to None to wait for the entire DAG to complete
+    allowed_states=["success"],  # You might need to customize this part
+    dag=dag,
+)
+
+run_dynamic_sql_task(
+    dag,
+    [wait_for_financials_task, wait_for_stripe_task, wait_for_mongo_migrations],
+    sql_type,
+    check_entity_pattern=False,
+)
