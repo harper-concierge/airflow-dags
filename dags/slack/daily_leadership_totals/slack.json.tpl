@@ -1,5 +1,5 @@
 {
-  "channel": "C06FN4911LP",
+  "channel": "#harperhq",
   "blocks": [
     {
       "type": "header",
