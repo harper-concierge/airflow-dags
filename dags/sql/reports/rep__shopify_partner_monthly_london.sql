@@ -1,8 +1,8 @@
 {% if is_modified %}
-DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__shopify_partner_monthly_summary CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__shopify_partner_monthly_london CASCADE;
 {% endif %}
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__shopify_partner_monthly_summary AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__shopify_partner_monthly_london AS
     WITH
 orders AS (
 	SELECT
@@ -29,12 +29,14 @@ orders AS (
         {{ schema }}.shopify_partner_orders po
     LEFT JOIN {{ schema }}.clean__order__summary co
     ON po.name = co.order_name
+    WHERE LOWER(po.shipping_address__city) LIKE '%%london%%'
             )
 
 SELECT
     ROW_NUMBER() OVER (ORDER BY TO_CHAR(created_at, 'YYYY-MM'), partner__name) as id,
     TO_CHAR(created_at, 'YYYY-MM') AS month,
     partner__name,
+    partner__reference,
     source,
     harper__product,
     COUNT(DISTINCT name) AS orders,
@@ -67,12 +69,12 @@ GROUP BY
     ;
 
 {% if is_modified %}
-CREATE UNIQUE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_id_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(id);
+CREATE UNIQUE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_id_idx ON {{ schema }}.rep__shopify_partner_monthly_london(id);
 
-CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_month_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(month);
-CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_partner_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(partner__name);
-CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_source_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(source);
+CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_month_idx ON {{ schema }}.rep__shopify_partner_monthly_london(month);
+CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_partner_idx ON {{ schema }}.rep__shopify_partner_monthly_london(partner__name);
+CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_source_idx ON {{ schema }}.rep__shopify_partner_monthly_london(source);
 
 {% endif %}
 
-REFRESH MATERIALIZED VIEW {{ schema }}.rep__shopify_partner_monthly_summary;
+REFRESH MATERIALIZED VIEW {{ schema }}.rep__shopify_partner_monthly_london;
