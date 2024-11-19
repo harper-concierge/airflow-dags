@@ -33,6 +33,7 @@ orders AS (
             )
 
 SELECT
+    ROW_NUMBER() OVER (ORDER BY TO_CHAR(created_at, 'YYYY-MM'), partner__name) as id,
     TO_CHAR(created_at, 'YYYY-MM') AS month,
     partner__name,
     partner__reference,
@@ -68,6 +69,8 @@ GROUP BY
     ;
 
 {% if is_modified %}
+CREATE UNIQUE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_id_idx ON {{ schema }}.rep__shopify_partner_monthly_london(id);
+
 CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_month_idx ON {{ schema }}.rep__shopify_partner_monthly_london(month);
 CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_partner_idx ON {{ schema }}.rep__shopify_partner_monthly_london(partner__name);
 CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_london_source_idx ON {{ schema }}.rep__shopify_partner_monthly_london(source);
