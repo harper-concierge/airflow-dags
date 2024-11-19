@@ -34,6 +34,7 @@ orders AS (
 SELECT
     ROW_NUMBER() OVER (ORDER BY TO_CHAR(created_at, 'YYYY-MM'), partner__name) as id,
     TO_CHAR(created_at, 'YYYY-MM') AS month,
+    TO_CHAR(created_at, 'YYYY-MM-01') AS year_month,
     partner__name,
     source,
     harper__product,
@@ -62,6 +63,7 @@ GROUP BY
     partner__name,
     partner__reference,
     TO_CHAR(created_at, 'YYYY-MM'),
+    TO_CHAR(created_at, 'YYYY-MM-01'),
     source,
     harper__product
     ;

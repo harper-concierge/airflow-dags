@@ -1,25 +1,16 @@
-/*Partnership Dashboard Orders
-1) CTE for first order with Harper for each customer
-2) Item level report for the join of orders__items and orders
-3) Two reports from (2): one grouped by order (linked to original order)
-	and one grouped by item.order_type to analyze order makeup and split into parts (e.g., initiated sales)
-To add: first time harper use with brand*/
 {% if is_modified %}
 DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__partnership_dashboard_base_view CASCADE;
 {% endif %}
 
+-- Create optimized materialized view with partitioning
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_base_view AS
     WITH
-
     ship_directs AS (
-        SELECT
-            previous_original_order_name,
-            id
-        FROM
-        {{ schema }}.rep__ship_direct_orders
+        SELECT previous_original_order_name, id
+        FROM {{ schema }}.rep__ship_direct_orders
     ),
 
-    order_items AS (
+    base_orders AS (
         SELECT
             o.*,
             i.*,
@@ -30,109 +21,70 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_b
             o.order_status AS order__status,
             i.createdat AS item__createdat,
             o.createdat AS order__createdat,
+            o.createdat__dim_year AS order__createdat__dim_year,
+            o.createdat__dim_month AS order__createdat__dim_month,
             o.createdat__dim_date AS order__createdat__dim_date,
             o.createdat__dim_yearmonth AS order__createdat__dim_yearmonth,
-            --i.initiated_sale__user_role AS item__initiated_sale__user_role,
-            /*CASE
-                WHEN o.ship_direct = 1 THEN sd.initiated_sale__original_order_id
-                ELSE o.id
-            END AS id_merge,*/
-            i.is_initiated_sale AS item_is_initiated_sale,
-            i.is_inspire_me AS item_is_inspire_me,
             CASE
-                WHEN o.ship_direct = 1 AND (sd.previous_original_order_name IS NOT NULL AND sd.previous_original_order_name != '') THEN sd.previous_original_order_name
+                WHEN o.ship_direct = 1 AND sd.previous_original_order_name != ''
+                THEN sd.previous_original_order_name
                 ELSE o.original_order_name
-            END AS original_order_name_merge, -- Parent order_name
-            i.item_value_pence AS item__item_value_pence
-        FROM
-            {{ schema }}.rep__deduped_order_items i
-        LEFT JOIN
-            {{ schema }}.clean__order__summary o ON o.id = i.order_id
-        LEFT JOIN
-            ship_directs sd ON o.id = sd.id
-        WHERE
-            i.is_link_order_child_item = 0
-            AND o.link_order__is_child = 0
+            END AS original_order_name_merge,
+            CASE
+                WHEN order_cancelled_status LIKE '%%Cancelled%%' OR o.order_status = 'cancelled'
+                THEN 1 ELSE 0
+            END AS is_cancelled,
+            CASE
+                WHEN o.order_type = 'ship_direct' THEN o.createdat
+                WHEN o.order_type = 'harper_try' THEN
+                    COALESCE(o.tp_actually_ended__dim_date, o.trial_period_end_at)
+                ELSE
+                    COALESCE(o.appointment_completed_at::date, o.appointment__date__dim_date)
+            END AS completion_date,
+            i.item_value_pence AS item__item_value_pence,
+            i.is_inspire_me AS item_is_inspire_me,
+            i.is_initiated_sale AS item_is_initiated_sale
+
+        FROM {{ schema }}.rep__deduped_order_items i
+        LEFT JOIN {{ schema }}.clean__order__summary o ON o.id = i.order_id
+        LEFT JOIN ship_directs sd ON o.id = sd.id
+        WHERE i.is_link_order_child_item = 0 AND o.link_order__is_child = 0
     )
+
     SELECT
+        original_order_name_merge,
+        order__name,
+        customer_id,
+        brand_name,
+        order__type,
+        order__status,
+        happened,
+        order__createdat__dim_date,
+        REPLACE(bo.order__createdat__dim_yearmonth, '/', '-') AS order__createdat__dim_yearmonth,
+        order__createdat__dim_year,
+        order__createdat__dim_month,
+        TO_CHAR(completion_date, 'YYYY-MM-DD')::date as completion_date,
         MAX(appointment__date__dim_date) AS appointment__date__dim_date,
         MAX(appointment__date__dim_month) AS appointment__date__dim_month,
         MAX(appointment__date__dim_year) AS appointment__date__dim_year,
-        brand_name,
-        CASE
-            WHEN order_cancelled_status LIKE 'Cancelled%%' THEN 1
-            WHEN order__status = 'cancelled'THEN 1
-            ELSE 0
-        END AS cancelled,
-        CASE
-        WHEN order__type = 'harper_try' THEN
-            CASE
-                WHEN tp_actually_ended__dim_date IS NOT NULL THEN MAX(tp_actually_ended__dim_date)
-                ELSE MAX(trial_period_end_at)
-            END
-        WHEN appointment_completed_at IS NULL THEN MAX(appointment__date__dim_date)
-        ELSE DATE(MAX(appointment_completed_at))
-    END AS completion_date,
-        CASE
-            WHEN MAX(CAST(item_is_initiated_sale AS INT)) = 1 THEN 1 ELSE 0
-            END AS contains_initiated_sale,
-        CASE
-            WHEN MAX(CAST(item_is_inspire_me AS INT)) = 1 THEN 1 ELSE 0
-        END AS contains_inspire_me,
-        customer_id,
-        CASE
-            WHEN MAX(new_harper_customer) = 1 THEN 'New Harper Customer'
-            ELSE 'Returning Harper Customer'
-        END AS customer_type_,
-        ROUND(CAST(NULLIF(discount_total, ' ') AS NUMERIC) / 100.0, 2) AS discount_total,
-		happened,
-        harper_product_type,
-        --id_merge,
-        SUM(CASE
-                WHEN item_is_inspire_me = 1 THEN 1 ELSE 0
-            END) AS inspire_me_items_ordered,
-        ROUND(SUM(CASE
-                WHEN item_is_inspire_me = 1 THEN item__item_value_pence ELSE 0
-            END)/100,2) AS inspire_me_items_ordered_value,
-        SUM(CASE
-                WHEN item_is_inspire_me = 1 AND purchased = 1 THEN 1 ELSE 0
-            END) AS inspire_me_items_purchased,
-        ROUND(SUM(CASE
-                WHEN item_is_inspire_me = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0
-            END)/100,2) AS inspire_me_items_purchased_value,
-        SUM(CASE
-                WHEN item_is_inspire_me = 1 AND returned = 1 THEN 1 ELSE 0
-            END) AS inspire_me_items_returned,
-        ROUND(SUM(CASE
-                WHEN item_is_inspire_me = 1 AND returned = 1 THEN item__item_value_pence ELSE 0
-            END)/100,2) AS inspire_me_items_returned_value,
-        SUM(CASE
-                WHEN item_is_initiated_sale = 1 THEN 1 ELSE 0
-            END) AS initiated_sale_ordered,
-        ROUND(SUM(CASE
-                WHEN item_is_initiated_sale = 1 THEN item__item_value_pence ELSE 0
-            END)/100,2) AS initiated_sale_items_ordered_value,
-        SUM(CASE
-                WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN 1 ELSE 0
-            END) AS initiated_sale_items_purchased,
-        ROUND(SUM(CASE
-                WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0
-            END)/100,2) AS initiated_sale_purchased_value,
-        SUM(CASE
-                WHEN item_is_initiated_sale = 1 AND returned = 1 THEN 1 ELSE 0
-            END) AS initiated_sale_items_returned,
-        ROUND(SUM(CASE
-                WHEN item_is_initiated_sale = 1 AND returned = 1 THEN item__item_value_pence ELSE 0
-            END)/100,2) AS initiated_sale_returned_value,
+        MAX(appointment__date__dim_yearmonth) AS appointment__date__dim_yearmonth,
         MAX(time_in_appointment) AS time_in_appointment,
         MAX(time_to_appointment) AS time_to_appointment,
-        order__createdat__dim_date AS order_created_date,
-        order__createdat__dim_yearmonth,
-        order__type,
-        order__name,
-        order__status,
-        original_order_name_merge,
-        shipping_address__postcode,
+        ROUND(CAST(NULLIF(discount_total, ' ') AS NUMERIC) / 100.0, 2) AS discount_total,
+
+        -- Inspire Me metrics
+        SUM(CASE WHEN item_is_inspire_me = 1 THEN 1 ELSE 0 END) AS inspire_me_items_ordered,
+        SUM(CASE WHEN item_is_inspire_me = 1 THEN item__item_value_pence ELSE 0 END) AS inspire_me_value,
+        SUM(CASE WHEN item_is_inspire_me = 1 AND purchased = 1 THEN 1 ELSE 0 END) AS inspire_me_items_purchased,
+        SUM(CASE WHEN item_is_inspire_me = 1 AND returned = 1 THEN 1 ELSE 0 END) AS inspire_me_items_returned,
+
+        -- Initiated Sale metrics
+        SUM(CASE WHEN item_is_initiated_sale = 1 THEN 1 ELSE 0 END) AS initiated_sale_ordered,
+        SUM(CASE WHEN item_is_initiated_sale = 1 THEN item__item_value_pence ELSE 0 END) AS initiated_sale_value,
+        SUM(CASE WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN 1 ELSE 0 END) AS initiated_sale_items_purchased,
+        SUM(CASE WHEN item_is_initiated_sale = 1 AND returned = 1 THEN 1 ELSE 0 END) AS initiated_sale_items_returned,
+
+        -- Item status counts
         SUM(missing) AS number_items_missing,
         SUM(not_available) AS number_items_not_available,
         SUM(out_of_stock) AS number_items_out_of_stock,
@@ -144,58 +96,83 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_b
         SUM(received_by_warehouse) AS number_items_received_by_warehouse,
         SUM(returned) AS number_items_returned,
         SUM(unpurchased_return) AS number_items_unpurchased_return,
-        --through_door_actual,
-        tp_actually_ended__dim_date,
-        tp_actually_started__dim_date,
-        try_commission_chargeable,
-        try_commission_chargeable_at,
-        ROUND(SUM(item__item_value_pence)/100,2) AS value_items_ordered,
-        ROUND(SUM(CASE
-                WHEN purchased = 1 THEN item__item_value_pence ELSE 0
-            END)/100,2) AS value_items_purchased,
-        ROUND(SUM(CASE
-                WHEN returned = 1 THEN item__item_value_pence ELSE 0
-            END)/100,2) AS value_items_returned,
-        ROUND(SUM(CASE
-                WHEN missing = 1 THEN item__item_value_pence ELSE 0
-            END)/100,2) AS value_items_missing
-    FROM
-        order_items o
+
+        -- Value calculations
+        SUM(item__item_value_pence) AS total_value,
+        SUM(CASE WHEN purchased = 1 THEN item__item_value_pence ELSE 0 END) AS purchased_value,
+        SUM(CASE WHEN returned = 1 THEN item__item_value_pence ELSE 0 END) AS returned_value,
+        SUM(CASE WHEN missing = 1 THEN item__item_value_pence ELSE 0 END) AS missing_value,
+
+        -- Brand Metrics
+        ss.orders AS regional_orders,
+        ss.total_value_ordered AS regional_value_ordered,
+        ss.net_ATV AS regional_net_ATV,
+        ss.net_UPT AS regional_net_UPT,
+        sl.orders AS london_orders,
+        sl.total_value_ordered AS london_value_ordered,
+        sl.net_ATV AS london_net_atv,
+        sl.net_UPT AS london_net_UPT
+
+    FROM base_orders bo
+    LEFT JOIN rep__shopify_partner_monthly_london sl -- Joining to get online store values
+        ON sl.partner__name = bo.brand_name
+        AND REPLACE(bo.order__createdat__dim_yearmonth, '/', '-') = sl.month
+    LEFT JOIN rep__shopify_partner_monthly_summary ss
+        ON ss.partner__name = bo.brand_name
+        AND REPLACE(bo.order__createdat__dim_yearmonth, '/', '-') = ss.month
+	WHERE ss.source = 'Web'
+	AND sl.source = 'Web'
     GROUP BY
         original_order_name_merge,
-        --id_merge,
+        order__name,
+        customer_id,
         brand_name,
-        order_cancelled_status,
         order__type,
+        order__status,
         happened,
-        harper_product_type,
         order__createdat__dim_date,
         order__createdat__dim_yearmonth,
-        order__name,
-        order__status,
-        customer_id,
+        order__createdat__dim_year,
+        order__createdat__dim_month,
+        completion_date,
         discount_total,
-        shipping_address__postcode,
-        --through_door_actual,
-        trial_period,
-        trial_period_end_at,
-        appointment_completed_at,
-        tp_actually_ended__dim_date,
-        tp_actually_started__dim_date,
-        try_commission_chargeable,
-        try_commission_chargeable_at
+ 		ss.orders,
+        ss.total_value_ordered,
+        ss.net_ATV ,
+        ss.net_UPT ,
+        sl.orders ,
+        sl.total_value_ordered,
+        sl.net_ATV ,
+        sl.net_UPT
 
 WITH NO DATA;
 
+-- Create optimized indexes
 {% if is_modified %}
---CREATE UNIQUE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_idx ON {{ schema }}.rep__partnership_dashboard_base_view (id_merge);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_original_order_name_idx ON {{ schema }}.rep__partnership_dashboard_base_view (original_order_name_merge);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_brand_name_idx ON {{ schema }}.rep__partnership_dashboard_base_view (brand_name);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__type_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__type);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__status_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__status);
-CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__order_created_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order_created_date);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__order_created_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__createdat__dim_date);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_completion_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (completion_date);
-
+-- Composite indexes for common query patterns
+CREATE INDEX idx_brand_date ON {{ schema }}.rep__partnership_dashboard_base_view
+    (brand_name, order__createdat__dim_date);
+CREATE INDEX idx_brand_type ON {{ schema }}.rep__partnership_dashboard_base_view
+    (brand_name, order__type);
+-- For time-based analysis
+CREATE INDEX idx_time_analysis ON {{ schema }}.rep__partnership_dashboard_base_view
+(order__createdat__dim_date, order__createdat__dim_month, order__createdat__dim_year);
+-- For brand/order analysis
+CREATE INDEX idx_brand_metrics ON {{ schema }}.rep__partnership_dashboard_base_view
+(completion_date, brand_name, order__type) INCLUDE (total_value, purchased_value, number_items_ordered);
+-- Unique index
+CREATE UNIQUE INDEX rep__partnership_dashboard_base_view_unique_idx
+ON {{ schema }}.rep__partnership_dashboard_base_view (order__name, order__createdat__dim_date,order__type);
 {% endif %}
 
+-- Refresh the view
 REFRESH MATERIALIZED VIEW {{ schema }}.rep__partnership_dashboard_base_view;
+
+-- Analyze for query optimization
+ANALYZE {{ schema }}.rep__partnership_dashboard_base_view;
