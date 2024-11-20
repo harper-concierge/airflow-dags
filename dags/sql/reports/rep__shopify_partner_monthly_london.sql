@@ -7,8 +7,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__shopify_partner_monthly
 orders AS (
 	SELECT
         CASE
-            WHEN order_type = 'harper_try' then 'harper_try'
-            WHEN (order_type  != 'harper_try' AND co.order_name IS NOT NULL) THEN 'harper_concierge'
+            WHEN (order_type = 'harper_try' OR harper_product = 'harper_try') THEN 'harper_try'
+            WHEN (tags LIKE '%%harper%%' OR payment_gateway_names LIKE '%%Harper Payments%%' OR co.original_order_name IS NOT NULL) THEN 'harper_concierge'
             ELSE NULL
         END AS harper__product,
         po.name,
