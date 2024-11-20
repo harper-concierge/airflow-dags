@@ -4827,6 +4827,12 @@
                         "string"
                     ]
                 },
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": [
+                        "bool"
+                    ]
+                },
                 "track17_courier_code": {
                     "type": "string",
                     "bsonType": [
