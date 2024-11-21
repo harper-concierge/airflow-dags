@@ -80,7 +80,7 @@ partners = [
     "live-unlimited",
     "needle-thread",
     # "nobodys-child",
-    # "fcuk",
+    "fcuk",
     # "pangaia",
     # "represent",
     # "harper_production",
