@@ -250,6 +250,60 @@
                         "string"
                     ]
                 },
+                "price_rule": {
+                    "title": "IPriceRuleSchema",
+                    "type": "object",
+                    "bsonType": "object",
+                    "properties": {
+                        "_id": {
+                            "type": "string",
+                            "bsonType": "objectId",
+                            "tsType": "MongooseObjectId"
+                        },
+                        "enabled": {
+                            "type": "boolean",
+                            "bsonType": "bool"
+                        },
+                        "rule_type": {
+                            "type": "string",
+                            "bsonType": "string",
+                            "enum": [
+                                "enableWhenOrderOver"
+                            ]
+                        },
+                        "min_price": {
+                            "type": "integer",
+                            "bsonType": "int"
+                        },
+                        "max_price": {
+                            "type": "integer",
+                            "bsonType": "int"
+                        },
+                        "__v": {
+                            "bsonType": [
+                                "int"
+                            ],
+                            "type": "integer"
+                        },
+                        "createdAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        },
+                        "updatedAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "rule_type",
+                        "min_price"
+                    ]
+                },
                 "__v": {
                     "bsonType": [
                         "int"
@@ -1890,6 +1944,60 @@
                         "string"
                     ]
                 },
+                "price_rule": {
+                    "title": "IPriceRuleSchema",
+                    "type": "object",
+                    "bsonType": "object",
+                    "properties": {
+                        "_id": {
+                            "type": "string",
+                            "bsonType": "objectId",
+                            "tsType": "MongooseObjectId"
+                        },
+                        "enabled": {
+                            "type": "boolean",
+                            "bsonType": "bool"
+                        },
+                        "rule_type": {
+                            "type": "string",
+                            "bsonType": "string",
+                            "enum": [
+                                "enableWhenOrderOver"
+                            ]
+                        },
+                        "min_price": {
+                            "type": "integer",
+                            "bsonType": "int"
+                        },
+                        "max_price": {
+                            "type": "integer",
+                            "bsonType": "int"
+                        },
+                        "__v": {
+                            "bsonType": [
+                                "int"
+                            ],
+                            "type": "integer"
+                        },
+                        "createdAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        },
+                        "updatedAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "rule_type",
+                        "min_price"
+                    ]
+                },
                 "__v": {
                     "bsonType": [
                         "int"
@@ -2130,6 +2238,60 @@
                         "type": "string",
                         "bsonType": [
                             "string"
+                        ]
+                    },
+                    "price_rule": {
+                        "title": "IPriceRuleSchema",
+                        "type": "object",
+                        "bsonType": "object",
+                        "properties": {
+                            "_id": {
+                                "type": "string",
+                                "bsonType": "objectId",
+                                "tsType": "MongooseObjectId"
+                            },
+                            "enabled": {
+                                "type": "boolean",
+                                "bsonType": "bool"
+                            },
+                            "rule_type": {
+                                "type": "string",
+                                "bsonType": "string",
+                                "enum": [
+                                    "enableWhenOrderOver"
+                                ]
+                            },
+                            "min_price": {
+                                "type": "integer",
+                                "bsonType": "int"
+                            },
+                            "max_price": {
+                                "type": "integer",
+                                "bsonType": "int"
+                            },
+                            "__v": {
+                                "bsonType": [
+                                    "int"
+                                ],
+                                "type": "integer"
+                            },
+                            "createdAt": {
+                                "bsonType": [
+                                    "date"
+                                ],
+                                "type": "string"
+                            },
+                            "updatedAt": {
+                                "bsonType": [
+                                    "date"
+                                ],
+                                "type": "string"
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                            "rule_type",
+                            "min_price"
                         ]
                     },
                     "__v": {
