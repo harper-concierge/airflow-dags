@@ -77,7 +77,7 @@ SELECT
     harper_product_type,
     order__status,
     happened,
-    order__createdat__dim_date,
+    order__createdat__dim_date AS order_created_date,
     is_cancelled,
     REPLACE(bo.order__createdat__dim_yearmonth, '/', '-') AS order__createdat__dim_yearmonth,
     order__createdat__dim_year,
@@ -87,6 +87,16 @@ SELECT
     try_commission_chargeable,
     try_commission_chargeable_at,
     shipping_address__postcode,
+    CASE
+            WHEN MAX(CAST(item_is_initiated_sale AS INT)) = 1 THEN 1 ELSE 0
+            END AS contains_initiated_sale,
+    CASE
+        WHEN MAX(CAST(item_is_inspire_me AS INT)) = 1 THEN 1 ELSE 0
+    END AS contains_inspire_me,
+    CASE
+        WHEN MAX(new_harper_customer) = 1 THEN 'New Harper Customer'
+        ELSE 'Returning Harper Customer'
+    END AS customer_type_,
     TO_CHAR(completion_date, 'YYYY-MM-DD')::date as completion_date,
     MAX(appointment__date__dim_date) AS appointment__date__dim_date,
     MAX(appointment__date__dim_month) AS appointment__date__dim_month,
@@ -98,15 +108,23 @@ SELECT
 
     -- Inspire Me metrics
     SUM(CASE WHEN item_is_inspire_me = 1 THEN 1 ELSE 0 END) AS inspire_me_items_ordered,
-    SUM(CASE WHEN item_is_inspire_me = 1 THEN item__item_value_pence ELSE 0 END)/100 AS inspire_me_value, -- £ needed for use case
     SUM(CASE WHEN item_is_inspire_me = 1 AND purchased = 1 THEN 1 ELSE 0 END) AS inspire_me_items_purchased,
     SUM(CASE WHEN item_is_inspire_me = 1 AND returned = 1 THEN 1 ELSE 0 END) AS inspire_me_items_returned,
+    SUM(CASE WHEN item_is_inspire_me = 1 THEN item__item_value_pence ELSE 0 END)/100 AS inspire_me_ordered_value, -- £ needed for use case
+    SUM(CASE WHEN item_is_inspire_me = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0 END)/100 AS inspire_me_purchased_value,
+        SUM(CASE WHEN item_is_inspire_me = 1 AND returned = 1 THEN item__item_value_pence ELSE 0 END)/100 AS inspire_me_returned_value,
+
+
+
 
     -- Initiated Sale metrics
     SUM(CASE WHEN item_is_initiated_sale = 1 THEN 1 ELSE 0 END) AS initiated_sale_ordered,
-    SUM(CASE WHEN item_is_initiated_sale = 1 THEN item__item_value_pence ELSE 0 END)/100 AS initiated_sale_value,
     SUM(CASE WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN 1 ELSE 0 END) AS initiated_sale_items_purchased,
     SUM(CASE WHEN item_is_initiated_sale = 1 AND returned = 1 THEN 1 ELSE 0 END) AS initiated_sale_items_returned,
+    SUM(CASE WHEN item_is_initiated_sale = 1 THEN item__item_value_pence ELSE 0 END)/100 AS initiated_sale_ordered_value,
+    SUM(CASE WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0 END)/100 AS initiated_sale_purchased_value,
+    SUM(CASE WHEN item_is_initiated_sale = 1 AND returned = 1 THEN item__item_value_pence ELSE 0 END)/100 AS initiated_sale_returned_value,
+
 
     -- Item counts
     SUM(missing) AS number_items_missing,
@@ -122,10 +140,10 @@ SELECT
     SUM(unpurchased_return) AS number_items_unpurchased_return,
 
     -- Value calculations
-    SUM(item__item_value_pence)/100 AS total_value,
+    SUM(item__item_value_pence)/100 AS ordered_value,
     SUM(CASE WHEN purchased = 1 THEN item__item_value_pence ELSE 0 END)/100 AS purchased_value,
     SUM(CASE WHEN returned = 1 THEN item__item_value_pence ELSE 0 END)/100 AS returned_value,
-    SUM(CASE WHEN missing = 1 THEN item__item_value_pence/100 ELSE 0 END)/100 AS missing_value,
+    SUM(CASE WHEN missing = 1 THEN item__item_value_pence ELSE 0 END)/100 AS missing_value,
 
     london_daily_orders,
     london_daily_value,
@@ -179,22 +197,22 @@ CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_original_order_n
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_brand_name_idx ON {{ schema }}.rep__partnership_dashboard_base_view (brand_name);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__type_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__type);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__status_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__status);
-CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__order_created_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__createdat__dim_date);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__order_created_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order_created_date);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_completion_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (completion_date);
 -- Composite indexes for common query patterns
 CREATE INDEX idx_brand_date ON {{ schema }}.rep__partnership_dashboard_base_view
-    (brand_name, order__createdat__dim_date);
+    (brand_name, order_created_date);
 CREATE INDEX idx_brand_type ON {{ schema }}.rep__partnership_dashboard_base_view
     (brand_name, order__type);
 -- For time-based analysis
 CREATE INDEX idx_time_analysis ON {{ schema }}.rep__partnership_dashboard_base_view
-(order__createdat__dim_date, order__createdat__dim_month, order__createdat__dim_year);
+(order_created_date, order__createdat__dim_month, order__createdat__dim_year);
 -- For brand/order analysis
 CREATE INDEX idx_brand_metrics ON {{ schema }}.rep__partnership_dashboard_base_view
-(completion_date, brand_name, order__type) INCLUDE (total_value, purchased_value, number_items_ordered);
+(completion_date, brand_name, order__type) INCLUDE (ordered_value, purchased_value, number_items_ordered);
 -- Unique index
 CREATE UNIQUE INDEX rep__partnership_dashboard_base_view_unique_idx
-ON {{ schema }}.rep__partnership_dashboard_base_view (order__name, order__createdat__dim_date,order__type);
+ON {{ schema }}.rep__partnership_dashboard_base_view (order__name, order_created_date,order__type);
 {% endif %}
 
 -- Refresh the view
