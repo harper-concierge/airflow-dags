@@ -153,6 +153,10 @@
                         "harper_try",
                         "harper_concierge"
                     ]
+                },
+                "ingrid_api_key": {
+                    "bsonType": "string",
+                    "type": "string"
                 }
             },
             "additionalProperties": false,

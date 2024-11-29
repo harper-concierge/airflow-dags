@@ -2665,6 +2665,27 @@
                             ]
                         }
                     }
+                },
+                "use_ingrid_fulfilment_data": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "bsonType": "boolean",
+                            "default": false
+                        },
+                        "function": {
+                            "type": "string",
+                            "bsonType": "string",
+                            "enum": [
+                                "fetchIngridFulfilmentData"
+                            ]
+                        }
+                    }
                 }
             }
         },
