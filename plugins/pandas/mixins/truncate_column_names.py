@@ -92,9 +92,10 @@ class TruncateColumnNamesMixin:
             if col.endswith("_id"):
                 print(f"Replacing _id column {col} to m_version")
                 col = col.replace("_id", "id")
-
-            print(f"Resulting column name is {col}")
-            if "__" in col:
+            print(f"Resulting column name is {col} {len(col)}")
+            if len(col) <= total_max_length:
+                new_col = col
+            elif "__" in col:
                 prefix, suffix = col.rsplit("__", 1)
                 truncated_prefix = self._truncate_name(prefix, max_prefix_length, "__", "_", 1)
 
