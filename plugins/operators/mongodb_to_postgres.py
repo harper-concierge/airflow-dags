@@ -7,7 +7,6 @@ from datetime import datetime
 
 import pandas as pd
 from bson import ObjectId, json_util
-from pandas import DataFrame
 from sqlalchemy import create_engine
 from airflow.models import XCom, BaseOperator
 from airflow.exceptions import AirflowException
@@ -19,6 +18,8 @@ from plugins.utils.render_template import render_template
 from plugins.utils.field_conversions import convert_field
 from plugins.utils.detect_duplicate_columns import detect_duplicate_columns
 from plugins.utils.json_schema_to_flattened_numpy_datatypes import json_schema_to_flattened_numpy_datatypes
+
+from plugins.pandas.mixins.truncate_column_names import SquashableDataFrame
 
 pd.set_option("display.max_rows", 10)  # or a large number instead of None
 pd.set_option("display.max_columns", None)  # Display any number of columns
@@ -178,7 +179,7 @@ END $$;
                         total_docs_processed += len(documents)
 
                         print("TOTAL docs after", len(documents))
-                        select_df = DataFrame(list(documents))
+                        select_df = pd.DataFrame(list(documents))
 
                         print("TOTAL df", select_df.shape)
 
@@ -215,8 +216,14 @@ END $$;
                         insert_df["airflow_sync_ds"] = ds
                         # Make all column names lowercase
                         insert_df.columns = insert_df.columns.str.lower()
-                        pprint(insert_df.iloc[0])
-                        insert_df.to_sql(
+                        squashable_df = SquashableDataFrame(insert_df)
+
+                        squashable_df = squashable_df.squash_column_names(squashable_df)
+
+                        print("TOTAL AFTER SQUASHING df", squashable_df.shape)
+                        print("SQUASHED COLUMNS", squashable_df.columns)
+                        pprint(squashable_df.iloc[0])
+                        squashable_df.to_sql(
                             self.destination_table,
                             conn,
                             if_exists="append",
