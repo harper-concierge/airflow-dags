@@ -304,6 +304,12 @@
                         "min_price"
                     ]
                 },
+                "carrier_id_name": {
+                    "type": "string",
+                    "bsonType": [
+                        "string"
+                    ]
+                },
                 "__v": {
                     "bsonType": [
                         "int"
@@ -1998,6 +2004,12 @@
                         "min_price"
                     ]
                 },
+                "carrier_id_name": {
+                    "type": "string",
+                    "bsonType": [
+                        "string"
+                    ]
+                },
                 "__v": {
                     "bsonType": [
                         "int"
@@ -2292,6 +2304,12 @@
                         "required": [
                             "rule_type",
                             "min_price"
+                        ]
+                    },
+                    "carrier_id_name": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
                         ]
                     },
                     "__v": {

@@ -91,6 +91,13 @@
                 "api_version"
             ]
         },
+        "tracking_provider_lookup": {
+            "type": "object",
+            "bsonType": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
         "__v": {
             "bsonType": [
                 "int"
