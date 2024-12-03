@@ -1,58 +1,58 @@
 {
-    "title": "IItemHarperTryServiceSchema",
-    "type": "object",
-    "bsonType": [
-        "object"
-    ],
-    "properties": {
-        "service_name": {
-            "bsonType": [
-                "string"
-            ],
-            "enum": [
-                "harper_try"
-            ],
-            "type": "string"
-        },
-        "item_block_list": {
-            "type": "boolean",
-            "bsonType": [
-                "boolean"
-            ]
-        },
-        "item_preorder_block_list": {
-            "type": "boolean",
-            "bsonType": [
-                "boolean"
-            ]
-        },
-        "item_partially_block_list": {
-            "type": "boolean",
-            "bsonType": [
-                "boolean"
-            ]
-        },
-        "__v": {
-            "bsonType": [
-                "int"
-            ],
-            "type": "integer"
-        },
-        "createdAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
-        "updatedAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        }
+  "title": "IItemHarperTryServiceSchema",
+  "type": "object",
+  "bsonType": [
+    "object"
+  ],
+  "properties": {
+    "service_name": {
+      "bsonType": [
+        "string"
+      ],
+      "enum": [
+        "harper_try"
+      ],
+      "type": "string"
     },
-    "additionalProperties": false,
-    "required": [
-        "service_name"
-    ]
+    "item_block_list": {
+      "type": "boolean",
+      "bsonType": [
+        "boolean"
+      ]
+    },
+    "item_preorder_block_list": {
+      "type": "boolean",
+      "bsonType": [
+        "boolean"
+      ]
+    },
+    "item_partially_block_list": {
+      "type": "boolean",
+      "bsonType": [
+        "boolean"
+      ]
+    },
+    "__v": {
+      "bsonType": [
+        "int"
+      ],
+      "type": "integer"
+    },
+    "createdAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    },
+    "updatedAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "service_name"
+  ]
 }

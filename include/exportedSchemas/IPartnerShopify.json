@@ -1,35 +1,35 @@
 {
-    "title": "IPartnerShopifySchema",
-    "type": "object",
-    "bsonType": [
-        "object"
-    ],
-    "properties": {
-        "tracking_provider_lookup": {
-            "type": "object",
-            "bsonType": "object",
-            "additionalProperties": {
-                "type": "string"
-            }
-        },
-        "__v": {
-            "bsonType": [
-                "int"
-            ],
-            "type": "integer"
-        },
-        "createdAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
-        "updatedAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        }
+  "title": "IPartnerShopifySchema",
+  "type": "object",
+  "bsonType": [
+    "object"
+  ],
+  "properties": {
+    "tracking_provider_lookup": {
+      "type": "object",
+      "bsonType": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
-    "additionalProperties": false
+    "__v": {
+      "bsonType": [
+        "int"
+      ],
+      "type": "integer"
+    },
+    "createdAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    },
+    "updatedAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
 }
