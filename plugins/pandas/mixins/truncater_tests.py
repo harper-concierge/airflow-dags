@@ -1,6 +1,5 @@
 import pandas as pd
-
-from .truncate_column_names import SquashableDataFrame
+from truncate_column_names import SquashableDataFrame
 
 
 class TestTruncateColumnNames:
