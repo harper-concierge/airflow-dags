@@ -304,6 +304,12 @@
             "min_price"
           ]
         },
+        "carrier_id_name": {
+          "type": "string",
+          "bsonType": [
+            "string"
+          ]
+        },
         "__v": {
           "bsonType": [
             "int"
@@ -331,8 +337,10 @@
       "bsonType": "object",
       "properties": {
         "day_0": {
-          "bsonType": "object",
           "type": "object",
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "day_name": {
               "type": "string",
@@ -377,8 +385,10 @@
               ]
             },
             "before_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -392,11 +402,18 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             },
             "after_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -410,13 +427,32 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             }
-          }
+          },
+          "additionalProperties": false,
+          "required": [
+            "day_name",
+            "day_number",
+            "offset_days",
+            "additional_offset_from",
+            "additional_offset_from_in_days",
+            "available_from_before_cutoff",
+            "available_from_after_cutoff",
+            "before_offset",
+            "after_offset"
+          ]
         },
         "day_1": {
-          "bsonType": "object",
           "type": "object",
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "day_name": {
               "type": "string",
@@ -467,8 +503,10 @@
               ]
             },
             "before_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -482,11 +520,18 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             },
             "after_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -500,13 +545,33 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             }
-          }
+          },
+          "additionalProperties": false,
+          "required": [
+            "day_name",
+            "day_number",
+            "offset_days",
+            "additional_offset_from",
+            "additional_offset_from_in_days",
+            "change_timekit_time_from",
+            "available_from_before_cutoff",
+            "available_from_after_cutoff",
+            "before_offset",
+            "after_offset"
+          ]
         },
         "day_2": {
-          "bsonType": "object",
           "type": "object",
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "day_name": {
               "type": "string",
@@ -551,8 +616,10 @@
               ]
             },
             "before_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -566,11 +633,18 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             },
             "after_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -584,13 +658,32 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             }
-          }
+          },
+          "additionalProperties": false,
+          "required": [
+            "day_name",
+            "day_number",
+            "offset_days",
+            "additional_offset_from",
+            "additional_offset_from_in_days",
+            "available_from_before_cutoff",
+            "available_from_after_cutoff",
+            "before_offset",
+            "after_offset"
+          ]
         },
         "day_3": {
-          "bsonType": "object",
           "type": "object",
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "day_name": {
               "type": "string",
@@ -635,8 +728,10 @@
               ]
             },
             "before_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -650,11 +745,18 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             },
             "after_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -668,13 +770,32 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             }
-          }
+          },
+          "additionalProperties": false,
+          "required": [
+            "day_name",
+            "day_number",
+            "offset_days",
+            "additional_offset_from",
+            "additional_offset_from_in_days",
+            "available_from_before_cutoff",
+            "available_from_after_cutoff",
+            "before_offset",
+            "after_offset"
+          ]
         },
         "day_4": {
-          "bsonType": "object",
           "type": "object",
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "day_name": {
               "type": "string",
@@ -719,8 +840,10 @@
               ]
             },
             "before_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -734,11 +857,18 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             },
             "after_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -752,13 +882,32 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             }
-          }
+          },
+          "additionalProperties": false,
+          "required": [
+            "day_name",
+            "day_number",
+            "offset_days",
+            "additional_offset_from",
+            "additional_offset_from_in_days",
+            "available_from_before_cutoff",
+            "available_from_after_cutoff",
+            "before_offset",
+            "after_offset"
+          ]
         },
         "day_5": {
-          "bsonType": "object",
           "type": "object",
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "day_name": {
               "type": "string",
@@ -803,8 +952,10 @@
               ]
             },
             "before_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -818,11 +969,18 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             },
             "after_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -836,13 +994,32 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             }
-          }
+          },
+          "additionalProperties": false,
+          "required": [
+            "day_name",
+            "day_number",
+            "offset_days",
+            "additional_offset_from",
+            "additional_offset_from_in_days",
+            "available_from_before_cutoff",
+            "available_from_after_cutoff",
+            "before_offset",
+            "after_offset"
+          ]
         },
         "day_6": {
-          "bsonType": "object",
           "type": "object",
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "day_name": {
               "type": "string",
@@ -887,8 +1064,10 @@
               ]
             },
             "before_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -902,11 +1081,18 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             },
             "after_offset": {
-              "bsonType": "object",
               "type": "object",
+              "bsonType": [
+                "object"
+              ],
               "properties": {
                 "offset_days": {
                   "type": "integer",
@@ -920,9 +1106,26 @@
                     "string"
                   ]
                 }
-              }
+              },
+              "additionalProperties": false,
+              "required": [
+                "offset_days",
+                "available_from"
+              ]
             }
-          }
+          },
+          "additionalProperties": false,
+          "required": [
+            "day_name",
+            "day_number",
+            "offset_days",
+            "additional_offset_from",
+            "additional_offset_from_in_days",
+            "available_from_before_cutoff",
+            "available_from_after_cutoff",
+            "before_offset",
+            "after_offset"
+          ]
         },
         "__v": {
           "bsonType": [
@@ -1801,6 +2004,12 @@
             "min_price"
           ]
         },
+        "carrier_id_name": {
+          "type": "string",
+          "bsonType": [
+            "string"
+          ]
+        },
         "__v": {
           "bsonType": [
             "int"
@@ -2097,6 +2306,12 @@
               "min_price"
             ]
           },
+          "carrier_id_name": {
+            "type": "string",
+            "bsonType": [
+              "string"
+            ]
+          },
           "__v": {
             "bsonType": [
               "int"
@@ -2205,8 +2420,12 @@
       ]
     },
     "customer_service": {
-      "bsonType": "object",
+      "title": "customer_service",
       "type": "object",
+      "additionalProperties": false,
+      "bsonType": [
+        "object"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -2234,7 +2453,6 @@
             "array"
           ],
           "items": {
-            "type": "string",
             "bsonType": [
               "string"
             ]
@@ -2286,1231 +2504,53 @@
       ]
     },
     "services": {
-      "bsonType": "object",
       "type": "object",
+      "bsonType": "object",
       "properties": {
         "harper_try": {
-          "title": "IPartnerHarperTryServiceSchema",
           "type": "object",
-          "bsonType": [
-            "object"
-          ],
-          "properties": {
-            "service_name": {
-              "bsonType": [
-                "string"
-              ],
-              "enum": [
-                "harper_try"
-              ],
-              "type": "string"
-            },
-            "service_areas": {
-              "type": "array",
-              "bsonType": [
-                "array"
-              ],
-              "items": {
-                "title": "IServiceAreaSchema",
-                "type": "object",
-                "bsonType": [
-                  "object"
-                ],
-                "properties": {
-                  "geofence_id": {
-                    "bsonType": [
-                      "objectId"
-                    ],
-                    "type": "string",
-                    "tsType": "MongooseObjectId"
-                  },
-                  "geofence_idname": {
-                    "type": "string",
-                    "bsonType": "string"
-                  },
-                  "active": {
-                    "title": "IActivePeriods",
-                    "type": "object",
-                    "bsonType": [
-                      "object"
-                    ],
-                    "properties": {
-                      "mon": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "tue": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "wed": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "thu": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "fri": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "sat": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "sun": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "__v": {
-                        "bsonType": [
-                          "int"
-                        ],
-                        "type": "integer"
-                      },
-                      "createdAt": {
-                        "bsonType": [
-                          "date"
-                        ],
-                        "type": "string"
-                      },
-                      "updatedAt": {
-                        "bsonType": [
-                          "date"
-                        ],
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": false,
-                    "required": []
-                  },
-                  "__v": {
-                    "bsonType": [
-                      "int"
-                    ],
-                    "type": "integer"
-                  },
-                  "createdAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  },
-                  "updatedAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false,
-                "required": [
-                  "geofence_id",
-                  "geofence_idname"
-                ]
-              }
-            },
-            "service_settings": {
-              "title": "IPartnerHarperTrySettingsSchema",
-              "type": "object",
-              "bsonType": [
-                "object"
-              ],
-              "properties": {
-                "max_basket_size": {
-                  "bsonType": "int",
-                  "type": "number"
-                },
-                "max_active_orders": {
-                  "bsonType": "int",
-                  "type": "number"
-                },
-                "item_block_list": {
-                  "type": "array",
-                  "bsonType": [
-                    "array"
-                  ],
-                  "items": {
-                    "type": "string",
-                    "bsonType": [
-                      "string"
-                    ]
-                  }
-                },
-                "item_preorder_block_list": {
-                  "type": "array",
-                  "bsonType": [
-                    "array"
-                  ],
-                  "items": {
-                    "type": "string",
-                    "bsonType": [
-                      "string"
-                    ]
-                  }
-                },
-                "item_partially_block_list": {
-                  "type": "array",
-                  "bsonType": [
-                    "array"
-                  ],
-                  "items": {
-                    "type": "string",
-                    "bsonType": [
-                      "string"
-                    ]
-                  }
-                },
-                "__v": {
-                  "bsonType": [
-                    "int"
-                  ],
-                  "type": "integer"
-                },
-                "createdAt": {
-                  "bsonType": [
-                    "date"
-                  ],
-                  "type": "string"
-                },
-                "updatedAt": {
-                  "bsonType": [
-                    "date"
-                  ],
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false,
-              "required": []
-            },
-            "__v": {
-              "bsonType": [
-                "int"
-              ],
-              "type": "integer"
-            },
-            "createdAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            },
-            "updatedAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "service_name",
-            "service_areas",
-            "service_settings"
-          ]
+          "bsonType": "object",
+          "tsType": "IPartnerHarperTryService"
         },
         "harper_concierge": {
-          "title": "IPartnerHarperConciergeServiceSchema",
           "type": "object",
-          "bsonType": [
-            "object"
-          ],
-          "properties": {
-            "service_name": {
-              "bsonType": [
-                "string"
-              ],
-              "enum": [
-                "harper_concierge"
-              ],
-              "type": "string"
-            },
-            "service_areas": {
-              "type": "array",
-              "bsonType": [
-                "array"
-              ],
-              "items": {
-                "title": "IServiceAreaSchema",
-                "type": "object",
-                "bsonType": [
-                  "object"
-                ],
-                "properties": {
-                  "geofence_id": {
-                    "bsonType": [
-                      "objectId"
-                    ],
-                    "type": "string",
-                    "tsType": "MongooseObjectId"
-                  },
-                  "geofence_idname": {
-                    "type": "string",
-                    "bsonType": "string"
-                  },
-                  "active": {
-                    "title": "IActivePeriods",
-                    "type": "object",
-                    "bsonType": [
-                      "object"
-                    ],
-                    "properties": {
-                      "mon": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "tue": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "wed": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "thu": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "fri": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "sat": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "sun": {
-                        "title": "IPeriodsOfDaySchema",
-                        "type": "object",
-                        "bsonType": [
-                          "object"
-                        ],
-                        "properties": {
-                          "morning": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "afternoon": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "evening": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                          },
-                          "__v": {
-                            "bsonType": [
-                              "int"
-                            ],
-                            "type": "integer"
-                          },
-                          "createdAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          },
-                          "updatedAt": {
-                            "bsonType": [
-                              "date"
-                            ],
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      },
-                      "__v": {
-                        "bsonType": [
-                          "int"
-                        ],
-                        "type": "integer"
-                      },
-                      "createdAt": {
-                        "bsonType": [
-                          "date"
-                        ],
-                        "type": "string"
-                      },
-                      "updatedAt": {
-                        "bsonType": [
-                          "date"
-                        ],
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": false,
-                    "required": []
-                  },
-                  "__v": {
-                    "bsonType": [
-                      "int"
-                    ],
-                    "type": "integer"
-                  },
-                  "createdAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  },
-                  "updatedAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false,
-                "required": [
-                  "geofence_id",
-                  "geofence_idname"
-                ]
-              }
-            },
-            "service_settings": {
-              "title": "IPartnerHarperConciergeSettingsSchema",
-              "type": "object",
-              "bsonType": "object",
-              "properties": {
-                "max_basket_size": {
-                  "bsonType": "int",
-                  "type": "number"
-                },
-                "item_block_list": {
-                  "type": "array",
-                  "bsonType": [
-                    "array"
-                  ],
-                  "items": {
-                    "type": "string",
-                    "bsonType": [
-                      "string"
-                    ]
-                  }
-                },
-                "item_preorder_block_list": {
-                  "type": "array",
-                  "bsonType": [
-                    "array"
-                  ],
-                  "items": {
-                    "type": "string",
-                    "bsonType": [
-                      "string"
-                    ]
-                  }
-                },
-                "item_partially_block_list": {
-                  "type": "array",
-                  "bsonType": [
-                    "array"
-                  ],
-                  "items": {
-                    "type": "string",
-                    "bsonType": [
-                      "string"
-                    ]
-                  }
-                },
-                "__v": {
-                  "bsonType": [
-                    "int"
-                  ],
-                  "type": "integer"
-                },
-                "createdAt": {
-                  "bsonType": [
-                    "date"
-                  ],
-                  "type": "string"
-                },
-                "updatedAt": {
-                  "bsonType": [
-                    "date"
-                  ],
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false,
-              "required": []
-            },
-            "__v": {
-              "bsonType": [
-                "int"
-              ],
-              "type": "integer"
-            },
-            "createdAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            },
-            "updatedAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "service_name",
-            "service_areas",
-            "service_settings"
-          ]
+          "bsonType": "object",
+          "tsType": "IPartnerHarperConciergeService"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "platform": {
-      "bsonType": "object",
       "type": "object",
+      "bsonType": "object",
       "properties": {
         "centra": {
-          "title": "IPartnerCentraSchema",
           "type": "object",
-          "bsonType": [
-            "object"
-          ],
-          "properties": {
-            "checkout_api_type": {
-              "bsonType": "string",
-              "type": "string",
-              "enum": [
-                "checkout-api",
-                "dtc-api"
-              ]
-            },
-            "checkout_api": {
-              "bsonType": "object",
-              "type": "object",
-              "properties": {
-                "checkout_api_endpoint": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "checkout_api_token": {
-                  "bsonType": "string",
-                  "type": "string"
-                }
-              }
-            },
-            "external_payments_api": {
-              "bsonType": "object",
-              "type": "object",
-              "properties": {
-                "external_payments_api_endpoint": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "external_payments_api_access_key": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "external_payments_plugin_secret": {
-                  "bsonType": "string",
-                  "type": "string"
-                }
-              }
-            },
-            "dtc_api": {
-              "bsonType": "object",
-              "type": "object",
-              "properties": {
-                "dtc_api_endpoint": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "dtc_api_shared_secret": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "dtc_api_session_mode_token": {
-                  "bsonType": "string",
-                  "type": "string"
-                }
-              }
-            },
-            "order_api": {
-              "bsonType": "object",
-              "type": "object",
-              "properties": {
-                "order_api_endpoint": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "order_api_secret": {
-                  "bsonType": "string",
-                  "type": "string"
-                }
-              }
-            },
-            "integration_api": {
-              "bsonType": "object",
-              "type": "object",
-              "properties": {
-                "integration_api_endpoint": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "integration_api_token": {
-                  "bsonType": "string",
-                  "type": "string"
-                }
-              }
-            },
-            "configured_payment_method": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "ingrid": {
-              "bsonType": "object",
-              "type": "object",
-              "properties": {
-                "ingrid_enabled": {
-                  "bsonType": "bool",
-                  "type": "boolean"
-                },
-                "ingrid_attributes": {
-                  "bsonType": "object",
-                  "type": "object",
-                  "properties": {
-                    "harper": {
-                      "bsonType": "string",
-                      "type": "string"
-                    },
-                    "harper_try": {
-                      "bsonType": "string",
-                      "type": "string"
-                    },
-                    "harper_concierge": {
-                      "bsonType": "string",
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "webhooks": {
-              "bsonType": "object",
-              "type": "object",
-              "properties": {
-                "webhook_fulfillment_secret": {
-                  "type": "string",
-                  "bsonType": "string"
-                },
-                "webhook_refund_secret": {
-                  "type": "string",
-                  "bsonType": "string"
-                },
-                "webhook_cancel_secret": {
-                  "type": "string",
-                  "bsonType": "string"
-                }
-              }
-            },
-            "__v": {
-              "bsonType": [
-                "int"
-              ],
-              "type": "integer"
-            },
-            "createdAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            },
-            "updatedAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "configured_payment_method",
-            "checkoutApiVersion"
-          ]
+          "bsonType": "object",
+          "tsType": "IPartnerCentra"
         },
         "salesforce": {
-          "title": "IPartnerSalesforceSchema",
           "type": "object",
+          "bsonType": "object",
+          "tsType": "IPartnerSalesforce"
+        }
+      },
+      "additionalProperties": false
+    },
+    "feature_flags": {
+      "title": "Feature Flags",
+      "type": "object",
+      "additionalProperties": false,
+      "bsonType": [
+        "object"
+      ],
+      "properties": {
+        "custom_sku_function": {
+          "type": "object",
+          "additionalProperties": false,
           "bsonType": [
             "object"
           ],
-          "properties": {
-            "partner_api_type": {
-              "bsonType": "string",
-              "type": "string",
-              "enum": [
-                "ocapi",
-                "scapi"
-              ]
-            },
-            "scapi": {
-              "bsonType": "object",
-              "type": "object",
-              "properties": {
-                "api_endpoint": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "short_code": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "realm_id": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "instance_id": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "oauth_client_id": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "oauth_client_secret": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "checkout_api_token": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "organization_id": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "site_id": {
-                  "bsonType": "string",
-                  "type": "string"
-                }
-              }
-            },
-            "ocapi": {
-              "bsonType": "object",
-              "type": "object",
-              "properties": {
-                "api_endpoint": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "store_id": {
-                  "bsonType": "string",
-                  "type": "string"
-                },
-                "api_version": {
-                  "bsonType": "string",
-                  "type": "string"
-                }
-              }
-            },
-            "__v": {
-              "bsonType": [
-                "int"
-              ],
-              "type": "integer"
-            },
-            "createdAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            },
-            "updatedAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            }
-          },
-          "required": [
-            "partner_api_type"
-          ],
-          "additionalProperties": false
-        }
-      }
-    },
-    "feature_flags": {
-      "bsonType": "object",
-      "type": "object",
-      "properties": {
-        "custom_sku_function": {
-          "bsonType": "object",
-          "type": "object",
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -3527,8 +2567,11 @@
           }
         },
         "custom_item_viability_function": {
-          "bsonType": "object",
           "type": "object",
+          "additionalProperties": false,
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -3545,8 +2588,11 @@
           }
         },
         "ecommerce_gtm_override_function": {
-          "bsonType": "object",
           "type": "object",
+          "additionalProperties": false,
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -3563,8 +2609,11 @@
           }
         },
         "newsletter_signup_function": {
-          "bsonType": "object",
           "type": "object",
+          "additionalProperties": false,
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -3582,8 +2631,11 @@
           }
         },
         "delivery_service_fee_override": {
-          "bsonType": "object",
           "type": "object",
+          "additionalProperties": false,
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -3605,8 +2657,11 @@
           }
         },
         "return_plugin": {
-          "bsonType": "object",
           "type": "object",
+          "additionalProperties": false,
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -3628,6 +2683,27 @@
               ]
             }
           }
+        },
+        "use_ingrid_fulfilment_data": {
+          "type": "object",
+          "additionalProperties": false,
+          "bsonType": [
+            "object"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "bsonType": "boolean",
+              "default": false
+            },
+            "function": {
+              "type": "string",
+              "bsonType": "string",
+              "enum": [
+                "fetchIngridFulfilmentData"
+              ]
+            }
+          }
         }
       }
     },
@@ -3638,207 +2714,31 @@
       ]
     },
     "plugins": {
-      "bsonType": "object",
       "type": "object",
+      "bsonType": "object",
       "properties": {
         "klaviyo": {
-          "title": "IPartnerKlaviyoSchema",
           "type": "object",
-          "bsonType": [
-            "object"
-          ],
-          "properties": {
-            "private_api_key": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "public_api_key": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "base_api_url": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "list_id": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "revision": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "__v": {
-              "bsonType": [
-                "int"
-              ],
-              "type": "integer"
-            },
-            "createdAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            },
-            "updatedAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "base_api_url",
-            "list_id",
-            "revision"
-          ]
+          "bsonType": "object",
+          "tsType": "IPartnerKlaviyoSchema"
         },
         "rebound": {
-          "title": "IPartnerReboundSchema",
           "type": "object",
-          "bsonType": [
-            "object"
-          ],
-          "properties": {
-            "login": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "api_key": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "base_api_url": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "__v": {
-              "bsonType": [
-                "int"
-              ],
-              "type": "integer"
-            },
-            "createdAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            },
-            "updatedAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "login",
-            "api_key",
-            "base_api_url"
-          ]
+          "bsonType": "object",
+          "tsType": "IPartnerReboundSchema"
         },
         "ometria": {
-          "title": "IPartnerOmetriaSchema",
           "type": "object",
-          "bsonType": [
-            "object"
-          ],
-          "properties": {
-            "private_api_key": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "base_api_url": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "list_id": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "collection_id": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "__v": {
-              "bsonType": [
-                "int"
-              ],
-              "type": "integer"
-            },
-            "createdAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            },
-            "updatedAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "base_api_url",
-            "list_id",
-            "private_api_key"
-          ]
+          "bsonType": "object",
+          "tsType": "IPartnerOmetriaSchema"
         },
         "zigzag": {
-          "title": "IPartnerZigzagSchema",
           "type": "object",
-          "bsonType": [
-            "object"
-          ],
-          "properties": {
-            "entity_id": {
-              "bsonType": "number",
-              "type": "number"
-            },
-            "user_name": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "password": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "url": {
-              "bsonType": "string",
-              "type": "string"
-            },
-            "__v": {
-              "bsonType": [
-                "int"
-              ],
-              "type": "integer"
-            },
-            "createdAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            },
-            "updatedAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "entity_id",
-            "user_name",
-            "password",
-            "url"
-          ]
+          "bsonType": "object",
+          "tsType": "IPartnerZigzagSchema"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "__v": {
       "bsonType": [

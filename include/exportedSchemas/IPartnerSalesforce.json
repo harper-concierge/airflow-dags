@@ -53,7 +53,19 @@
           "bsonType": "string",
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false,
+      "required": [
+        "api_endpoint",
+        "short_code",
+        "realm_id",
+        "instance_id",
+        "oauth_client_id",
+        "oauth_client_secret",
+        "checkout_api_token",
+        "organization_id",
+        "site_id"
+      ]
     },
     "ocapi": {
       "bsonType": "object",
@@ -71,6 +83,19 @@
           "bsonType": "string",
           "type": "string"
         }
+      },
+      "additionalProperties": false,
+      "required": [
+        "api_endpoint",
+        "store_id",
+        "api_version"
+      ]
+    },
+    "tracking_provider_lookup": {
+      "type": "object",
+      "bsonType": "object",
+      "additionalProperties": {
+        "type": "string"
       }
     },
     "__v": {

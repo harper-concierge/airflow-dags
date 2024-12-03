@@ -256,8 +256,11 @@
       ]
     },
     "customer_service": {
-      "bsonType": "object",
+      "title": "customer_service",
       "type": "object",
+      "bsonType": [
+        "object"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -286,11 +289,11 @@
             "array"
           ],
           "items": {
-            "type": "string",
-            "bsonType": "string"
+            "type": "string"
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "createdAt": {
       "bsonType": [

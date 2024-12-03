@@ -70,8 +70,11 @@
       ]
     },
     "context_data": {
-      "bsonType": "object",
+      "title": "context_data",
       "type": "object",
+      "bsonType": [
+        "object"
+      ],
       "properties": {
         "data_type": {
           "type": "string",
@@ -90,8 +93,7 @@
           "type": "object",
           "bsonType": [
             "object"
-          ],
-          "additionalProperties": false
+          ]
         },
         "links": {
           "type": "array",
@@ -120,7 +122,8 @@
             "additionalProperties": false
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "event_name_id": {
       "type": "string",

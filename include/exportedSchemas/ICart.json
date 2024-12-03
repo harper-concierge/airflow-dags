@@ -49,8 +49,11 @@
       ]
     },
     "customer": {
-      "bsonType": "object",
+      "title": "customer",
       "type": "object",
+      "bsonType": [
+        "object"
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -83,76 +86,14 @@
           ]
         },
         "shipping_address": {
-          "title": "IAddressSchema",
           "type": "object",
           "bsonType": [
             "object"
           ],
-          "properties": {
-            "address_1": {
-              "type": "string",
-              "bsonType": [
-                "string"
-              ]
-            },
-            "address_2": {
-              "type": "string",
-              "bsonType": [
-                "string"
-              ]
-            },
-            "city": {
-              "type": "string",
-              "bsonType": [
-                "string"
-              ]
-            },
-            "county": {
-              "type": "string",
-              "bsonType": [
-                "string"
-              ]
-            },
-            "postcode": {
-              "type": "string",
-              "bsonType": [
-                "string"
-              ]
-            },
-            "country": {
-              "type": "string",
-              "bsonType": [
-                "string"
-              ]
-            },
-            "telephone_number": {
-              "type": "string",
-              "bsonType": [
-                "string"
-              ]
-            },
-            "__v": {
-              "bsonType": [
-                "int"
-              ],
-              "type": "integer"
-            },
-            "createdAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            },
-            "updatedAt": {
-              "bsonType": [
-                "date"
-              ],
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
+          "tsType": "IAddress"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "items": {
       "type": "array",
@@ -743,8 +684,10 @@
             ]
           },
           "item_validation": {
-            "bsonType": "object",
             "type": "object",
+            "bsonType": [
+              "object"
+            ],
             "properties": {
               "is_qualified_item": {
                 "type": "boolean",
@@ -770,7 +713,8 @@
                   "bool"
                 ]
               }
-            }
+            },
+            "additionalProperties": false
           },
           "taxable": {
             "type": "boolean",
@@ -779,126 +723,21 @@
             ]
           },
           "services": {
-            "bsonType": "object",
             "type": "object",
+            "bsonType": "object",
             "properties": {
               "harper_try": {
-                "title": "IItemHarperTryServiceSchema",
                 "type": "object",
-                "bsonType": [
-                  "object"
-                ],
-                "properties": {
-                  "service_name": {
-                    "bsonType": [
-                      "string"
-                    ],
-                    "enum": [
-                      "harper_try"
-                    ],
-                    "type": "string"
-                  },
-                  "item_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_preorder_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_partially_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "__v": {
-                    "bsonType": [
-                      "int"
-                    ],
-                    "type": "integer"
-                  },
-                  "createdAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  },
-                  "updatedAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false,
-                "required": [
-                  "service_name"
-                ]
+                "bsonType": "object",
+                "tsType": "IItemHarperTryServiceSchema"
               },
               "harper_concierge": {
-                "title": "IItemHarperConciergeServiceSchema",
                 "type": "object",
-                "bsonType": [
-                  "object"
-                ],
-                "properties": {
-                  "service_name": {
-                    "bsonType": [
-                      "string"
-                    ],
-                    "enum": [
-                      "harper_concierge"
-                    ],
-                    "type": "string"
-                  },
-                  "item_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_preorder_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_partially_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "__v": {
-                    "bsonType": [
-                      "int"
-                    ],
-                    "type": "integer"
-                  },
-                  "createdAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  },
-                  "updatedAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false,
-                "required": [
-                  "service_name"
-                ]
+                "bsonType": "object",
+                "tsType": "IItemHarperConciergeServiceSchema"
               }
-            }
+            },
+            "additionalProperties": false
           },
           "__v": {
             "bsonType": [
@@ -1518,8 +1357,10 @@
             ]
           },
           "item_validation": {
-            "bsonType": "object",
             "type": "object",
+            "bsonType": [
+              "object"
+            ],
             "properties": {
               "is_qualified_item": {
                 "type": "boolean",
@@ -1545,7 +1386,8 @@
                   "bool"
                 ]
               }
-            }
+            },
+            "additionalProperties": false
           },
           "taxable": {
             "type": "boolean",
@@ -1554,126 +1396,21 @@
             ]
           },
           "services": {
-            "bsonType": "object",
             "type": "object",
+            "bsonType": "object",
             "properties": {
               "harper_try": {
-                "title": "IItemHarperTryServiceSchema",
                 "type": "object",
-                "bsonType": [
-                  "object"
-                ],
-                "properties": {
-                  "service_name": {
-                    "bsonType": [
-                      "string"
-                    ],
-                    "enum": [
-                      "harper_try"
-                    ],
-                    "type": "string"
-                  },
-                  "item_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_preorder_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_partially_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "__v": {
-                    "bsonType": [
-                      "int"
-                    ],
-                    "type": "integer"
-                  },
-                  "createdAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  },
-                  "updatedAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false,
-                "required": [
-                  "service_name"
-                ]
+                "bsonType": "object",
+                "tsType": "IItemHarperTryServiceSchema"
               },
               "harper_concierge": {
-                "title": "IItemHarperConciergeServiceSchema",
                 "type": "object",
-                "bsonType": [
-                  "object"
-                ],
-                "properties": {
-                  "service_name": {
-                    "bsonType": [
-                      "string"
-                    ],
-                    "enum": [
-                      "harper_concierge"
-                    ],
-                    "type": "string"
-                  },
-                  "item_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_preorder_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_partially_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "__v": {
-                    "bsonType": [
-                      "int"
-                    ],
-                    "type": "integer"
-                  },
-                  "createdAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  },
-                  "updatedAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false,
-                "required": [
-                  "service_name"
-                ]
+                "bsonType": "object",
+                "tsType": "IItemHarperConciergeServiceSchema"
               }
-            }
+            },
+            "additionalProperties": false
           },
           "__v": {
             "bsonType": [
@@ -2293,8 +2030,10 @@
             ]
           },
           "item_validation": {
-            "bsonType": "object",
             "type": "object",
+            "bsonType": [
+              "object"
+            ],
             "properties": {
               "is_qualified_item": {
                 "type": "boolean",
@@ -2320,7 +2059,8 @@
                   "bool"
                 ]
               }
-            }
+            },
+            "additionalProperties": false
           },
           "taxable": {
             "type": "boolean",
@@ -2329,126 +2069,21 @@
             ]
           },
           "services": {
-            "bsonType": "object",
             "type": "object",
+            "bsonType": "object",
             "properties": {
               "harper_try": {
-                "title": "IItemHarperTryServiceSchema",
                 "type": "object",
-                "bsonType": [
-                  "object"
-                ],
-                "properties": {
-                  "service_name": {
-                    "bsonType": [
-                      "string"
-                    ],
-                    "enum": [
-                      "harper_try"
-                    ],
-                    "type": "string"
-                  },
-                  "item_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_preorder_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_partially_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "__v": {
-                    "bsonType": [
-                      "int"
-                    ],
-                    "type": "integer"
-                  },
-                  "createdAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  },
-                  "updatedAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false,
-                "required": [
-                  "service_name"
-                ]
+                "bsonType": "object",
+                "tsType": "IItemHarperTryServiceSchema"
               },
               "harper_concierge": {
-                "title": "IItemHarperConciergeServiceSchema",
                 "type": "object",
-                "bsonType": [
-                  "object"
-                ],
-                "properties": {
-                  "service_name": {
-                    "bsonType": [
-                      "string"
-                    ],
-                    "enum": [
-                      "harper_concierge"
-                    ],
-                    "type": "string"
-                  },
-                  "item_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_preorder_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "item_partially_block_list": {
-                    "type": "boolean",
-                    "bsonType": [
-                      "boolean"
-                    ]
-                  },
-                  "__v": {
-                    "bsonType": [
-                      "int"
-                    ],
-                    "type": "integer"
-                  },
-                  "createdAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  },
-                  "updatedAt": {
-                    "bsonType": [
-                      "date"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false,
-                "required": [
-                  "service_name"
-                ]
+                "bsonType": "object",
+                "tsType": "IItemHarperConciergeServiceSchema"
               }
-            }
+            },
+            "additionalProperties": false
           },
           "__v": {
             "bsonType": [

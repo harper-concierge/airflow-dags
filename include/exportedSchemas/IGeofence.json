@@ -10,8 +10,8 @@
       "bsonType": "string"
     },
     "geofence": {
-      "bsonType": "object",
       "type": "object",
+      "bsonType": "object",
       "properties": {
         "type": {
           "type": "string",
@@ -21,7 +21,8 @@
           "type": "array",
           "bsonType": "array"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "__v": {
       "bsonType": [

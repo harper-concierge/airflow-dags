@@ -57,8 +57,11 @@
       ]
     },
     "risk": {
-      "bsonType": "object",
+      "title": "risk",
       "type": "object",
+      "bsonType": [
+        "object"
+      ],
       "properties": {
         "level": {
           "type": "string",
@@ -67,8 +70,10 @@
           ]
         },
         "risk_instruction": {
-          "bsonType": "object",
           "type": "object",
+          "bsonType": [
+            "object"
+          ],
           "properties": {
             "action": {
               "type": "string",
@@ -82,13 +87,18 @@
                 "double"
               ]
             }
-          }
+          },
+          "additionalProperties": false
         }
-      }
+      },
+      "additionalProperties": false
     },
     "payment": {
-      "bsonType": "object",
+      "title": "payment",
       "type": "object",
+      "bsonType": [
+        "object"
+      ],
       "properties": {
         "client_secret": {
           "type": "string",
@@ -102,7 +112,8 @@
             "string"
           ]
         }
-      }
+      },
+      "additionalProperties": false
     },
     "customer_notification": {
       "type": "string",
