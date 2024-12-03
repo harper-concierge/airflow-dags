@@ -1,49 +1,49 @@
 {
-  "title": "IPartnerOmetriaSchema",
-  "type": "object",
-  "bsonType": [
-    "object"
-  ],
-  "properties": {
-    "private_api_key": {
-      "bsonType": "string",
-      "type": "string"
+    "title": "IPartnerOmetriaSchema",
+    "type": "object",
+    "bsonType": [
+        "object"
+    ],
+    "properties": {
+        "private_api_key": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "base_api_url": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "list_id": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "collection_id": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
     },
-    "base_api_url": {
-      "bsonType": "string",
-      "type": "string"
-    },
-    "list_id": {
-      "bsonType": "string",
-      "type": "string"
-    },
-    "collection_id": {
-      "bsonType": "string",
-      "type": "string"
-    },
-    "__v": {
-      "bsonType": [
-        "int"
-      ],
-      "type": "integer"
-    },
-    "createdAt": {
-      "bsonType": [
-        "date"
-      ],
-      "type": "string"
-    },
-    "updatedAt": {
-      "bsonType": [
-        "date"
-      ],
-      "type": "string"
-    }
-  },
-  "additionalProperties": false,
-  "required": [
-    "base_api_url",
-    "list_id",
-    "private_api_key"
-  ]
+    "additionalProperties": false,
+    "required": [
+        "base_api_url",
+        "list_id",
+        "private_api_key"
+    ]
 }

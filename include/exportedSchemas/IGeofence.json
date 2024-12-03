@@ -1,51 +1,50 @@
 {
-  "title": "IGeofenceSchema",
-  "bsonType": [
-    "object"
-  ],
-  "type": "object",
-  "properties": {
-    "idname": {
-      "type": "string",
-      "bsonType": "string"
-    },
-    "geofence": {
-      "type": "object",
-      "bsonType": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "bsonType": "string"
+    "title": "IGeofenceSchema",
+    "bsonType": [
+        "object"
+    ],
+    "type": "object",
+    "properties": {
+        "idname": {
+            "type": "string",
+            "bsonType": "string"
         },
-        "coordinates": {
-          "type": "array",
-          "bsonType": "array"
+        "geofence": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "coordinates": {
+                    "type": "array",
+                    "bsonType": "array"
+                }
+            }
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
         }
-      },
-      "additionalProperties": false
     },
-    "__v": {
-      "bsonType": [
-        "int"
-      ],
-      "type": "integer"
-    },
-    "createdAt": {
-      "bsonType": [
-        "date"
-      ],
-      "type": "string"
-    },
-    "updatedAt": {
-      "bsonType": [
-        "date"
-      ],
-      "type": "string"
-    }
-  },
-  "required": [
-    "idname",
-    "geofence"
-  ],
-  "additionalProperties": false
+    "required": [
+        "idname",
+        "geofence"
+    ],
+    "additionalProperties": false
 }
