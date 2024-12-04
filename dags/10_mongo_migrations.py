@@ -89,7 +89,6 @@ exported_schemas_abspath = os.path.join(os.path.dirname(os.path.abspath(__file__
 migration_tasks = []
 for config in migrations:
     schema_path = os.path.join(exported_schemas_abspath, config["jsonschema"])
-    drop_tables = []
     task_id = f"{config['task_name']}_drop_transient_table_if_exists"
     drop_transient_table = DropPostgresTableOperator(
         task_id=task_id,
@@ -98,8 +97,8 @@ for config in migrations:
         table=config["destination_table"],
         dag=dag,
     )
-    drop_tables.append(drop_transient_table)
     task_id = f"{config['task_name']}_drop_destination_table_if_exists"
+    last_drop_table_task = drop_transient_table
     if rebuild:
         drop_destination_table = DropPostgresTableOperator(
             task_id=task_id,
@@ -109,7 +108,8 @@ for config in migrations:
             depends_on_past=False,
             dag=dag,
         )
-        drop_tables.append(drop_destination_table)
+        drop_transient_table >> drop_destination_table
+        last_drop_table_task = drop_destination_table
 
     task_id = f"{config['task_name']}_migrate_to_postgres"
     mongo_to_postgres = MongoDBToPostgresViaDataframeOperator(
@@ -199,7 +199,7 @@ for config in migrations:
         dag=dag,
     )
     (
-        drop_tables
+        last_drop_table_task
         >> mongo_to_postgres
         >> has_records_to_process
         >> refresh_transient_table
