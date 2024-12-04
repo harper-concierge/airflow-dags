@@ -49,6 +49,7 @@ class MongoDBToPostgresViaDataframeOperator(BaseOperator):
     :type jsonschema: str
     :param unwind: Field to Unwind
     :type unwind: str
+    :type rebuild: bool
     :param preserve_fields: Fields that you create during the aggregation stage that you want to keep, but don't exist in the json Schema  # noqa
     :type preserve_fields: Optional[List[str]]
     :param discard_fields: Fields that you don't want to keep that despite them existing in the json Schema
@@ -73,6 +74,7 @@ class MongoDBToPostgresViaDataframeOperator(BaseOperator):
         jsonschema: str,
         destination_table: str,
         destination_schema: str,
+        rebuild: bool,
         unwind: Optional[str] = None,
         preserve_fields: Optional[Dict] = {},
         discard_fields: Optional[List[str]] = [],
@@ -92,6 +94,7 @@ class MongoDBToPostgresViaDataframeOperator(BaseOperator):
         self.destination_table = destination_table
         self.destination_schema = destination_schema
         self.unwind = unwind
+        self.rebuild = rebuild
         self.preserve_fields = preserve_fields or {}
         self.discard_fields = discard_fields or []
         self.convert_fields = convert_fields or []
@@ -154,7 +157,8 @@ END $$;
 
                     aggregation_query = self._prepare_aggregation_query()
                     self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
-                    conn.execute(self.delete_sql)
+                    if not self.rebuild:
+                        conn.execute(self.delete_sql)
 
                     while True:
                         aggregation_query = self._prepare_runtime_aggregation_query(
@@ -543,18 +547,19 @@ END $$;
 
     @provide_session
     def get_last_successful_dagrun_ts(self, run_id, session=None):
-        query = XCom.get_many(
-            include_prior_dates=True,
-            dag_ids=self.dag_id,
-            run_id=run_id,
-            task_ids=self.task_id,
-            key=self.last_successful_dagrun_xcom_key,
-            session=session,
-            limit=1,
-        )
+        if not self.rebuild:
+            query = XCom.get_many(
+                include_prior_dates=True,
+                dag_ids=self.dag_id,
+                run_id=run_id,
+                task_ids=self.task_id,
+                key=self.last_successful_dagrun_xcom_key,
+                session=session,
+                limit=1,
+            )
 
-        xcom = query.first()
-        if xcom:
-            return datetime.fromisoformat(xcom.value)
+            xcom = query.first()
+            if xcom:
+                return datetime.fromisoformat(xcom.value)
 
         return None

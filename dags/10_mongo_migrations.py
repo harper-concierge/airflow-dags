@@ -2,8 +2,9 @@ import os
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.models import Variable
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import ShortCircuitOperator
+from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
 
@@ -20,6 +21,13 @@ from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDa
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
 
 from data_migrations.aggregation_loader import load_aggregation_configs
+
+rebuild = Variable.get("REBUILD_MONGO_DATA", "False").lower() in ["true", "1", "yes"]
+
+
+def reset_rebuild_var():
+    Variable.set("REBUILD_MONGO_DATA", False)
+
 
 # Now load the migrations
 migrations = load_aggregation_configs("aggregations")
@@ -66,6 +74,14 @@ start_task = ShortCircuitOperator(
 )
 start_task.doc = doc
 
+reset_rebuild_var_task = PythonOperator(
+    task_id="reset_rebuild_var_task",
+    depends_on_past=False,
+    python_callable=reset_rebuild_var,
+    dag=dag,
+)
+
+
 base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
 exported_schemas_path = "../include/exportedSchemas/"
 exported_schemas_abspath = os.path.join(os.path.dirname(os.path.abspath(__file__)), exported_schemas_path)
@@ -73,7 +89,7 @@ exported_schemas_abspath = os.path.join(os.path.dirname(os.path.abspath(__file__
 migration_tasks = []
 for config in migrations:
     schema_path = os.path.join(exported_schemas_abspath, config["jsonschema"])
-
+    drop_tables = []
     task_id = f"{config['task_name']}_drop_transient_table_if_exists"
     drop_transient_table = DropPostgresTableOperator(
         task_id=task_id,
@@ -82,6 +98,18 @@ for config in migrations:
         table=config["destination_table"],
         dag=dag,
     )
+    drop_tables.append(drop_transient_table)
+    task_id = f"{config['task_name']}_drop_destination_table_if_exists"
+    if rebuild:
+        drop_destination_table = DropPostgresTableOperator(
+            task_id=task_id,
+            postgres_conn_id="postgres_datalake_conn_id",
+            schema="public",
+            table=f"raw_{config['destination_table']}",
+            depends_on_past=False,
+            dag=dag,
+        )
+        drop_tables.append(drop_destination_table)
 
     task_id = f"{config['task_name']}_migrate_to_postgres"
     mongo_to_postgres = MongoDBToPostgresViaDataframeOperator(
@@ -99,6 +127,7 @@ for config in migrations:
         preserve_fields=config.get("preserve_fields", {}),
         discard_fields=config.get("discard_fields", []),
         convert_fields=config.get("convert_fields", []),
+        rebuild=rebuild,
         dag=dag,
     )
     previous_task_id = task_id
@@ -170,7 +199,7 @@ for config in migrations:
         dag=dag,
     )
     (
-        drop_transient_table
+        drop_tables
         >> mongo_to_postgres
         >> has_records_to_process
         >> refresh_transient_table
@@ -180,6 +209,7 @@ for config in migrations:
         >> append_transient_table_data
         >> ensure_table_view_exists
         >> base_tables_completed
+        >> reset_rebuild_var_task
     )
     # append_transient_table_data >> base_tables_completed
     migration_tasks.append(drop_transient_table)
