@@ -38,6 +38,7 @@ class DropPostgresTableOperator(BaseOperator):
 
     def execute(self, context):
         try:
+
             hook = BaseHook.get_hook(self.postgres_conn_id)
 
             engine = self.get_postgres_sqlalchemy_engine(hook)
