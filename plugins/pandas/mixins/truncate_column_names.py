@@ -89,9 +89,9 @@ class TruncateColumnNamesMixin:
             if col.endswith("__v"):
                 print(f"Replacing __v column {col} to m_version")
                 col = col.replace("__v", "m_version")
-            if col.endswith("_id"):
+            if col.endswith("___id"):
                 print(f"Replacing _id column {col} to m_version")
-                col = col.replace("_id", "id")
+                col = col.replace("___id", "__id")
             print(f"Resulting column name is {col} {len(col)}")
             if len(col) <= total_max_length:
                 new_col = col
