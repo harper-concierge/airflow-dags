@@ -26,7 +26,11 @@ rebuild = Variable.get("REBUILD_MONGO_DATA", "False").lower() in ["true", "1", "
 
 
 def reset_rebuild_var():
-    Variable.set("REBUILD_MONGO_DATA", False)
+    Variable.set("REBUILD_MONGO_DATA", "False")
+
+
+def set_concurrently_var():
+    Variable.set("REFRESH_CONCURRENTLY", "False")
 
 
 # Now load the migrations
@@ -81,6 +85,12 @@ reset_rebuild_var_task = PythonOperator(
     dag=dag,
 )
 
+set_concurrently_var_task = PythonOperator(
+    task_id="set_concurrently_var",
+    depends_on_past=False,
+    python_callable=set_concurrently_var,
+    dag=dag,
+)
 
 base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
 exported_schemas_path = "../include/exportedSchemas/"
@@ -214,4 +224,6 @@ for config in migrations:
     # append_transient_table_data >> base_tables_completed
     migration_tasks.append(drop_transient_table)
 
+if rebuild:
+    reset_rebuild_var_task >> set_concurrently_var_task
 (wait_for_things_to_exist >> start_task >> migration_tasks)
