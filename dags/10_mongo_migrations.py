@@ -23,6 +23,10 @@ from plugins.operators.append_transient_table_data_operator import AppendTransie
 from data_migrations.aggregation_loader import load_aggregation_configs
 
 rebuild = Variable.get("REBUILD_MONGO_DATA", "False").lower() in ["true", "1", "yes"]
+if rebuild:
+    mongo_pool = "mongo_rebuild_pool"
+else:
+    mongo_pool = "mongo_default_pool"
 
 
 def reset_rebuild_var():
@@ -124,6 +128,7 @@ for config in migrations:
     task_id = f"{config['task_name']}_migrate_to_postgres"
     mongo_to_postgres = MongoDBToPostgresViaDataframeOperator(
         task_id=task_id,
+        pool=mongo_pool,
         mongo_conn_id="mongo_db_conn_id",
         postgres_conn_id="postgres_datalake_conn_id",
         preoperation=config.get("preoperation", None),
