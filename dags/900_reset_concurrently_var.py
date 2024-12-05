@@ -11,7 +11,7 @@ rebuild = Variable.get("REBUILD_MONGO_DATA", "False").lower() in ["true", "1", "
 
 
 def reset_concurrently_var():
-    Variable.set("CONCURRENTLY", "True")
+    Variable.set("REFRESH_CONCURRENTLY", "True")
 
 
 default_args = {
