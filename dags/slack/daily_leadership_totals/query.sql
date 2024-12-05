@@ -12,7 +12,9 @@ WITH latest_data AS (
     FROM
         public.rep__daily_total_metrics
     WHERE
-        date = (SELECT MAX(date) FROM public.rep__daily_total_metrics)
+        -- date = (SELECT MAX(date) FROM public.rep__daily_total_metrics)
+        date = '{{ dag_run.data_interval_start.strftime("%Y-%m-%d") }}'::date
+
 ),
 last_week_data AS (
     SELECT
@@ -28,7 +30,8 @@ last_week_data AS (
     FROM
         public.rep__daily_total_metrics
     WHERE
-        date = (SELECT MAX(date) FROM public.rep__daily_total_metrics) - INTERVAL '7 days'
+        date = ('{{ dag_run.data_interval_start.strftime("%Y-%m-%d") }}'::date - INTERVAL '7 days')
+        -- date = (SELECT MAX(date) FROM public.rep__daily_total_metrics) - INTERVAL '7 days'
 )
 SELECT
     l.date AS latest_date,
