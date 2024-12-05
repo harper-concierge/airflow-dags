@@ -2,10 +2,9 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.sensors.external_task import ExternalTaskSensor
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 
-from plugins.utils.run_dynamic_sql_task import run_dynamic_sql_task
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
-from plugins.utils.get_recursive_entities_for_sql_types import get_recursive_entities_for_sql_types
 
 default_args = {
     "owner": "airflow",
@@ -17,12 +16,10 @@ default_args = {
     "on_failure_callback": [send_harper_failure_notification()],
 }
 
-
-sql_type = "cleansers"
-add_table_columns_to_context = get_recursive_entities_for_sql_types(["dimensions"])
+sql_type = "indexes"
 
 dag = DAG(
-    f"50_create_{sql_type}_dag",
+    "49_analyze_tables_dag",
     catchup=False,
     default_args=default_args,
     max_active_runs=1,  # This ensures sequential execution
@@ -31,15 +28,17 @@ dag = DAG(
 
 wait_for_task = ExternalTaskSensor(
     task_id="wait_for_indexes_to_complete",
-    external_dag_id="49_analyze_tables_dag",  # The ID of the DAG you're waiting for
+    external_dag_id="45_create_indexes_dag",  # The ID of the DAG you're waiting for
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
     allowed_states=["success"],  # You might need to customize this part
     dag=dag,
 )
 
-run_dynamic_sql_task(
-    dag,
-    wait_for_task=wait_for_task,
-    sql_type=sql_type,
-    add_table_columns_to_context=add_table_columns_to_context,
+analyze_all_tables = PostgresOperator(
+    task_id="analyze_all_tables",
+    postgres_conn_id="postgres_datalake_conn_id",
+    sql="ANALYZE;",
+    dag=dag,
 )
+
+wait_for_task >> analyze_all_tables

@@ -5,7 +5,7 @@
       "type": "header",
       "text": {
         "type": "plain_text",
-        "text": "Daily Orders - {{ results_df.iloc[0].latest_date.strftime('%A  %Y-%m-%d') }} ( vs {{ results_df.iloc[0].last_week_date.strftime('%Y-%m-%d') }})",
+        "text": "{{ dag_run.data_interval_start.strftime('%A') }}'s Orders - {{ dag_run.data_interval_start.strftime('%Y-%m-%d') }} ( vs {{ last_week_date.strftime('%Y-%m-%d') }})",
         "emoji": true
       }
     },

@@ -1,5 +1,6 @@
 import pandas as pd
-from truncate_column_names import SquashableDataFrame
+
+from plugins.pandas.mixins.truncate_column_names import SquashableDataFrame
 
 
 class TestTruncateColumnNames:
@@ -54,4 +55,4 @@ class TestTruncateColumnNames:
 
 
 # Run the tests
-TestTruncateColumnNames.run_tests()
+# TestTruncateColumnNames.run_tests()

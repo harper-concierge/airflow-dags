@@ -14,7 +14,7 @@ default_args = {
     "owner": "airflow",
     "start_date": datetime(2019, 7, 14),
     "schedule_interval": "@daily",
-    "depends_on_past": True,
+    "depends_on_past": False,
     "retry_delay": timedelta(minutes=5),
     "retries": 0,
     "on_failure_callback": [send_harper_failure_notification()],
