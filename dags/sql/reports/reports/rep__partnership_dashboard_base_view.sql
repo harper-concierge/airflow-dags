@@ -114,9 +114,6 @@ SELECT
     SUM(CASE WHEN item_is_inspire_me = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0 END)/100 AS inspire_me_purchased_value,
         SUM(CASE WHEN item_is_inspire_me = 1 AND returned = 1 THEN item__item_value_pence ELSE 0 END)/100 AS inspire_me_returned_value,
 
-
-
-
     -- Initiated Sale metrics
     SUM(CASE WHEN item_is_initiated_sale = 1 THEN 1 ELSE 0 END) AS initiated_sale_ordered,
     SUM(CASE WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN 1 ELSE 0 END) AS initiated_sale_items_purchased,
@@ -124,7 +121,6 @@ SELECT
     SUM(CASE WHEN item_is_initiated_sale = 1 THEN item__item_value_pence ELSE 0 END)/100 AS initiated_sale_ordered_value,
     SUM(CASE WHEN item_is_initiated_sale = 1 AND purchased = 1 THEN item__item_value_pence ELSE 0 END)/100 AS initiated_sale_purchased_value,
     SUM(CASE WHEN item_is_initiated_sale = 1 AND returned = 1 THEN item__item_value_pence ELSE 0 END)/100 AS initiated_sale_returned_value,
-
 
     -- Item counts
     SUM(missing) AS number_items_missing,
@@ -188,7 +184,6 @@ GROUP BY
     regional_daily_atv,
     regional_daily_upt
 
-
 WITH NO DATA;
 
 -- Create optimized indexes
@@ -217,6 +212,3 @@ ON {{ schema }}.rep__partnership_dashboard_base_view (order__name, order_created
 
 -- Refresh the view
 REFRESH MATERIALIZED VIEW {{ schema }}.rep__partnership_dashboard_base_view;
-
--- Analyze for query optimization
-ANALYZE {{ schema }}.rep__partnership_dashboard_base_view;
