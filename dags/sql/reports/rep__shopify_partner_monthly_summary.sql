@@ -1,8 +1,7 @@
-{% if is_modified %}
-DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__shopify_partner_monthly_summary CASCADE;
-{% endif %}
+--DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__shopify_partner_monthly_summary CASCADE;
+DROP VIEW IF EXISTS {{ schema }}.rep__shopify_partner_monthly_summary CASCADE;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__shopify_partner_monthly_summary AS
+CREATE VIEW {{ schema }}.rep__shopify_partner_monthly_summary AS
    WITH base_orders AS (
   SELECT
       po.harper_product AS harper__product,
@@ -15,12 +14,9 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__shopify_partner_monthly
       po.value_ordered,
       po.value_returned,
       po.cancelled_at,
-      po.london
-      CASE
-          po.harper_product IS NOT NULL THEN 'Harper'
-          WHEN source_name = 'web' THEN 'Web'
-      END AS source,
-      CASE WHEN ((items_ordered::bigint) - (items_returned::bigint)) >= 1 THEN 1 ELSE 0 END AS keep
+      po.london,
+      po.channel,
+      po.keep
   FROM {{ schema }}.clean__shopify_partner_orders po
   LEFT JOIN {{ schema }}.clean__order__summary co ON po.name = co.order_name
 ),
@@ -43,7 +39,7 @@ SELECT
   TO_CHAR(created_at, 'YYYY-MM-01') AS year_month,
   partner__name,
   partner__reference,
-  source,
+  channel,
   harper__product,
   analysis_region,
   COUNT(DISTINCT name) AS orders,
@@ -65,27 +61,16 @@ SELECT
   COALESCE((ROUND((SUM(value_returned)/NULLIF(SUM(value_ordered), 0))::decimal, 2))::decimal, 0) AS return_rate_value,
   ROUND((SUM(keep)::numeric/NULLIF(COUNT(DISTINCT name), 0)),2) AS keep_rate
 FROM london_data
-WHERE source IN ('Web','Harper')
+WHERE channel IN ('Online Store','Harper')
 AND analysis_region IS NOT NULL
 GROUP BY
   partner__name,
   partner__reference,
   TO_CHAR(created_at, 'YYYY-MM-01'),
-  source,
+  channel,
   harper__product,
   analysis_region
 ORDER BY
   partner__name,
   TO_CHAR(created_at, 'YYYY-MM-01'),
   analysis_region;
-
-{% if is_modified %}
-CREATE UNIQUE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_id_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(id);
-CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_year_month_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(year_month);
-CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_partner_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(partner__name);
-CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_partner__reference_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(partner__reference);
-CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_analysis_region_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(analysis_region);
-CREATE INDEX IF NOT EXISTS rep__shopify_partner_monthly_summary_harper__product_idx ON {{ schema }}.rep__shopify_partner_monthly_summary(harper__product);
-{% endif %}
-
-REFRESH MATERIALIZED VIEW {{ schema }}.rep__shopify_partner_monthly_summary;

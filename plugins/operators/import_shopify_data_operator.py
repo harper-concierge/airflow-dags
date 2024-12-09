@@ -665,7 +665,6 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
 
     def _process_additional_fields(self, df: pd.DataFrame) -> pd.DataFrame:
         # Ensure df is not None and is a DataFrame
-
         df["order_name"] = df["name"]
         for field in ["line_items", "fulfillments", "refunds"]:
             df[field] = df[field].apply(self.parse_json_field)
@@ -693,14 +692,22 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
         )
         df["fulfilled_at"] = df["fulfillments"].apply(lambda x: x[-1]["created_at"] if x else None)
 
-        # print(df.head)
+        def get_harper_product(
+            tags,
+        ):  # This was incorrect before and therefore past data will be incorrect, needs backfill
+            if not isinstance(tags, str):
+                return None
+
+            tags_lower = tags.lower()
+            if "harper_try" in tags_lower or "harper:try" in tags_lower:
+                return "harper_try"
+            elif "harper_concierge" in tags_lower or "harper:concierge" in tags_lower:
+                return "harper_concierge"
+            return None
 
         # Add the new harper_product field
-        df["harper_product"] = df["tags"].apply(
-            lambda tags: (
-                "harper_try" if "harper_try" in tags else ("harper_concierge" if "harper_concierge" in tags else None)
-            )
-        )
+        df["harper_product"] = df["tags"].apply(get_harper_product)
+
         return df
 
     def align_to_schema(self, df):

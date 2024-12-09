@@ -18,9 +18,10 @@ monthly_kpi_data AS (
        orders,
        total_value_ordered,
        net_ATV,
-       net_UPT
+       net_UPT,
+       net_ASP
    FROM public.rep__shopify_partner_monthly_summary
-   WHERE source = 'Web'
+   WHERE channel = 'Online Store'
 ),
 
 daily_summary AS (
@@ -31,9 +32,10 @@ daily_summary AS (
        orders as daily_orders,
        total_value_ordered as daily_value,
        net_ATV as daily_atv,
-       net_UPT as daily_upt
+       net_UPT as daily_upt,
+       net_ASP as daily_asp
    FROM public.rep__shopify_partner_daily_summary
-   WHERE source = 'Web'
+   WHERE channel = 'Online Store'
 ),
 
 base_orders AS (
@@ -57,7 +59,8 @@ base_orders AS (
            ELSE o.original_order_name
        END AS original_order_name_merge,
        CASE
-           WHEN order_cancelled_status LIKE '%%Cancelled%%' OR o.order_status = 'cancelled'
+           WHEN order_cancelled_status IN ('Cancelled post shipment', 'Cancelled - no email triggered', 'Cancelled pre shipment')
+            OR o.order_status = 'cancelled'
            THEN 1 ELSE 0
        END AS is_cancelled,
        CASE
@@ -172,6 +175,11 @@ SELECT
        WHEN harper_product_type = 'harper_concierge' THEN ds.daily_upt
        ELSE ds.daily_upt
    END as daily_brand_upt,
+   CASE
+       WHEN harper_product_type = 'harper_concierge' THEN ds.daily_asp
+       ELSE ds.daily_asp
+   END as daily_brand_asp,
+
 
    -- Monthly KPIs
    CASE
@@ -189,7 +197,11 @@ SELECT
    CASE
        WHEN harper_product_type = 'harper_concierge' THEN m.net_UPT
        ELSE m.net_UPT
-   END as monthly_brand_upt
+   END as monthly_brand_upt,
+   CASE
+       WHEN harper_product_type = 'harper_concierge' THEN m.net_ASP
+       ELSE m.net_ASP
+   END as monthly_brand_asp
 
 FROM base_orders bo
 LEFT JOIN daily_summary ds
@@ -231,29 +243,34 @@ GROUP BY
    ds.daily_value,
    ds.daily_atv,
    ds.daily_upt,
+   ds.daily_asp,
    m.orders,
    m.total_value_ordered,
    m.net_ATV,
-   m.net_UPT
-
+   m.net_UPT,
+   m.net_ASP
 
 WITH NO DATA;
 
 -- Create optimized indexes
 {% if is_modified %}
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_original_order_name_idx ON {{ schema }}.rep__partnership_dashboard_base_view (original_order_name_merge);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__name_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__name);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_happened_idx ON {{ schema }}.rep__partnership_dashboard_base_view (happened);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_brand_name_idx ON {{ schema }}.rep__partnership_dashboard_base_view (brand_name);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_harper_product_type_idx ON {{ schema }}.rep__partnership_dashboard_base_view (harper_product_type);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__type_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__type);
+CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_is_cancelled_idx ON {{ schema }}.rep__partnership_dashboard_base_view (is_cancelled);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__status_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__status);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__order_created_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order_created_date);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_completion_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (completion_date);
 -- Composite indexes for common query patterns
 -- For KPI analysis
 CREATE INDEX idx_brand_kpi_daily ON {{ schema }}.rep__partnership_dashboard_base_view
-(brand_name, order_created_date) INCLUDE (daily_brand_orders, daily_brand_value, daily_brand_atv, daily_brand_upt);
+(brand_name, order_created_date) INCLUDE (daily_brand_orders, daily_brand_value, daily_brand_atv, daily_brand_upt,daily_brand_asp);
 
 CREATE INDEX idx_brand_kpi_monthly ON {{ schema }}.rep__partnership_dashboard_base_view
-(brand_name, order__createdat__dim_yearmonth) INCLUDE (monthly_brand_orders, monthly_brand_value, monthly_brand_atv, monthly_brand_upt);
+(brand_name, order__createdat__dim_yearmonth) INCLUDE (monthly_brand_orders, monthly_brand_value, monthly_brand_atv, monthly_brand_upt,monthly_brand_asp);
 
 CREATE INDEX idx_brand_kpi_type ON {{ schema }}.rep__partnership_dashboard_base_view
 (brand_name, harper_product_type) INCLUDE (daily_brand_orders, monthly_brand_orders);
