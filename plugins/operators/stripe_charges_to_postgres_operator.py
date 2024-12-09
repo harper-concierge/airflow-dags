@@ -31,7 +31,10 @@ class StripeChargesToPostgresOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin
         self.destination_table = destination_table
         self.postgres_conn_id = postgres_conn_id
         self.stripe_conn_id = stripe_conn_id
-        self.discard_fields = ["source"]  # discard unnecessary fields like source
+        self.discard_fields = [
+            "source",
+            "payment_method_details__card__wallet__apple_pay__type",
+        ]  # discard unnecessary fields like source
         # self.discard_flattenned_fields = ["outcome__network_advice_code"]  # discard unnecessary fields like source
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_charge_id"
