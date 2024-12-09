@@ -21,7 +21,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__shopify_partner_monthly
           WHEN source_name = 'web' THEN 'Web'
       END AS source,
       CASE WHEN ((items_ordered::bigint) - (items_returned::bigint)) >= 1 THEN 1 ELSE 0 END AS keep
-  FROM {{ schema }}.shopify_partner_orders po
+  FROM {{ schema }}.clean__shopify_partner_orders po
   LEFT JOIN {{ schema }}.clean__order__summary co ON po.name = co.order_name
 ),
 

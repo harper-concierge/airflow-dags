@@ -5,29 +5,22 @@ DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__shopify_partner_daily_summary
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__shopify_partner_daily_summary AS
     WITH base_orders AS (
    SELECT
-       CASE
-           WHEN (order_type = 'harper_try' OR harper_product = 'harper_try') THEN 'harper_try'
-           WHEN (payment_gateway_names = 'Harper Payments' OR co.original_order_name IS NOT NULL) THEN 'harper_concierge'
-           ELSE NULL
-       END AS harper__product,
-       po.name,
-       CASE
-           WHEN LOWER(po.shipping_address__city) = 'london' THEN 'London'
-           ELSE 'Outside_London'
-       END AS region,
-       po.created_at,
-       po.partner__name,
-       po.partner__reference,
-       po.items_ordered,
-       po.items_returned,
-       po.value_ordered,
-       po.value_returned,
-       po.cancelled_at,
-       CASE
-           WHEN tags LIKE '%%harper%%' OR payment_gateway_names = 'Harper Payments' OR co.order_name IS NOT NULL THEN 'Harper'
-           WHEN source_name = 'web' THEN 'Web'
-       END AS source,
-       CASE WHEN ((items_ordered::bigint) - (items_returned::bigint)) >= 1 THEN 1 ELSE 0 END AS keep
+    po.harper_product AS harper__product,
+    po.name,
+    po.london,
+    po.created_at,
+    po.partner__name,
+    po.partner__reference,
+    po.items_ordered,
+    po.items_returned,
+    po.value_ordered,
+    po.value_returned,
+    po.cancelled_at,
+    CASE
+        WHEN tags LIKE '%%harper%%' OR payment_gateway_names = 'Harper Payments' OR co.order_name IS NOT NULL THEN 'Harper'
+        WHEN source_name = 'web' THEN 'Web'
+    END AS source,
+    CASE WHEN ((items_ordered::bigint) - (items_returned::bigint)) >= 1 THEN 1 ELSE 0 END AS keep
    FROM {{ schema }}.shopify_partner_orders po
    LEFT JOIN {{ schema }}.clean__order__summary co ON po.name = co.order_name
 ),
@@ -35,7 +28,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__shopify_partner_daily_s
 london_data AS (
    SELECT *,
    CASE
-       WHEN region = 'London' THEN 'London'
+       WHEN london = 1 THEN 'London'
        ELSE NULL
    END AS analysis_region
    FROM base_orders
