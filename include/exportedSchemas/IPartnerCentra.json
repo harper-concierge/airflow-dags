@@ -25,12 +25,7 @@
                     "bsonType": "string",
                     "type": "string"
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "checkout_api_endpoint",
-                "checkout_api_token"
-            ]
+            }
         },
         "external_payments_api": {
             "bsonType": "object",
@@ -48,13 +43,7 @@
                     "bsonType": "string",
                     "type": "string"
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "external_payments_api_endpoint",
-                "external_payments_api_access_key",
-                "external_payments_plugin_secret"
-            ]
+            }
         },
         "dtc_api": {
             "bsonType": "object",
@@ -72,13 +61,7 @@
                     "bsonType": "string",
                     "type": "string"
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "dtc_api_endpoint",
-                "dtc_api_shared_secret",
-                "dtc_api_session_mode_token"
-            ]
+            }
         },
         "order_api": {
             "bsonType": "object",
@@ -92,12 +75,7 @@
                     "bsonType": "string",
                     "type": "string"
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "order_api_endpoint",
-                "order_api_secret"
-            ]
+            }
         },
         "integration_api": {
             "bsonType": "object",
@@ -111,12 +89,7 @@
                     "bsonType": "string",
                     "type": "string"
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "integration_api_endpoint",
-                "integration_api_token"
-            ]
+            }
         },
         "configured_payment_method": {
             "bsonType": "string",
@@ -146,24 +119,17 @@
                             "bsonType": "string",
                             "type": "string"
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "harper",
-                        "harper_try",
-                        "harper_concierge"
-                    ]
+                    }
+                },
+                "ingrid_api_key": {
+                    "bsonType": "string",
+                    "type": "string"
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "ingrid_enabled",
-                "ingrid_attributes"
-            ]
+            }
         },
         "webhooks": {
-            "type": "object",
             "bsonType": "object",
+            "type": "object",
             "properties": {
                 "webhook_fulfillment_secret": {
                     "type": "string",
@@ -177,13 +143,14 @@
                     "type": "string",
                     "bsonType": "string"
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "webhook_fulfillment_secret",
-                "webhook_refund_secret",
-                "webhook_cancel_secret"
-            ]
+            }
+        },
+        "tracking_provider_lookup": {
+            "type": "object",
+            "bsonType": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
         },
         "__v": {
             "bsonType": [

@@ -7,7 +7,6 @@ from datetime import datetime
 
 import pandas as pd
 from bson import ObjectId, json_util
-from pandas import DataFrame
 from sqlalchemy import create_engine
 from airflow.models import XCom, BaseOperator
 from airflow.exceptions import AirflowException
@@ -19,6 +18,8 @@ from plugins.utils.render_template import render_template
 from plugins.utils.field_conversions import convert_field
 from plugins.utils.detect_duplicate_columns import detect_duplicate_columns
 from plugins.utils.json_schema_to_flattened_numpy_datatypes import json_schema_to_flattened_numpy_datatypes
+
+from plugins.pandas.mixins.truncate_column_names import SquashableDataFrame
 
 pd.set_option("display.max_rows", 10)  # or a large number instead of None
 pd.set_option("display.max_columns", None)  # Display any number of columns
@@ -48,6 +49,7 @@ class MongoDBToPostgresViaDataframeOperator(BaseOperator):
     :type jsonschema: str
     :param unwind: Field to Unwind
     :type unwind: str
+    :type rebuild: bool
     :param preserve_fields: Fields that you create during the aggregation stage that you want to keep, but don't exist in the json Schema  # noqa
     :type preserve_fields: Optional[List[str]]
     :param discard_fields: Fields that you don't want to keep that despite them existing in the json Schema
@@ -72,6 +74,7 @@ class MongoDBToPostgresViaDataframeOperator(BaseOperator):
         jsonschema: str,
         destination_table: str,
         destination_schema: str,
+        rebuild: bool,
         unwind: Optional[str] = None,
         preserve_fields: Optional[Dict] = {},
         discard_fields: Optional[List[str]] = [],
@@ -91,6 +94,7 @@ class MongoDBToPostgresViaDataframeOperator(BaseOperator):
         self.destination_table = destination_table
         self.destination_schema = destination_schema
         self.unwind = unwind
+        self.rebuild = rebuild
         self.preserve_fields = preserve_fields or {}
         self.discard_fields = discard_fields or []
         self.convert_fields = convert_fields or []
@@ -153,7 +157,8 @@ END $$;
 
                     aggregation_query = self._prepare_aggregation_query()
                     self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
-                    conn.execute(self.delete_sql)
+                    if not self.rebuild:
+                        conn.execute(self.delete_sql)
 
                     while True:
                         aggregation_query = self._prepare_runtime_aggregation_query(
@@ -178,7 +183,7 @@ END $$;
                         total_docs_processed += len(documents)
 
                         print("TOTAL docs after", len(documents))
-                        select_df = DataFrame(list(documents))
+                        select_df = pd.DataFrame(list(documents))
 
                         print("TOTAL df", select_df.shape)
 
@@ -215,8 +220,14 @@ END $$;
                         insert_df["airflow_sync_ds"] = ds
                         # Make all column names lowercase
                         insert_df.columns = insert_df.columns.str.lower()
-                        pprint(insert_df.iloc[0])
-                        insert_df.to_sql(
+                        squashable_df = SquashableDataFrame(insert_df)
+
+                        squashable_df = squashable_df.squash_column_names(squashable_df)
+
+                        print("TOTAL AFTER SQUASHING df", squashable_df.shape)
+                        print("SQUASHED COLUMNS", squashable_df.columns)
+                        pprint(squashable_df.iloc[0])
+                        squashable_df.to_sql(
                             self.destination_table,
                             conn,
                             if_exists="append",
@@ -536,18 +547,19 @@ END $$;
 
     @provide_session
     def get_last_successful_dagrun_ts(self, run_id, session=None):
-        query = XCom.get_many(
-            include_prior_dates=True,
-            dag_ids=self.dag_id,
-            run_id=run_id,
-            task_ids=self.task_id,
-            key=self.last_successful_dagrun_xcom_key,
-            session=session,
-            limit=1,
-        )
+        if not self.rebuild:
+            query = XCom.get_many(
+                include_prior_dates=True,
+                dag_ids=self.dag_id,
+                run_id=run_id,
+                task_ids=self.task_id,
+                key=self.last_successful_dagrun_xcom_key,
+                session=session,
+                limit=1,
+            )
 
-        xcom = query.first()
-        if xcom:
-            return datetime.fromisoformat(xcom.value)
+            xcom = query.first()
+            if xcom:
+                return datetime.fromisoformat(xcom.value)
 
         return None

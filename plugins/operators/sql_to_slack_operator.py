@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any, Mapping, Iterable, Sequence
+from datetime import timedelta
 
 from tabulate import tabulate
 from airflow.models import Variable
@@ -82,6 +83,9 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
         """
         # Add the DataFrame to the context for Jinja2 rendering
         context[self.results_df_name] = df
+        context["last_week_date"] = context["dag_run"].data_interval_start - timedelta(days=7)
+
+        print("Results", df)
 
         # Ensure slack_config is rendered with context
         self.render_template_fields(context)
@@ -162,11 +166,15 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
         :param context: Airflow's execution context.
         :param jinja_env: Custom Jinja2 environment (optional).
         """
+
+        print("context", context)
         if self.times_rendered == 0:
             # On the first render, exclude slack_message since query results are not yet retrieved
             fields_to_render: Iterable[str] = (x for x in self.template_fields if x != "slack_config")
         else:
             fields_to_render = self.template_fields
+
+        print("fields_to_render", fields_to_render)
 
         # Use the default Jinja environment if none is provided
         if not jinja_env:

@@ -678,10 +678,8 @@
                         ]
                     },
                     "item_validation": {
+                        "bsonType": "object",
                         "type": "object",
-                        "bsonType": [
-                            "object"
-                        ],
                         "properties": {
                             "is_qualified_item": {
                                 "type": "boolean",
@@ -707,8 +705,7 @@
                                     "bool"
                                 ]
                             }
-                        },
-                        "additionalProperties": false
+                        }
                     },
                     "taxable": {
                         "type": "boolean",
@@ -717,21 +714,126 @@
                         ]
                     },
                     "services": {
-                        "type": "object",
                         "bsonType": "object",
+                        "type": "object",
                         "properties": {
                             "harper_try": {
+                                "title": "IItemHarperTryServiceSchema",
                                 "type": "object",
-                                "bsonType": "object",
-                                "tsType": "IItemHarperTryServiceSchema"
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "service_name": {
+                                        "bsonType": [
+                                            "string"
+                                        ],
+                                        "enum": [
+                                            "harper_try"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "item_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_preorder_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_partially_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "__v": {
+                                        "bsonType": [
+                                            "int"
+                                        ],
+                                        "type": "integer"
+                                    },
+                                    "createdAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "updatedAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "service_name"
+                                ]
                             },
                             "harper_concierge": {
+                                "title": "IItemHarperConciergeServiceSchema",
                                 "type": "object",
-                                "bsonType": "object",
-                                "tsType": "IItemHarperConciergeServiceSchema"
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "service_name": {
+                                        "bsonType": [
+                                            "string"
+                                        ],
+                                        "enum": [
+                                            "harper_concierge"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "item_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_preorder_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_partially_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "__v": {
+                                        "bsonType": [
+                                            "int"
+                                        ],
+                                        "type": "integer"
+                                    },
+                                    "createdAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "updatedAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "service_name"
+                                ]
                             }
-                        },
-                        "additionalProperties": false
+                        }
                     },
                     "__v": {
                         "bsonType": [
@@ -1356,10 +1458,8 @@
                         ]
                     },
                     "item_validation": {
+                        "bsonType": "object",
                         "type": "object",
-                        "bsonType": [
-                            "object"
-                        ],
                         "properties": {
                             "is_qualified_item": {
                                 "type": "boolean",
@@ -1385,8 +1485,7 @@
                                     "bool"
                                 ]
                             }
-                        },
-                        "additionalProperties": false
+                        }
                     },
                     "taxable": {
                         "type": "boolean",
@@ -1395,21 +1494,126 @@
                         ]
                     },
                     "services": {
-                        "type": "object",
                         "bsonType": "object",
+                        "type": "object",
                         "properties": {
                             "harper_try": {
+                                "title": "IItemHarperTryServiceSchema",
                                 "type": "object",
-                                "bsonType": "object",
-                                "tsType": "IItemHarperTryServiceSchema"
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "service_name": {
+                                        "bsonType": [
+                                            "string"
+                                        ],
+                                        "enum": [
+                                            "harper_try"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "item_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_preorder_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_partially_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "__v": {
+                                        "bsonType": [
+                                            "int"
+                                        ],
+                                        "type": "integer"
+                                    },
+                                    "createdAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "updatedAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "service_name"
+                                ]
                             },
                             "harper_concierge": {
+                                "title": "IItemHarperConciergeServiceSchema",
                                 "type": "object",
-                                "bsonType": "object",
-                                "tsType": "IItemHarperConciergeServiceSchema"
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "service_name": {
+                                        "bsonType": [
+                                            "string"
+                                        ],
+                                        "enum": [
+                                            "harper_concierge"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "item_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_preorder_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_partially_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "__v": {
+                                        "bsonType": [
+                                            "int"
+                                        ],
+                                        "type": "integer"
+                                    },
+                                    "createdAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "updatedAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "service_name"
+                                ]
                             }
-                        },
-                        "additionalProperties": false
+                        }
                     },
                     "__v": {
                         "bsonType": [
@@ -2028,10 +2232,8 @@
                         ]
                     },
                     "item_validation": {
+                        "bsonType": "object",
                         "type": "object",
-                        "bsonType": [
-                            "object"
-                        ],
                         "properties": {
                             "is_qualified_item": {
                                 "type": "boolean",
@@ -2057,8 +2259,7 @@
                                     "bool"
                                 ]
                             }
-                        },
-                        "additionalProperties": false
+                        }
                     },
                     "taxable": {
                         "type": "boolean",
@@ -2067,21 +2268,126 @@
                         ]
                     },
                     "services": {
-                        "type": "object",
                         "bsonType": "object",
+                        "type": "object",
                         "properties": {
                             "harper_try": {
+                                "title": "IItemHarperTryServiceSchema",
                                 "type": "object",
-                                "bsonType": "object",
-                                "tsType": "IItemHarperTryServiceSchema"
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "service_name": {
+                                        "bsonType": [
+                                            "string"
+                                        ],
+                                        "enum": [
+                                            "harper_try"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "item_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_preorder_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_partially_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "__v": {
+                                        "bsonType": [
+                                            "int"
+                                        ],
+                                        "type": "integer"
+                                    },
+                                    "createdAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "updatedAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "service_name"
+                                ]
                             },
                             "harper_concierge": {
+                                "title": "IItemHarperConciergeServiceSchema",
                                 "type": "object",
-                                "bsonType": "object",
-                                "tsType": "IItemHarperConciergeServiceSchema"
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "service_name": {
+                                        "bsonType": [
+                                            "string"
+                                        ],
+                                        "enum": [
+                                            "harper_concierge"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "item_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_preorder_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_partially_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "__v": {
+                                        "bsonType": [
+                                            "int"
+                                        ],
+                                        "type": "integer"
+                                    },
+                                    "createdAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "updatedAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "service_name"
+                                ]
                             }
-                        },
-                        "additionalProperties": false
+                        }
                     },
                     "__v": {
                         "bsonType": [
@@ -2713,10 +3019,8 @@
                         ]
                     },
                     "item_validation": {
+                        "bsonType": "object",
                         "type": "object",
-                        "bsonType": [
-                            "object"
-                        ],
                         "properties": {
                             "is_qualified_item": {
                                 "type": "boolean",
@@ -2742,8 +3046,7 @@
                                     "bool"
                                 ]
                             }
-                        },
-                        "additionalProperties": false
+                        }
                     },
                     "taxable": {
                         "type": "boolean",
@@ -2752,21 +3055,126 @@
                         ]
                     },
                     "services": {
-                        "type": "object",
                         "bsonType": "object",
+                        "type": "object",
                         "properties": {
                             "harper_try": {
+                                "title": "IItemHarperTryServiceSchema",
                                 "type": "object",
-                                "bsonType": "object",
-                                "tsType": "IItemHarperTryServiceSchema"
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "service_name": {
+                                        "bsonType": [
+                                            "string"
+                                        ],
+                                        "enum": [
+                                            "harper_try"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "item_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_preorder_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_partially_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "__v": {
+                                        "bsonType": [
+                                            "int"
+                                        ],
+                                        "type": "integer"
+                                    },
+                                    "createdAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "updatedAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "service_name"
+                                ]
                             },
                             "harper_concierge": {
+                                "title": "IItemHarperConciergeServiceSchema",
                                 "type": "object",
-                                "bsonType": "object",
-                                "tsType": "IItemHarperConciergeServiceSchema"
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "service_name": {
+                                        "bsonType": [
+                                            "string"
+                                        ],
+                                        "enum": [
+                                            "harper_concierge"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "item_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_preorder_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "item_partially_block_list": {
+                                        "type": "boolean",
+                                        "bsonType": [
+                                            "boolean"
+                                        ]
+                                    },
+                                    "__v": {
+                                        "bsonType": [
+                                            "int"
+                                        ],
+                                        "type": "integer"
+                                    },
+                                    "createdAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "updatedAt": {
+                                        "bsonType": [
+                                            "date"
+                                        ],
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "service_name"
+                                ]
                             }
-                        },
-                        "additionalProperties": false
+                        }
                     },
                     "__v": {
                         "bsonType": [
@@ -2887,11 +3295,8 @@
             ]
         },
         "experiment": {
-            "title": "experiment",
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "experiment_id": {
                     "type": "string",
@@ -2923,15 +3328,11 @@
                         "string"
                     ]
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "appointment": {
-            "title": "appointment",
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "date": {
                     "type": "string",
@@ -2953,15 +3354,11 @@
                         "string"
                     ]
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "timekit_details": {
-            "title": "timekit_details",
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "resource_id": {
                     "type": "string",
@@ -2977,8 +3374,7 @@
                     ],
                     "default": " "
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "appointments": {
             "type": "array",
@@ -3477,11 +3873,8 @@
             ]
         },
         "customer_details": {
-            "title": "customer_details",
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "name": {
                     "type": "string",
@@ -3525,8 +3918,7 @@
                     ],
                     "default": " "
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "order_status": {
             "type": "string",
@@ -3869,11 +4261,8 @@
             }
         },
         "link_order": {
-            "title": "link_order",
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "parent_order_id": {
                     "type": "array",
@@ -3998,8 +4387,7 @@
                         ]
                     }
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "number_of_items_ordered": {
             "type": "integer",
@@ -4014,10 +4402,8 @@
             ]
         },
         "ordered_items_calculated": {
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "total_value_less_discount": {
                     "type": "integer",
@@ -4025,8 +4411,7 @@
                         "int"
                     ]
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "number_of_items_ordered_original": {
             "type": "integer",
@@ -4414,11 +4799,8 @@
             ]
         },
         "green_slot": {
-            "title": "green_slot",
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "appointment": {
                     "type": "boolean",
@@ -4438,8 +4820,7 @@
                         "int"
                     ]
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "call_to_action_by_customer": {
             "type": "string",
@@ -4454,11 +4835,8 @@
             ]
         },
         "discount_in_appointment": {
-            "title": "discount_in_appointment",
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "discount_applied": {
                     "type": "boolean",
@@ -4500,15 +4878,11 @@
                     ],
                     "default": " "
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "location": {
-            "title": "location",
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "type": {
                     "type": "string",
@@ -4524,8 +4898,7 @@
                     ],
                     "default": []
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "greenslot_live": {
             "type": "boolean",
@@ -4891,6 +5264,12 @@
                     "required": [
                         "rule_type",
                         "min_price"
+                    ]
+                },
+                "carrier_id_name": {
+                    "type": "string",
+                    "bsonType": [
+                        "string"
                     ]
                 },
                 "__v": {

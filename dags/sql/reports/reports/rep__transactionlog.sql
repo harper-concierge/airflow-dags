@@ -65,4 +65,4 @@ CREATE INDEX IF NOT EXISTS rep__transactionlog_order_type_idx ON {{ schema }}.re
 
 {% endif %}
 
-REFRESH MATERIALIZED VIEW {{ schema }}.rep__transactionlog;
+REFRESH MATERIALIZED VIEW {{ concurrently }} {{ schema }}.rep__transactionlog;

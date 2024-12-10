@@ -4,10 +4,8 @@
     "bsonType": "object",
     "properties": {
         "day_0": {
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "day_name": {
                     "type": "string",
@@ -52,10 +50,8 @@
                     ]
                 },
                 "before_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -69,18 +65,11 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 },
                 "after_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -94,32 +83,13 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "day_name",
-                "day_number",
-                "offset_days",
-                "additional_offset_from",
-                "additional_offset_from_in_days",
-                "available_from_before_cutoff",
-                "available_from_after_cutoff",
-                "before_offset",
-                "after_offset"
-            ]
+            }
         },
         "day_1": {
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "day_name": {
                     "type": "string",
@@ -170,10 +140,8 @@
                     ]
                 },
                 "before_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -187,18 +155,11 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 },
                 "after_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -212,33 +173,13 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "day_name",
-                "day_number",
-                "offset_days",
-                "additional_offset_from",
-                "additional_offset_from_in_days",
-                "change_timekit_time_from",
-                "available_from_before_cutoff",
-                "available_from_after_cutoff",
-                "before_offset",
-                "after_offset"
-            ]
+            }
         },
         "day_2": {
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "day_name": {
                     "type": "string",
@@ -283,10 +224,8 @@
                     ]
                 },
                 "before_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -300,18 +239,11 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 },
                 "after_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -325,32 +257,13 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "day_name",
-                "day_number",
-                "offset_days",
-                "additional_offset_from",
-                "additional_offset_from_in_days",
-                "available_from_before_cutoff",
-                "available_from_after_cutoff",
-                "before_offset",
-                "after_offset"
-            ]
+            }
         },
         "day_3": {
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "day_name": {
                     "type": "string",
@@ -395,10 +308,8 @@
                     ]
                 },
                 "before_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -412,18 +323,11 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 },
                 "after_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -437,32 +341,13 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "day_name",
-                "day_number",
-                "offset_days",
-                "additional_offset_from",
-                "additional_offset_from_in_days",
-                "available_from_before_cutoff",
-                "available_from_after_cutoff",
-                "before_offset",
-                "after_offset"
-            ]
+            }
         },
         "day_4": {
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "day_name": {
                     "type": "string",
@@ -507,10 +392,8 @@
                     ]
                 },
                 "before_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -524,18 +407,11 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 },
                 "after_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -549,32 +425,13 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "day_name",
-                "day_number",
-                "offset_days",
-                "additional_offset_from",
-                "additional_offset_from_in_days",
-                "available_from_before_cutoff",
-                "available_from_after_cutoff",
-                "before_offset",
-                "after_offset"
-            ]
+            }
         },
         "day_5": {
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "day_name": {
                     "type": "string",
@@ -619,10 +476,8 @@
                     ]
                 },
                 "before_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -636,18 +491,11 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 },
                 "after_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -661,32 +509,13 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "day_name",
-                "day_number",
-                "offset_days",
-                "additional_offset_from",
-                "additional_offset_from_in_days",
-                "available_from_before_cutoff",
-                "available_from_after_cutoff",
-                "before_offset",
-                "after_offset"
-            ]
+            }
         },
         "day_6": {
+            "bsonType": "object",
             "type": "object",
-            "bsonType": [
-                "object"
-            ],
             "properties": {
                 "day_name": {
                     "type": "string",
@@ -731,10 +560,8 @@
                     ]
                 },
                 "before_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -748,18 +575,11 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 },
                 "after_offset": {
+                    "bsonType": "object",
                     "type": "object",
-                    "bsonType": [
-                        "object"
-                    ],
                     "properties": {
                         "offset_days": {
                             "type": "integer",
@@ -773,26 +593,9 @@
                                 "string"
                             ]
                         }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "offset_days",
-                        "available_from"
-                    ]
+                    }
                 }
-            },
-            "additionalProperties": false,
-            "required": [
-                "day_name",
-                "day_number",
-                "offset_days",
-                "additional_offset_from",
-                "additional_offset_from_in_days",
-                "available_from_before_cutoff",
-                "available_from_after_cutoff",
-                "before_offset",
-                "after_offset"
-            ]
+            }
         },
         "__v": {
             "bsonType": [

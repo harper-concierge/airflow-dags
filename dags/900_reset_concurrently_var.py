@@ -1,11 +1,18 @@
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.models import Variable
+from airflow.operators.python import PythonOperator
 from airflow.sensors.external_task import ExternalTaskSensor
 
-from plugins.utils.run_dynamic_sql_task import run_dynamic_sql_task
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
-from plugins.utils.get_recursive_entities_for_sql_types import get_recursive_entities_for_sql_types
+
+rebuild = Variable.get("REBUILD_MONGO_DATA", "False").lower() in ["true", "1", "yes"]
+
+
+def reset_concurrently_var():
+    Variable.set("REFRESH_CONCURRENTLY", "True")
+
 
 default_args = {
     "owner": "airflow",
@@ -18,28 +25,28 @@ default_args = {
 }
 
 
-sql_type = "cleansers"
-add_table_columns_to_context = get_recursive_entities_for_sql_types(["dimensions"])
-
 dag = DAG(
-    f"50_create_{sql_type}_dag",
+    "900_reset_concurrently_var",
     catchup=False,
     default_args=default_args,
     max_active_runs=1,  # This ensures sequential execution
     template_searchpath="/usr/local/airflow/dags",
 )
 
-wait_for_task = ExternalTaskSensor(
-    task_id="wait_for_indexes_to_complete",
-    external_dag_id="49_analyze_tables_dag",  # The ID of the DAG you're waiting for
+wait_for_slack = ExternalTaskSensor(
+    task_id="wait_for_send_slack_messages",
+    external_dag_id="70_send_slack_messages",  # The ID of the DAG you're waiting for
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
     allowed_states=["success"],  # You might need to customize this part
     dag=dag,
 )
 
-run_dynamic_sql_task(
-    dag,
-    wait_for_task=wait_for_task,
-    sql_type=sql_type,
-    add_table_columns_to_context=add_table_columns_to_context,
+
+reset_concurrently_var_task = PythonOperator(
+    task_id="reset_concurrently_var_task",
+    depends_on_past=False,
+    python_callable=reset_concurrently_var,
+    dag=dag,
 )
+
+wait_for_slack >> reset_concurrently_var_task

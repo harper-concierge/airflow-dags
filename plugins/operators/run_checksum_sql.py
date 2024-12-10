@@ -28,6 +28,7 @@ class RunChecksumSQLPostgresOperator(GetColumnsFromTableMixin, BaseOperator):
     :type checksum: str
     :param sql: sql
     :type sql: str
+    :type rebuild: bool
     :param sql_type: type of sql [reports|functions|indexes|dimensions|users|cleansers]
     :type sql_type: str
     :param json_schema_file_dir: Directory of Exported Json Schema Files
@@ -83,10 +84,17 @@ CREATE TABLE IF NOT EXISTS {self.schema}.report_checksums (
 
     def execute(self, context):
         try:
+            concurrently = (
+                "CONCURRENTLY" if Variable.get("REFRESH_CONCURRENTLY", "").lower() in ["true", "1", "yes"] else ""
+            )
+
+            self.context["concurrently"] = concurrently  # should be "" if we are rebuilding mongo DB's
+
             hook = BaseHook.get_hook(self.postgres_conn_id)
             tableau_user = Connection.get_connection_from_secrets("tableau_user_id")
             self.context["tableau_username"] = tableau_user.login
             self.context["tableau_password"] = tableau_user.password
+
             engine = self.get_postgres_sqlalchemy_engine(hook)
 
             with engine.connect() as conn:

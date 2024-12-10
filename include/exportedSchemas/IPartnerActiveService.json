@@ -10,34 +10,770 @@
             "type": "object",
             "properties": {
                 "active": {
+                    "title": "IActivePeriods",
                     "type": "object",
-                    "bsonType": "object",
-                    "tsType": "IActivePeriods"
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "mon": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "tue": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "wed": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "thu": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "fri": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "sat": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "sun": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "__v": {
+                            "bsonType": [
+                                "int"
+                            ],
+                            "type": "integer"
+                        },
+                        "createdAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        },
+                        "updatedAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": []
                 },
                 "service_settings": {
+                    "title": "IPartnerHarperTrySettingsSchema",
                     "type": "object",
-                    "bsonType": "object",
-                    "tsType": "IPartnerHarperTrySettings"
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "max_basket_size": {
+                            "bsonType": "int",
+                            "type": "number"
+                        },
+                        "max_active_orders": {
+                            "bsonType": "int",
+                            "type": "number"
+                        },
+                        "item_block_list": {
+                            "type": "array",
+                            "bsonType": [
+                                "array"
+                            ],
+                            "items": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            }
+                        },
+                        "item_preorder_block_list": {
+                            "type": "array",
+                            "bsonType": [
+                                "array"
+                            ],
+                            "items": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            }
+                        },
+                        "item_partially_block_list": {
+                            "type": "array",
+                            "bsonType": [
+                                "array"
+                            ],
+                            "items": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            }
+                        },
+                        "__v": {
+                            "bsonType": [
+                                "int"
+                            ],
+                            "type": "integer"
+                        },
+                        "createdAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        },
+                        "updatedAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": []
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "harper_concierge": {
             "bsonType": "object",
             "type": "object",
             "properties": {
                 "active": {
+                    "title": "IActivePeriods",
                     "type": "object",
-                    "bsonType": "object",
-                    "tsType": "IActivePeriods"
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "mon": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "tue": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "wed": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "thu": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "fri": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "sat": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "sun": {
+                            "title": "IPeriodsOfDaySchema",
+                            "type": "object",
+                            "bsonType": [
+                                "object"
+                            ],
+                            "properties": {
+                                "morning": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "afternoon": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "evening": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "__v": {
+                            "bsonType": [
+                                "int"
+                            ],
+                            "type": "integer"
+                        },
+                        "createdAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        },
+                        "updatedAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": []
                 },
                 "service_settings": {
+                    "title": "IPartnerHarperConciergeSettingsSchema",
                     "type": "object",
                     "bsonType": "object",
-                    "tsType": "IPartnerHarperConciergeSettings"
+                    "properties": {
+                        "max_basket_size": {
+                            "bsonType": "int",
+                            "type": "number"
+                        },
+                        "item_block_list": {
+                            "type": "array",
+                            "bsonType": [
+                                "array"
+                            ],
+                            "items": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            }
+                        },
+                        "item_preorder_block_list": {
+                            "type": "array",
+                            "bsonType": [
+                                "array"
+                            ],
+                            "items": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            }
+                        },
+                        "item_partially_block_list": {
+                            "type": "array",
+                            "bsonType": [
+                                "array"
+                            ],
+                            "items": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            }
+                        },
+                        "__v": {
+                            "bsonType": [
+                                "int"
+                            ],
+                            "type": "integer"
+                        },
+                        "createdAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        },
+                        "updatedAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": []
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "__v": {
             "bsonType": [

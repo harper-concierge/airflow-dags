@@ -31,8 +31,13 @@ class StripeChargesToPostgresOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin
         self.destination_table = destination_table
         self.postgres_conn_id = postgres_conn_id
         self.stripe_conn_id = stripe_conn_id
-        self.discard_fields = ["source"]  # discard unnecessary fields like source
-        # self.discard_flattenned_fields = ["outcome__network_advice_code"]  # discard unnecessary fields like source
+        self.discard_fields = [
+            "source",
+        ]  # discard unnecessary fields like source
+        self.discard_flattened_fields = [
+            "payment_method_details__card__wallet__apple_pay__type"
+        ]  # fields to discard after flattening
+        # self.discard_flattened_fields = ["outcome__network_advice_code"]  # discard unnecessary fields like source
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_charge_id"
         self.separator = "__"  # separator for nested field names
@@ -127,12 +132,12 @@ END $$;
                 df = self.flatten_dataframe_columns_precisely(df)
                 df.columns = df.columns.str.lower()
 
-                # if self.discard_flattenned_fields:
-                #     # Drop any unwanted fields before flattening
-                #     existing_flattenned_discard_fields = [
-                #         col for col in self.discard_flattenned_fields if col in df.columns
-                #     ]
-                #     df.drop(existing_flattenned_discard_fields, axis=1, inplace=True)
+                if self.discard_flattened_fields:
+                    # Drop any unwanted fields before flattening
+                    existing_flattened_discard_fields = [
+                        col for col in self.discard_flattened_fields if col in df.columns
+                    ]
+                    df.drop(existing_flattened_discard_fields, axis=1, inplace=True)
 
                 # Write processed data to PostgreSQL
                 df.to_sql(
