@@ -100,6 +100,10 @@ CREATE TABLE IF NOT EXISTS {self.schema}.report_checksums (
             with engine.connect() as conn:
                 transaction = conn.begin()
                 try:
+                    # SQL to fetch the backend PID
+                    pid_result = conn.execute("SELECT pg_backend_pid();")
+                    self._pg_pid = pid_result.scalar()  # Fetch the single value from the query
+
                     self._add_table_columns_to_context(conn)
                     self._add_event_name_ids_to_context()
                     self.preoperation_sql = render_template(
@@ -107,11 +111,11 @@ CREATE TABLE IF NOT EXISTS {self.schema}.report_checksums (
                         context=context,
                         extra_context=self.context,
                     )
-                    self.log.info(f"Executing {self.preoperation_sql}")
+                    self.log.info(f"[{self._pg_pid}] Executing {self.preoperation_sql}")
                     conn.execute(self.preoperation_sql)
 
                     is_modified = self._check_if_modified(conn)
-                    self.log.info(f"{self.filename}.sql is modified = {is_modified}")
+                    self.log.info(f"[{self._pg_pid}] {self.filename}.sql is modified = {is_modified}")
                     self.context["is_modified"] = is_modified
 
                     self.log.info(self.sql_template)
@@ -125,22 +129,22 @@ CREATE TABLE IF NOT EXISTS {self.schema}.report_checksums (
                     if not (self.sql.isspace() or self.sql == ""):
                         # Validate the SQL to make sure it follows our naming convention
 
-                        self.log.info(f"Executing {self.sql}")
+                        self.log.info(f"[{self._pg_pid}] Executing {self.sql}")
                         conn.execute(self.sql)
                     else:
                         self.log.info(
-                            f"Query is empty, assuming its an unmodified view, therefore skipping execution {self.sql}"
+                            f"[{self._pg_pid}] Query is empty, assuming its an unmodified view, therefore skipping execution {self.sql}"  # noqa
                         )
-
+                    self.log.info(f"RunChecksumSQLPostgresOperator Successfully Ran using pid {self._pg_pid}")
                     transaction.commit()
                 except Exception as e:
-                    self.log.error("Error during database operation: %s", e)
+                    self.log.error("[{self._pg_pid}] Error during database operation: %s", e)
                     transaction.rollback()
-                    raise AirflowException(f"Database operation failed Rolling Back: {e}")
+                    raise AirflowException(f"[{self._pg_pid}] Database operation failed Rolling Back: {e}")
 
             return f"Run SQL for {self.schema},{self.filename}, {self.sql_type}"
         except Exception as e:
-            self.log.error(f"An error occurred: {e}")
+            self.log.error(f"[{self._pg_pid}] An error occurred: {e}")
             raise AirflowException(e)
 
     def get_postgres_sqlalchemy_engine(self, hook, engine_kwargs=None):
