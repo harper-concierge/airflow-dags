@@ -304,6 +304,18 @@
             ],
             "type": "string"
         },
+        "add_xmas_festive_message": {
+            "type": "boolean",
+            "bsonType": [
+                "bool"
+            ]
+        },
+        "add_email_calendar_invite": {
+            "type": "boolean",
+            "bsonType": [
+                "bool"
+            ]
+        },
         "__v": {
             "bsonType": [
                 "int"
