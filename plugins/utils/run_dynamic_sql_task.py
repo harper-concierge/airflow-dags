@@ -25,6 +25,7 @@ def run_dynamic_sql_task(
 
     is_latest_dagrun_task = ShortCircuitOperator(
         task_id="skip_check",
+        pool="sql_single_thread_pool",
         python_callable=is_latest_dagrun,
         depends_on_past=False,
         dag=dag,
@@ -55,6 +56,7 @@ def run_dynamic_sql_task(
                 schema="public",
                 filename=config["filename"],
                 checksum=config["checksum"],
+                pool="sql_single_thread_pool",
                 sql=config["sql"],
                 sql_type=sql_type,
                 json_schema_file_dir=exported_schemas_abspath,
