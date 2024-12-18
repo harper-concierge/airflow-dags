@@ -518,6 +518,12 @@
             ],
             "type": "string"
         },
+        "tracking_provider": {
+            "bsonType": [
+                "string"
+            ],
+            "type": "string"
+        },
         "return_requested_by_customer": {
             "type": "boolean",
             "bsonType": [

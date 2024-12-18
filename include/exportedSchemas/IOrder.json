@@ -615,6 +615,12 @@
                         ],
                         "type": "string"
                     },
+                    "tracking_provider": {
+                        "bsonType": [
+                            "string"
+                        ],
+                        "type": "string"
+                    },
                     "return_requested_by_customer": {
                         "type": "boolean",
                         "bsonType": [
@@ -1395,6 +1401,12 @@
                         ],
                         "type": "string"
                     },
+                    "tracking_provider": {
+                        "bsonType": [
+                            "string"
+                        ],
+                        "type": "string"
+                    },
                     "return_requested_by_customer": {
                         "type": "boolean",
                         "bsonType": [
@@ -2164,6 +2176,12 @@
                         "type": "string"
                     },
                     "tracking_url": {
+                        "bsonType": [
+                            "string"
+                        ],
+                        "type": "string"
+                    },
+                    "tracking_provider": {
                         "bsonType": [
                             "string"
                         ],
@@ -2951,6 +2969,12 @@
                         "type": "string"
                     },
                     "tracking_url": {
+                        "bsonType": [
+                            "string"
+                        ],
+                        "type": "string"
+                    },
+                    "tracking_provider": {
                         "bsonType": [
                             "string"
                         ],
