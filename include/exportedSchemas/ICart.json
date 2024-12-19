@@ -2569,6 +2569,12 @@
                 "string"
             ]
         },
+        "discount_type": {
+            "type": "string",
+            "bsonType": [
+                "string"
+            ]
+        },
         "__v": {
             "bsonType": [
                 "int"
