@@ -21,6 +21,10 @@
             "bsonType": "string",
             "type": "string"
         },
+        "token_generate_url": {
+            "bsonType": "string",
+            "type": "string"
+        },
         "__v": {
             "bsonType": [
                 "int"
