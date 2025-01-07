@@ -6,12 +6,14 @@
 
 ## Running locally
 
-Do this once, the first time you setup your local docker, 
+The first time you setup your local docker, 
 or after every 
 
 ```
 astro dev kill
 ```
+
+Do this once:-
 
 ```shell
 touch airflow_settings.yaml
