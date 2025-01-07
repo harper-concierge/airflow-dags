@@ -1,47 +1,203 @@
-from datetime import datetime, timedelta
+import re
 
-from airflow import DAG
-from airflow.operators.dummy import DummyOperator
+import pandas as pd
+from sqlalchemy import text, create_engine
+from airflow.models import BaseOperator
+from airflow.hooks.base import BaseHook
+from airflow.utils.decorators import apply_defaults
+from google.analytics.data_v1beta import BetaAnalyticsDataClient
+from google.analytics.data_v1beta.types import Metric, DateRange, Dimension, RunReportRequest
+from airflow.providers.google.common.hooks.base_google import GoogleBaseHook
 
-from plugins.operators.import_ga4_data import GA4ToPostgresOperator
 
-# from airflow.operators.python import ShortCircuitOperator
+class GA4ToPostgresOperator(BaseOperator):
+    """
+    Operator that fetches data from Google Analytics 4 and loads it into a Postgres database.
 
+    :param property_id: GA4 property ID
+    :param postgres_conn_id: Airflow connection ID for Postgres
+    :param google_analytics_conn_id: Airflow connection ID for GA4
+    :param destination_schema: Target schema in Postgres
+    :param destination_table: Target table in Postgres
+    :param start_date: Start date for GA4 data pull
+    :param end_date: End date for GA4 data pull
+    """
 
-default_args = {
-    "owner": "airflow",
-    "start_date": datetime(2024, 1, 1),
-    "depends_on_past": False,
-    "retries": 3,
-    "retry_delay": timedelta(minutes=5),
-    "retry_exponential_backoff": True,
-    "max_retry_delay": timedelta(minutes=30),
-}
+    template_fields = ("start_date", "end_date")  # Allow Jinja templating for dates
 
-dag = DAG(
-    "19_ga4_to_postgres_dag",
-    default_args=default_args,
-    description="Load GA4 data into Postgres daily",
-    schedule_interval="@daily",
-    catchup=False,
-    max_active_runs=1,
-)
+    @apply_defaults
+    def __init__(
+        self,
+        property_id: str,
+        postgres_conn_id: str,
+        google_analytics_conn_id: str,
+        destination_schema: str,
+        destination_table: str,
+        start_date: str,
+        end_date: str,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.property_id = property_id
+        self.postgres_conn_id = postgres_conn_id
+        self.google_analytics_conn_id = google_analytics_conn_id
+        self.destination_schema = destination_schema
+        self.destination_table = destination_table
+        self.start_date = start_date
+        self.end_date = end_date
 
-start = DummyOperator(task_id="start", dag=dag)
+    def get_postgres_sqlalchemy_engine(self, hook, engine_kwargs=None):
+        """Creates SQLAlchemy engine from Airflow connection."""
+        if engine_kwargs is None:
+            engine_kwargs = {}
+        conn_uri = hook.get_uri().replace("postgres:/", "postgresql:/")
+        conn_uri = re.sub(r"\?.*$", "", conn_uri)
+        return create_engine(conn_uri, **engine_kwargs)
 
-# Import GA4 data
-import_ga4_data = GA4ToPostgresOperator(
-    task_id="import_ga4_data",
-    property_id="{{ var.value.ga4_property_id }}",  # Set this in Airflow Variables
-    postgres_conn_id="postgres_datalake_conn_id",
-    google_analytics_conn_id="google_analytics_conn_id",
-    destination_schema="analytics",
-    destination_table="ga4_daily_metrics",
-    start_date="2024-08-01",
-    end_date="{{ ds }}",  # Current execution date
-    dag=dag,
-)
+    def run_ga4_report(self, client, start_date, end_date, offset=0):
+        """Runs GA4 report with specified dimensions and metrics."""
+        request = RunReportRequest(
+            property=f"properties/{self.property_id}",
+            dimensions=[
+                Dimension(name="date"),
+                Dimension(name="city"),
+                Dimension(name="customEvent:partner_reference"),
+                Dimension(name="customEvent:service_type"),
+                Dimension(name="eventName"),
+            ],
+            metrics=[
+                Metric(name="eventCount"),
+                Metric(name="activeUsers"),
+                Metric(name="sessions"),
+                Metric(name="totalUsers"),
+                Metric(name="checkouts"),
+            ],
+            date_ranges=[DateRange(start_date=start_date, end_date=end_date)],
+            limit=100000,
+            offset=offset,
+        )
+        return client.run_report(request)
 
-end = DummyOperator(task_id="end", dag=dag)
+    def clean_existing_data(self, engine, date_to_clean):
+        """Cleans existing data for the given date before inserting new data."""
+        with engine.connect() as conn:
+            conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {self.destination_schema}"))
 
-start >> import_ga4_data >> end
+            table_exists = conn.execute(
+                text(
+                    f"""
+                    SELECT EXISTS (
+                        SELECT FROM pg_tables
+                        WHERE schemaname = '{self.destination_schema}'
+                        AND tablename = '{self.destination_table}'
+                    );
+                    """
+                )
+            ).scalar()
+
+            if table_exists:
+                self.log.info(f"Cleaning existing data for date: {date_to_clean}")
+                delete_sql = text(
+                    f"""
+                    DELETE FROM {self.destination_schema}.{self.destination_table}
+                    WHERE date = :date_to_clean
+                    """
+                )
+                conn.execute(delete_sql, {"date_to_clean": date_to_clean})
+
+    def write_to_postgres(self, df, engine):
+        """Writes DataFrame to Postgres with index creation."""
+        try:
+            df.to_sql(
+                self.destination_table,
+                engine,
+                schema=self.destination_schema,
+                if_exists="append",
+                index=False,
+                chunksize=1000,
+            )
+
+            with engine.connect() as conn:
+                conn.execute(
+                    text(
+                        f"""
+                        CREATE INDEX IF NOT EXISTS idx_{self.destination_table}_date
+                        ON {self.destination_schema}.{self.destination_table} (date);
+
+                        CREATE INDEX IF NOT EXISTS idx_{self.destination_table}_event_name
+                        ON {self.destination_schema}.{self.destination_table} (event_name);
+                        """
+                    )
+                )
+
+        except Exception as e:
+            self.log.error(f"Error writing to Postgres: {str(e)}")
+            raise
+
+    def execute(self, context):
+        """Main execution method for the operator."""
+        # Set up GA4 client
+        ga4_hook = GoogleBaseHook(gcp_conn_id=self.google_analytics_conn_id)
+        ga4_credentials = ga4_hook._get_credentials()
+        client = BetaAnalyticsDataClient(credentials=ga4_credentials)
+
+        # Set up Postgres connection
+        hook = BaseHook.get_hook(self.postgres_conn_id)
+        engine = self.get_postgres_sqlalchemy_engine(hook)
+
+        # Clean existing data for the period we're about to import
+        self.clean_existing_data(engine, self.start_date)
+
+        all_data = []
+        offset = 0
+        total_rows = 0
+
+        # Fetch data from GA4
+        while True:
+            try:
+                response = self.run_ga4_report(client, self.start_date, self.end_date, offset)
+
+                if not response.rows:
+                    break
+
+                for row in response.rows:
+                    all_data.append(
+                        {
+                            "date": row.dimension_values[0].value,
+                            "city": row.dimension_values[1].value,
+                            "partner_reference": row.dimension_values[2].value,
+                            "service_type": row.dimension_values[3].value,
+                            "event_name": row.dimension_values[4].value,
+                            "event_count": int(row.metric_values[0].value),
+                            "active_users": int(row.metric_values[1].value),
+                            "sessions": int(row.metric_values[2].value),
+                            "total_users": int(row.metric_values[3].value),
+                            "checkouts": int(row.metric_values[4].value),
+                            "sync_timestamp": pd.Timestamp.now(),
+                        }
+                    )
+
+                total_rows += len(response.rows)
+                self.log.info(f"Fetched {len(response.rows)} rows. Total rows: {total_rows}")
+
+                if len(response.rows) < 100000:
+                    break
+
+                offset += len(response.rows)
+
+            except Exception as e:
+                self.log.error(f"Error fetching GA4 data: {str(e)}")
+                raise
+
+        if not all_data:
+            self.log.info("No data to write to Postgres.")
+            return
+
+        # Convert to DataFrame and process
+        df = pd.DataFrame(all_data)
+
+        # Write to Postgres
+        self.write_to_postgres(df, engine)
+
+        self.log.info(f"Successfully wrote {len(df)} rows to Postgres")
