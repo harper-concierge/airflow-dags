@@ -95,6 +95,10 @@
             "bsonType": "string",
             "type": "string"
         },
+        "market_id": {
+            "type": "integer",
+            "bsonType": "int"
+        },
         "ingrid": {
             "bsonType": "object",
             "type": "object",
