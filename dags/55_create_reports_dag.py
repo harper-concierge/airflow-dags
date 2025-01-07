@@ -14,7 +14,7 @@ default_args = {
     "depends_on_past": False,
     "retry_delay": timedelta(minutes=5),
     "retries": 0,
-    "pool": "report_build_pool",
+    "pool": "sql_single_thread_pool",
 }
 
 sql_type = "reports"
