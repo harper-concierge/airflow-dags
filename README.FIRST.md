@@ -32,6 +32,7 @@ astro dev restart
 ```
 
 Now in admin->connections edit the 'mongo_db_conn_id' connection and change its type from Generic to MongoDB and save.
+
 Now in admin->pools Create the following pools
 
 * sql_single_thread_pool - slots=0
