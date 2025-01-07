@@ -2,6 +2,8 @@
 apache-airflow-providers-mongo==4.0.0
 apache-airflow-providers-postgres==5.10.1
 apache-airflow-providers-slack==8.7.0
+google-analytics-admin==0.23.3
+google-analytics-data==0.18.16
 # apache-airflow-providers-google
 # jaydebeapi
 # jpype1
