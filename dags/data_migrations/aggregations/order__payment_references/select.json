@@ -2,7 +2,7 @@
     {
         "$match": {
             "updatedAt": {
-                "$gt": "{{ last_successful_dagrun_ds }}",
+                "$gt": "{{ last_successful_dagrun_ts }}",
                 "$lte": "{{ data_interval_end }}"
             },
             "zettle_payment_references": {
