@@ -2,26 +2,19 @@ import re
 import json
 import time
 
-# import random
-from datetime import datetime, timezone
-
 import pandas as pd
 import shopify
 import requests.exceptions
 from pandas import DataFrame
-
-# from tenacity import wait_exponential
 from sqlalchemy import create_engine
-from airflow.models import XCom, BaseOperator
-
-# from sqlalchemy.exc import OperationalError
+from airflow.models import BaseOperator
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
-from airflow.utils.session import provide_session
 
 from plugins.utils.render_template import render_template
 
 from plugins.operators.mixins.flatten_json import FlattenJsonDictMixin
+from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
 from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
 
 # Filter output
@@ -196,7 +189,9 @@ api_field_filter = [
 ]
 
 
-class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin, BaseOperator):
+class ImportShopifyPartnerDataOperator(
+    LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, FlattenJsonDictMixin, BaseOperator
+):
 
     # Shopify API allows 2 requests per second for non-Plus plans
     MAX_REQUESTS_PER_SECOND = 2
@@ -322,7 +317,7 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
 
                 # Set up date range for data fetch
                 lte = context["data_interval_end"].to_iso8601_string()
-                start_param = last_successful_dagrun_ts if last_successful_dagrun_ts else "2024-01-01T00:00:00.000Z"
+                start_param = last_successful_dagrun_ts.to_iso8601_string()
 
                 # Main processing loop
                 while True:
@@ -352,7 +347,7 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
                 self._handle_completion(conn, total_docs_processed, filtered_out_orders, context)
 
             # Update task state
-            self.set_last_successful_dagrun_ts(context, context["data_interval_end"].int_timestamp)
+            self.set_last_successful_dagrun_ts(context)
             context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
             self.log.info(f"Successfully completed import for partner {self.partner_ref}")
 
@@ -597,63 +592,63 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
                 return True
         return False
 
-    @provide_session
-    def get_last_successful_dagrun_ts(self, run_id, session=None):
-        run_id = run_id if isinstance(run_id, (str, int)) else str(run_id)
+    # @provide_session
+    # def get_last_successful_dagrun_ts(self, run_id, session=None):
+    #     run_id = run_id if isinstance(run_id, (str, int)) else str(run_id)
 
-        query = XCom.get_many(
-            include_prior_dates=True,
-            dag_ids=self.dag_id,
-            run_id=run_id,
-            task_ids=self.task_id,
-            key=self.last_successful_dagrun_xcom_key,
-            session=session,
-            limit=1,
-        )
+    #     query = XCom.get_many(
+    #         include_prior_dates=True,
+    #         dag_ids=self.dag_id,
+    #         run_id=run_id,
+    #         task_ids=self.task_id,
+    #         key=self.last_successful_dagrun_xcom_key,
+    #         session=session,
+    #         limit=1,
+    #     )
 
-        xcom = query.first()
-        self.log.info(f"xcom return: {xcom}, data type: {type(xcom)}")
+    #     xcom = query.first()
+    #     self.log.info(f"xcom return: {xcom}, data type: {type(xcom)}")
 
-        if xcom:
-            value = xcom.value
-            print(f"Retrieved XCom value: {value}")
-            if isinstance(value, dict) and "timestamp" in value:
-                timestamp = value["timestamp"]
-                print(f"Timestamp retrieved from XCom: {timestamp} (Type: {type(timestamp)})")
-                # Convert integer timestamp to datetime object
-                if isinstance(timestamp, int):
-                    return self.convert_from_int(timestamp)
-                elif isinstance(timestamp, str):
-                    # Handle string timestamp if needed
-                    print(f"Handling string timestamp: {timestamp}")
-                    return self.convert_from_str(timestamp)
-            elif isinstance(value, int):
-                return self.convert_from_int(value)
-            elif isinstance(value, str):
-                return self.convert_from_str(value)
-        return None
+    #     if xcom:
+    #         value = xcom.value
+    #         print(f"Retrieved XCom value: {value}")
+    #         if isinstance(value, dict) and "timestamp" in value:
+    #             timestamp = value["timestamp"]
+    #             print(f"Timestamp retrieved from XCom: {timestamp} (Type: {type(timestamp)})")
+    #             # Convert integer timestamp to datetime object
+    #             if isinstance(timestamp, int):
+    #                 return self.convert_from_int(timestamp)
+    #             elif isinstance(timestamp, str):
+    #                 # Handle string timestamp if needed
+    #                 print(f"Handling string timestamp: {timestamp}")
+    #                 return self.convert_from_str(timestamp)
+    #         elif isinstance(value, int):
+    #             return self.convert_from_int(value)
+    #         elif isinstance(value, str):
+    #             return self.convert_from_str(value)
+    #     return None
 
-    def set_last_successful_dagrun_ts(self, context, timestamp):
-        if isinstance(timestamp, datetime):
-            timestamp_str = timestamp.isoformat()
-        elif isinstance(timestamp, int):
-            timestamp_str = self.convert_from_int(timestamp).isoformat()
-        elif isinstance(timestamp, str):
-            # Validate the string if needed
-            try:
-                self.convert_from_str(timestamp)
-                timestamp_str = timestamp
-            except ValueError:
-                print(f"Invalid timestamp string: {timestamp}")
-                raise ValueError("Timestamp must be a valid ISO 8601 string, integer, or datetime object.")
-        else:
-            print(f"Invalid timestamp type: {type(timestamp)}. Expected a string, integer, or datetime.")
-            raise ValueError("Timestamp must be a string, integer, or datetime object.")
+    # def set_last_successful_dagrun_ts(self, context, timestamp):
+    #     if isinstance(timestamp, datetime):
+    #         timestamp_str = timestamp.isoformat()
+    #     elif isinstance(timestamp, int):
+    #         timestamp_str = self.convert_from_int(timestamp).isoformat()
+    #     elif isinstance(timestamp, str):
+    #         # Validate the string if needed
+    #         try:
+    #             self.convert_from_str(timestamp)
+    #             timestamp_str = timestamp
+    #         except ValueError:
+    #             print(f"Invalid timestamp string: {timestamp}")
+    #             raise ValueError("Timestamp must be a valid ISO 8601 string, integer, or datetime object.")
+    #     else:
+    #         print(f"Invalid timestamp type: {type(timestamp)}. Expected a string, integer, or datetime.")
+    #         raise ValueError("Timestamp must be a string, integer, or datetime object.")
 
-        print(f"Setting last successful DAG run timestamp: {timestamp_str}")
+    #     print(f"Setting last successful DAG run timestamp: {timestamp_str}")
 
-        # Push the timestamp string to XCom
-        context["ti"].xcom_push(key=self.last_successful_dagrun_xcom_key, value={"timestamp": timestamp_str})
+    #     # Push the timestamp string to XCom
+    #     context["ti"].xcom_push(key=self.last_successful_dagrun_xcom_key, value={"timestamp": timestamp_str})
 
     def _preprocess_dataframe(self, df: pd.DataFrame, ds: str) -> pd.DataFrame:
         df.insert(0, "partner__name", self.partner_name)
@@ -735,16 +730,16 @@ class ImportShopifyPartnerDataOperator(DagRunTaskCommsMixin, FlattenJsonDictMixi
         df = df[required_columns]
         return df
 
-    def convert_from_int(self, timestamp_int):
-        # Convert Unix timestamp integer to datetime object in UTC
-        print(f"Converting integer timestamp to datetime: {timestamp_int} (Type: {type(timestamp_int)})")
-        return datetime.fromtimestamp(timestamp_int, tz=timezone.utc)
+    # def convert_from_int(self, timestamp_int):
+    #     # Convert Unix timestamp integer to datetime object in UTC
+    #     print(f"Converting integer timestamp to datetime: {timestamp_int} (Type: {type(timestamp_int)})")
+    #     return datetime.fromtimestamp(timestamp_int, tz=timezone.utc)
 
-    def convert_from_str(self, timestamp_str):
-        # Convert ISO 8601 string to datetime object
-        print(f"Converting ISO 8601 timestamp string to datetime: {timestamp_str} (Type: {type(timestamp_str)})")
-        try:
-            return datetime.fromisoformat(timestamp_str).replace(tzinfo=timezone.utc)
-        except ValueError:
-            print(f"Invalid ISO 8601 timestamp string: {timestamp_str}")
-            raise ValueError(f"Invalid ISO 8601 timestamp string: {timestamp_str}")
+    # def convert_from_str(self, timestamp_str):
+    #     # Convert ISO 8601 string to datetime object
+    #     print(f"Converting ISO 8601 timestamp string to datetime: {timestamp_str} (Type: {type(timestamp_str)})")
+    #     try:
+    #         return datetime.fromisoformat(timestamp_str).replace(tzinfo=timezone.utc)
+    #     except ValueError:
+    #         print(f"Invalid ISO 8601 timestamp string: {timestamp_str}")
+    #         raise ValueError(f"Invalid ISO 8601 timestamp string: {timestamp_str}")

@@ -6,6 +6,7 @@ from airflow.operators.python import ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
 
+from plugins.utils.calculate_start_date import fixed_date_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 from plugins.utils.found_records_to_process import found_records_to_process
 
@@ -22,7 +23,7 @@ from plugins.operators.append_transient_table_data_operator import AppendTransie
 
 default_args = {
     "owner": "airflow",
-    "start_date": datetime(2019, 7, 14),
+    "start_date": fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 1, 1)),
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),  # airflows retry mechanism
@@ -37,6 +38,7 @@ dag = DAG(
     "15_get_shopify_data_dag",
     catchup=False,
     default_args=default_args,
+    start_date=fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 1, 1)),
     max_active_runs=1,  # This ensures sequential execution
     template_searchpath="/usr/local/airflow/dags",
 )
