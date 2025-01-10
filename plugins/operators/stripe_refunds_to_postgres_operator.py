@@ -37,6 +37,9 @@ class StripeRefundsToPostgresOperator(
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_refund_id"
         self.separator = "__"
+        self.preserve_fields = [
+            ("failure_balance_transaction", "string"),
+        ]
 
         self.context = {
             "destination_schema": destination_schema,
@@ -176,3 +179,17 @@ END $$;
 
     def get_last_successful_item_id(self, conn, context):
         return self.get_task_var(conn, context, self.last_successful_item_key)
+
+    def align_to_schema_df(self, df):
+        # Check if the column exists
+        if "metadata__harper_invoice_subtype" not in df.columns:
+            # Create the column with default value "checkout" for all rows
+            df["metadata__harper_invoice_subtype"] = "checkout"
+        else:
+            # Fill NaN values in the existing column with "checkout"
+            df["metadata__harper_invoice_subtype"].fillna("checkout", inplace=True)
+        for field, dtype in self.preserve_fields:
+            if field not in df.columns:
+                df[field] = None  # because zettle is rubbish
+            print(f"aligning column {field} as type {dtype}")
+            df[field] = df[field].astype(dtype)

@@ -1,5 +1,4 @@
-from datetime import datetime
-
+import pendulum
 from airflow.models import XCom
 from airflow.utils.session import provide_session
 
@@ -16,7 +15,14 @@ class LastSuccessfulDagrunMixin:
 
     @provide_session
     def get_last_successful_dagrun_ts(self, run_id, session=None):
-        if not self.rebuild:
+        rebuild = False
+        try:
+            if self.rebuild:
+                rebuild = True
+        except AttributeError:
+            rebuild = False
+
+        if not rebuild:
             query = XCom.get_many(
                 include_prior_dates=True,
                 dag_ids=self.dag_id,
@@ -29,7 +35,7 @@ class LastSuccessfulDagrunMixin:
 
             xcom = query.first()
             if xcom:
-                return datetime.fromisoformat(xcom.value)
+                return pendulum.parse(xcom.value)
 
         # return the earliest start date for the Dag
         return self.dag.start_date
