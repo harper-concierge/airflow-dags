@@ -3,19 +3,21 @@ import re
 import stripe
 from pandas import DataFrame
 from sqlalchemy import create_engine
-from airflow.models import XCom, BaseOperator
+from airflow.models import BaseOperator
 from airflow.hooks.base import BaseHook
-from airflow.utils.session import provide_session
 from airflow.utils.decorators import apply_defaults
 from airflow.models.connection import Connection
 
 from plugins.utils.render_template import render_template
 
 from plugins.operators.mixins.flatten_json import FlattenJsonDictMixin
+from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
 from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
 
 
-class StripeRefundsToPostgresOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin, BaseOperator):
+class StripeRefundsToPostgresOperator(
+    LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, FlattenJsonDictMixin, BaseOperator
+):
     @apply_defaults
     def __init__(
         self,
@@ -35,6 +37,9 @@ class StripeRefundsToPostgresOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_refund_id"
         self.separator = "__"
+        self.preserve_fields = [
+            ("failure_balance_transaction", "string"),
+        ]
 
         self.context = {
             "destination_schema": destination_schema,
@@ -86,7 +91,7 @@ END $$;
                 conn.execute(self.delete_sql)
 
             created = {
-                "gt": last_successful_dagrun_ts or 1690898262,
+                "gt": last_successful_dagrun_ts.int_timestamp,
                 "lte": context["data_interval_end"].int_timestamp,
             }
             total_docs_processed = 0
@@ -159,7 +164,7 @@ END $$;
             # Final task communication updates
             self.clear_task_vars(conn, context)
         context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
-        self.set_last_successful_dagrun_ts(context, context["data_interval_end"].int_timestamp)
+        self.set_last_successful_dagrun_ts(context)
         self.log.info("Stripe Refunds written to Datalake successfully.")
 
     def get_postgres_sqlalchemy_engine(self, hook, engine_kwargs=None):
@@ -175,22 +180,16 @@ END $$;
     def get_last_successful_item_id(self, conn, context):
         return self.get_task_var(conn, context, self.last_successful_item_key)
 
-    def set_last_successful_dagrun_ts(self, context, value):
-        context["ti"].xcom_push(key=self.last_successful_dagrun_xcom_key, value=value)
-
-    @provide_session
-    def get_last_successful_dagrun_ts(self, run_id, session=None):
-        query = XCom.get_many(
-            include_prior_dates=True,
-            dag_ids=self.dag_id,
-            run_id=run_id,
-            task_ids=self.task_id,
-            key=self.last_successful_dagrun_xcom_key,
-            session=session,
-            limit=1,
-        )
-
-        xcom = query.first()
-        if xcom:
-            return xcom.value
-        return None
+    def align_to_schema_df(self, df):
+        # Check if the column exists
+        if "metadata__harper_invoice_subtype" not in df.columns:
+            # Create the column with default value "checkout" for all rows
+            df["metadata__harper_invoice_subtype"] = "checkout"
+        else:
+            # Fill NaN values in the existing column with "checkout"
+            df["metadata__harper_invoice_subtype"].fillna("checkout", inplace=True)
+        for field, dtype in self.preserve_fields:
+            if field not in df.columns:
+                df[field] = None  # because zettle is rubbish
+            print(f"aligning column {field} as type {dtype}")
+            df[field] = df[field].astype(dtype)

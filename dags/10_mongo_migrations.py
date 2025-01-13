@@ -8,6 +8,7 @@ from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
 
+from plugins.utils.calculate_start_date import fixed_date_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 from plugins.utils.found_records_to_process import found_records_to_process
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
@@ -42,7 +43,7 @@ migrations = load_aggregation_configs("aggregations")
 
 default_args = {
     "owner": "airflow",
-    "start_date": datetime(2019, 7, 14),
+    "start_date": fixed_date_start_date("MONGO_START_DATE", datetime(2019, 7, 14)),
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),
@@ -55,6 +56,7 @@ dag = DAG(
     "10_mongo_migrations_dag",
     catchup=False,
     default_args=default_args,
+    start_date=fixed_date_start_date("MONGO_START_DATE", datetime(2019, 7, 14)),
     max_active_runs=1,  # This ensures sequential execution
     template_searchpath="/usr/local/airflow/dags",
 )

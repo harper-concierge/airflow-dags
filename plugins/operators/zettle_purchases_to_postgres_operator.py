@@ -1,15 +1,12 @@
 import re
-from datetime import datetime
 from urllib.parse import urlencode
 
 import requests
 from pandas import DataFrame
 from sqlalchemy import create_engine
-from airflow.models import XCom, BaseOperator
+from airflow.models import BaseOperator
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
-from airflow.utils.session import provide_session
-from dateutil.relativedelta import relativedelta
 from airflow.utils.decorators import apply_defaults
 from airflow.models.connection import Connection
 
@@ -17,12 +14,15 @@ from plugins.utils.render_template import render_template
 
 from plugins.operators.mixins.zettle import ZettleMixin
 from plugins.operators.mixins.flatten_json import FlattenJsonDictMixin
+from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
 from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
 
 # YOU MUST CREATE THE DESTINATION SPREADSHEET IN ADVANCE MANUALLY IN ORDER FOR THIS TO WORK
 
 
-class ZettlePurchasesToPostgresOperator(DagRunTaskCommsMixin, FlattenJsonDictMixin, ZettleMixin, BaseOperator):
+class ZettlePurchasesToPostgresOperator(
+    DagRunTaskCommsMixin, LastSuccessfulDagrunMixin, FlattenJsonDictMixin, ZettleMixin, BaseOperator
+):
     @apply_defaults
     def __init__(
         self,
@@ -92,7 +92,7 @@ END $$;
             extra_context = {
                 **context,
                 **self.context,
-                f"{self.last_successful_dagrun_xcom_key}": last_successful_dagrun_ts,
+                f"{self.last_successful_dagrun_xcom_key}": last_successful_dagrun_ts.to_iso8601_string(),
             }
 
             self.log.info(
@@ -114,13 +114,6 @@ END $$;
 
             # Base URL path
             base_url = "https://purchase.izettle.com/purchases/v2"
-            # Determine the 'start' parameter based on 'last_successful_dagrun_ts'
-            if last_successful_dagrun_ts:
-                start_param = last_successful_dagrun_ts
-            else:
-                three_years_back = datetime.now() - relativedelta(years=2)
-                start_param = three_years_back.strftime("%Y-%m-%dT%H:%M:%S.000Z")
-            print("start_param", start_param)
 
             total_docs_processed = 0
 
@@ -130,7 +123,7 @@ END $$;
             while has_more:
                 # Dictionary of query parameters
                 query_params = {
-                    "startDate": start_param,
+                    "startDate": last_successful_dagrun_ts.to_iso8601_string(),
                     "endDate": lte,
                     "limit": limit,
                 }
@@ -215,7 +208,7 @@ END $$;
             self.clear_task_vars(conn, context)
 
         context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
-        self.set_last_successful_dagrun_ts(context, lte)
+        self.set_last_successful_dagrun_ts(context)
         self.log.info("Stripe Charges written to Datalake successfully.")
 
     def get_postgres_sqlalchemy_engine(self, hook, engine_kwargs=None):
@@ -236,27 +229,6 @@ END $$;
 
     def get_last_successful_purchase_id(self, conn, context):
         return self.get_task_var(conn, context, self.last_successful_purchase_key)
-
-    def set_last_successful_dagrun_ts(self, context, value):
-        context["ti"].xcom_push(key=self.last_successful_dagrun_xcom_key, value=value)
-
-    @provide_session
-    def get_last_successful_dagrun_ts(self, run_id, session=None):
-        query = XCom.get_many(
-            include_prior_dates=True,
-            dag_ids=self.dag_id,
-            run_id=run_id,
-            task_ids=self.task_id,
-            key=self.last_successful_dagrun_xcom_key,
-            session=session,
-            limit=1,
-        )
-
-        xcom = query.first()
-        if xcom:
-            return xcom.value
-
-        return None
 
     def _normalise_records(self, records):
 

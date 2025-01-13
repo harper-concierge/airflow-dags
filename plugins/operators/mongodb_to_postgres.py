@@ -8,16 +8,17 @@ from datetime import datetime
 import pandas as pd
 from bson import ObjectId, json_util
 from sqlalchemy import create_engine
-from airflow.models import XCom, BaseOperator
+from airflow.models import BaseOperator
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
 from bson.codec_options import CodecOptions
-from airflow.utils.session import provide_session
 
 from plugins.utils.render_template import render_template
 from plugins.utils.field_conversions import convert_field
 from plugins.utils.detect_duplicate_columns import detect_duplicate_columns
 from plugins.utils.json_schema_to_flattened_numpy_datatypes import json_schema_to_flattened_numpy_datatypes
+
+from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
 
 from plugins.pandas.mixins.truncate_column_names import SquashableDataFrame
 
@@ -27,7 +28,7 @@ pd.set_option("display.max_colwidth", 80)  # Display full width of each column
 pd.set_option("display.width", None)  # Use maximum width available
 
 
-class MongoDBToPostgresViaDataframeOperator(BaseOperator):
+class MongoDBToPostgresViaDataframeOperator(LastSuccessfulDagrunMixin, BaseOperator):
     """
     :param mongo_conn_id: The Mongo JDBC connection id
     :type mongo_conn_id: str
@@ -258,7 +259,10 @@ BEGIN
 END $$;
 """  # noqa
                         )  # noqa
-                    context["ti"].xcom_push(key=self.last_successful_dagrun_xcom_key, value=context["ts"])
+                    # deprecated, and also whilst we run daily ts and data_interval_end are the same.
+                    # BUT in future they might not be
+                    # context["ti"].xcom_push(key=self.last_successful_dagrun_xcom_key, value=context["ts"])
+                    self.set_last_successful_dagrun_ts(context)
                     transaction.commit()
                 except Exception as e:
                     self.log.error("Error during database operation: %s", e)
@@ -544,22 +548,3 @@ END $$;
 
     def _convert_fieldname_to_flattened_name(self, field_name):
         return field_name.replace(".", self.separator)
-
-    @provide_session
-    def get_last_successful_dagrun_ts(self, run_id, session=None):
-        if not self.rebuild:
-            query = XCom.get_many(
-                include_prior_dates=True,
-                dag_ids=self.dag_id,
-                run_id=run_id,
-                task_ids=self.task_id,
-                key=self.last_successful_dagrun_xcom_key,
-                session=session,
-                limit=1,
-            )
-
-            xcom = query.first()
-            if xcom:
-                return datetime.fromisoformat(xcom.value)
-
-        return None

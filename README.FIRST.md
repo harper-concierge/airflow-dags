@@ -7,16 +7,53 @@
 ## Running locally
 
 The first time you setup your local docker,
-or after every
+create an aitflow_settings.yaml file
+
+```yaml
+airflow:
+    connections:
+        - conn_id: ""
+          conn_type: ""
+          conn_host: ""
+          conn_schema: ""
+          conn_login: ""
+          conn_password: ""
+          conn_port: 0
+          conn_uri: ""
+          conn_extra:
+            example_extra_field: example-value
+    pools: ## pool_name and pool_slot are required
+      - pool_name: sql_single_thread_pool
+        pool_slot: 1
+        pool_description: "Used to enforce one query ata  time to speed up heavy queries"
+      - pool_name: shopify_import_pool
+        pool_slot: 5
+        pool_description: "Set the concurrency of shopify calls for partner data processing"
+      - pool_name: mongo_default_pool
+        pool_slot: 5
+        pool_description: "Set the concurrency of calls to production mongoDB"
+    variables:
+        - variable_name: REBUILD_MONGO_DATA
+          variable_value: "False"
+        - variable_name: REFRESH_CONCURRENTLY
+          variable_value: "False"
+        - variable_name: SHOPIFY_START_DATE
+          variable_value: "2024-08-01T00:00:00.000Z"
+        - variable_name: ZETTLE_START_DAYS_AGO
+          variable_value: "60"
+        - variable_name: MONGO_START_DATE
+          variable_value: "2024-08-01T00:00:00.000Z"
+```
+
+If you wish to wipe your local docker - e.g. when an airflow DB upgrade is needed you can issue the following command
 
 ```shell
 astro dev kill
 ```
 
-Do this once:-
+If you are running for the first time, or have just issued a kill command you need to do this once:-
 
 ```shell
-touch airflow_settings.yaml
 astro login
 astro config set -g disable_env_objects false
 astro workspace list
@@ -37,6 +74,7 @@ Now in admin->Pools Create the following pools
 
 * sql_single_thread_pool - slots=0
 * shopify_import_pool - slots=5
+* mongo_default_pool - slots=5
 
 ## restarting your local environment to pickup code changes outside of your plugins/operators directory
 

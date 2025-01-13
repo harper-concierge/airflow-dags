@@ -4,10 +4,9 @@ from urllib.parse import urlencode
 import requests
 from pandas import DataFrame
 from sqlalchemy import create_engine
-from airflow.models import XCom, BaseOperator
+from airflow.models import BaseOperator
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
-from airflow.utils.session import provide_session
 from airflow.utils.decorators import apply_defaults
 from airflow.models.connection import Connection
 
@@ -15,11 +14,12 @@ from plugins.utils.render_template import render_template
 
 from plugins.operators.mixins.zettle import ZettleMixin
 from plugins.operators.mixins.flatten_json import FlattenJsonDictMixin
+from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
 
 # YOU MUST CREATE THE DESTINATION SPREADSHEET IN ADVANCE MANUALLY IN ORDER FOR THIS TO WORK
 
 
-class ZettleFinanceToPostgresOperator(ZettleMixin, FlattenJsonDictMixin, BaseOperator):
+class ZettleFinanceToPostgresOperator(LastSuccessfulDagrunMixin, ZettleMixin, FlattenJsonDictMixin, BaseOperator):
     @apply_defaults
     def __init__(
         self,
@@ -76,7 +76,7 @@ END $$;
         extra_context = {
             **context,
             **self.context,
-            f"{self.last_successful_dagrun_xcom_key}": last_successful_dagrun_ts,
+            f"{self.last_successful_dagrun_xcom_key}": last_successful_dagrun_ts.to_iso8601_string(),
         }
 
         self.delete_sql = render_template(self.delete_template, context=extra_context)
@@ -98,13 +98,11 @@ END $$;
 
             # Base URL path
             base_url = "https://finance.izettle.com/v2/accounts/LIQUID/transactions"
-            # Determine the 'start' parameter based on 'last_successful_dagrun_ts'
-            start_param = last_successful_dagrun_ts if last_successful_dagrun_ts else "2016-08-01T00:00:00.000Z"
 
             while True:
                 # Dictionary of query parameters
                 query_params = {
-                    "start": start_param,
+                    "start": last_successful_dagrun_ts.to_iso8601_string(),
                     "end": lte,
                     "limit": limit,
                     "offset": offset,
@@ -172,10 +170,7 @@ END $$;
 
             context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
 
-        context["ti"].xcom_push(
-            key=self.last_successful_dagrun_xcom_key,
-            value=context["data_interval_end"].to_iso8601_string(),
-        )
+        self.set_last_successful_dagrun_ts(context)
         self.log.info("Zettle Charges written to Datalake successfully.")
 
     def get_postgres_sqlalchemy_engine(self, hook, engine_kwargs=None):
@@ -190,21 +185,3 @@ END $$;
         conn_uri = hook.get_uri().replace("postgres:/", "postgresql:/")
         conn_uri = re.sub(r"\?.*$", "", conn_uri)
         return create_engine(conn_uri, **engine_kwargs)
-
-    @provide_session
-    def get_last_successful_dagrun_ts(self, run_id, session=None):
-        query = XCom.get_many(
-            include_prior_dates=True,
-            dag_ids=self.dag_id,
-            run_id=run_id,
-            task_ids=self.task_id,
-            key=self.last_successful_dagrun_xcom_key,
-            session=session,
-            limit=1,
-        )
-
-        xcom = query.first()
-        if xcom:
-            return xcom.value
-
-        return None
