@@ -36,7 +36,7 @@ class LastSuccessfulDagrunMixin:
             xcom = query.first()
             if xcom:
                 self.log.info(
-                    f"[LastSuccessfulDagrunMixin] Parsing {self.last_successful_dagrun_xcom_key} xcom value {xcom}"
+                    f"[LastSuccessfulDagrunMixin] Parsing {self.last_successful_dagrun_xcom_key} xcom value {xcom.value}"  # noqa
                 )
 
                 try:
