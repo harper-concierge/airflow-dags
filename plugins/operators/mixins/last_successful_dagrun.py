@@ -35,7 +35,23 @@ class LastSuccessfulDagrunMixin:
 
             xcom = query.first()
             if xcom:
-                return pendulum.parse(xcom.value)
+                self.log.info(
+                    f"[LastSuccessfulDagrunMixin] Parsing {self.last_successful_dagrun_xcom_key} xcom value {xcom}"
+                )
+
+                try:
+                    # Attempt to parse the XCom value as a date
+                    return pendulum.parse(xcom.value)
+                except TypeError:
+                    # Handle old XCom value formats as a one-off
+                    if isinstance(xcom.value, dict) and "timestamp" in xcom.value:
+                        timestamp = xcom.value["timestamp"]
+                        return pendulum.parse(timestamp)
+                    elif isinstance(xcom.value, int):
+                        # Convert an integer timestamp to a Pendulum datetime
+                        return pendulum.from_timestamp(xcom.value)
+                    else:
+                        raise TypeError(f"Cannot parse xcom value {xcom.value}")
 
         # return the earliest start date for the Dag
         return self.dag.start_date
