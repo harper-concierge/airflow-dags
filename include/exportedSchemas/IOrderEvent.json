@@ -24,6 +24,12 @@
                 "string"
             ]
         },
+        "jobId": {
+            "type": "string",
+            "bsonType": [
+                "string"
+            ]
+        },
         "event_type": {
             "type": "string",
             "bsonType": [
@@ -32,8 +38,7 @@
             "enum": [
                 "event",
                 "note",
-                "function",
-                ""
+                "function"
             ]
         },
         "user_type": {
