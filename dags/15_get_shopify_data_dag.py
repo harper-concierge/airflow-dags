@@ -8,7 +8,7 @@ from airflow.sensors.external_task import ExternalTaskSensor
 
 from plugins.utils.calculate_start_date import fixed_date_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
-from plugins.utils.found_records_to_process import found_records_to_process
+from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
 
 from plugins.operators.drop_table import DropPostgresTableOperator
 from plugins.operators.analyze_table import RefreshPostgresTableStatisticsOperator
@@ -17,9 +17,6 @@ from plugins.operators.ensure_datalake_table_exists import EnsurePostgresDatalak
 from plugins.operators.import_shopify_data_operator import ImportShopifyPartnerDataOperator
 from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDatalakeTableViewExistsOperator
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
-
-# from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
-
 
 default_args = {
     "owner": "airflow",
@@ -30,7 +27,7 @@ default_args = {
     "retries": 3,  # Increased from 0 to 3
     "retry_exponential_backoff": True,
     "max_retry_delay": timedelta(minutes=30),
-    # "on_failure_callback": [send_harper_failure_notification()],
+    "on_failure_callback": [send_harper_failure_notification()],
 }
 
 
@@ -44,7 +41,6 @@ dag = DAG(
 )
 
 base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
-# is_latest_dagrun_task = DummyOperator(task_id="start", dag=dag)
 doc = """
 Skip the subsequent tasks if
     a) the execution_date is in past
@@ -123,12 +119,6 @@ for partner in partners:
         first_task = shopify_task
 
 previous_task_id = task_id
-task_id = f"{destination_table}_has_records_to_process"
-has_records_to_process = ShortCircuitOperator(
-    task_id=task_id,
-    python_callable=found_records_to_process,
-    op_kwargs={"parent_task_id": previous_task_id, "xcom_key": "documents_found"},
-)
 
 task_id = f"{destination_table}_refresh_transient_table_stats"
 refresh_transient_table = RefreshPostgresTableStatisticsOperator(
@@ -197,7 +187,6 @@ ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsOperator(
     >> drop_transient_table
     >> first_task
     >> migration_tasks
-    >> has_records_to_process
     >> refresh_transient_table
     >> ensure_datalake_table
     >> refresh_datalake_table
