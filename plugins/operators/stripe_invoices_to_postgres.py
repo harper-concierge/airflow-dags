@@ -138,14 +138,6 @@ END $$;
                 df = self.flatten_dataframe_columns_precisely(df)
                 df = self.align_to_schema_df(df)
 
-                # Check if the column exists
-                if "metadata__harper_invoice_subtype" not in df.columns:
-                    # Create the column with default value "checkout" for all rows
-                    df["metadata__harper_invoice_subtype"] = "checkout"
-                else:
-                    # Fill NaN values in the existing column with "checkout"
-                    df["metadata__harper_invoice_subtype"].fillna("checkout", inplace=True)
-
                 df.columns = df.columns.str.lower()
 
                 df.to_sql(

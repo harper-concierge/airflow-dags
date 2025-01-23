@@ -37,9 +37,13 @@ class StripeChargesToPostgresOperator(
             "source",
         ]  # discard unnecessary fields like source
         self.discard_flattened_fields = [
-            "payment_method_details__card__wallet__apple_pay__type"
+            "payment_method_details__card__wallet__apple_pay__type",
+            "fraud_details__stripe_report",
         ]  # fields to discard after flattening
         # self.discard_flattened_fields = ["outcome__network_advice_code"]  # discard unnecessary fields like source
+        self.preserve_fields = [
+            ("fraud_details__stripe_report", "string"),
+        ]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_charge_id"
         self.separator = "__"  # separator for nested field names
@@ -141,6 +145,8 @@ END $$;
                     ]
                     df.drop(existing_flattened_discard_fields, axis=1, inplace=True)
 
+                df = self.align_to_schema_df(df)
+
                 # Write processed data to PostgreSQL
                 df.to_sql(
                     self.destination_table,
@@ -192,3 +198,13 @@ END $$;
 
     def get_last_successful_item_id(self, conn, context):
         return self.get_task_var(conn, context, self.last_successful_item_key)
+
+    def align_to_schema_df(self, df):
+        # Check if the column exists
+        for field, dtype in self.preserve_fields:
+            if field not in df.columns:
+                df[field] = None  # because zettle is rubbish
+            print(f"aligning column {field} as type {dtype}")
+            df[field] = df[field].astype(dtype)
+
+        return df
