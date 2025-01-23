@@ -10,6 +10,7 @@ volumes:
 services:
   datalake:
     image: docker.io/postgres
+    shm_size: 1gb
     restart: unless-stopped
     networks:
       - airflow
