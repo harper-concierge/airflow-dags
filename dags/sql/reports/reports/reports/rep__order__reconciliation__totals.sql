@@ -25,6 +25,10 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
     -- ),
     SELECT
         o.order_id,
+        o.order_status,
+        o.trial_period_ended,
+        o.trial_period_start_at,
+        o.trial_period_actually_ended_at,
         cos.updatedat,
         cos.tp_actually_reconciled__dim_calendarweek,
         (o.total_value_purchased_net + o.shipping_method__price) as order_total,
