@@ -23,6 +23,7 @@ class DropPostgresTableOperator(BaseOperator):
         self,
         *,
         postgres_conn_id: str = "postgres_conn_id",
+        cascade: bool = False,
         schema: str,
         table: str,
         **kwargs,
@@ -32,9 +33,13 @@ class DropPostgresTableOperator(BaseOperator):
         self.postgres_conn_id = postgres_conn_id
         self.schema = schema
         self.table = table
+        self.cascade = cascade
 
+        cascade = ""
+        if self.cascade:
+            cascade = "CASCADE"
         self.log.info("Initialised DropPostgresTableOperator")
-        self.template_func = f" DROP TABLE IF EXISTS  {self.schema}.{self.table};"  # noqa
+        self.template_func = f" DROP TABLE IF EXISTS  {self.schema}.{self.table} {cascade};"  # noqa
 
     def execute(self, context):
         try:

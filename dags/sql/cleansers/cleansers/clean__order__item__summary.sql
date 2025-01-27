@@ -20,8 +20,22 @@ CREATE VIEW {{ schema }}.clean__order__item__summary AS
 		SUM(CASE WHEN oi.purchased = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS total_value_purchased,
 		SUM(CASE WHEN oi.returned = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS total_value_returned,
 		SUM(CASE WHEN oi.received = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS total_value_received,
-        (SUM(CASE WHEN oi.purchased = 1 THEN oi.calculated_item_value_pence ELSE 0 END)
-        - SUM(CASE WHEN oi.returned = 1 THEN oi.calculated_item_value_pence ELSE 0 END)) AS total_value_purchased_net,
+        -- (SUM(CASE WHEN oi.purchased = 1 THEN oi.calculated_item_value_pence ELSE 0 END)
+        -- - SUM(CASE WHEN oi.returned = 1 THEN oi.calculated_item_value_pence ELSE 0 END)) AS total_value_purchased_net,
+        (SUM(
+          CASE
+            WHEN oi.purchased = 1 THEN oi.calculated_item_value_pence
+            ELSE 0
+          END
+        )
+        -
+        SUM(
+          CASE
+            WHEN oi.returned = 1 AND oi.purchased = 1 THEN oi.calculated_item_value_pence
+            ELSE 0
+          END
+        )) AS total_value_purchased_net,
+
 		SUM(CASE WHEN oi.received_by_warehouse = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS total_value_received_by_warehouse,
 		-- item summary for initiated sale
 		COUNT(DISTINCT CASE WHEN (oi.is_initiated_sale = 1) THEN oi.id ELSE NULL END) AS initiated_sale__num_ordered,
@@ -58,10 +72,12 @@ CREATE VIEW {{ schema }}.clean__order__item__summary AS
 		SUM(CASE WHEN oi.is_inspire_me = 1 AND oi.received = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS inspire_me__total_value_received,
 		SUM(CASE WHEN oi.is_inspire_me = 1 AND oi.received_by_warehouse = 1 THEN oi.calculated_item_value_pence ELSE 0 END) AS inspire_me__total_value_received_wh, --renamed since too long
 
+        o.shipping_method__price,
         array_agg(DISTINCT(oi.tracking_url)) AS delivery_tracking_urls
     FROM
         {{ schema }}.orders o
     JOIN
         {{ schema }}.clean__order__items oi ON o.id = oi.order_id
     GROUP BY
-        o.id;
+        o.id,
+        o.shipping_method__price;
