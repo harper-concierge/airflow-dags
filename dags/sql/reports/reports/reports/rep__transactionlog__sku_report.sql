@@ -27,9 +27,11 @@ select
     t.harper_order__stripe_customer_link,
     t.harper_order__halo_link,
     t.harper_order__id,
+    t.order_id,
     t.item_info__item_id,
     t.id
 
 FROM rep__transactionlog t
 WHERE lineitem_category='product'
+AND lineitem_type <> 'try_on'
 ORDER BY t.createdat DESC

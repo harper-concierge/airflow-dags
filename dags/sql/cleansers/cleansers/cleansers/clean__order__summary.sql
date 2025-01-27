@@ -54,5 +54,6 @@ CREATE VIEW {{ schema }}.clean__order__summary AS
     AND o.brand_name NOT IN ('ME+EM UAT', 'Harper UAT Shopify','Harper Production','Harper-concierge-demo','',' ')
     AND o.order_name IS NOT NULL
     AND o.order_name NOT IN ('',' ','  ',' -L1')
-    AND lower(o.customer__first_name) NOT LIKE '%%test%%'
+    -- DO NOT DO LIKE comparisons without checking for NULL
+    AND (c.first_name IS NULL OR lower(c.first_name) NOT LIKE '%%test%%')
     ;
