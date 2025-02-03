@@ -77,7 +77,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                     start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
                 else:
                     self.log.info("No previous successful run found, using default start date")
-                    start_param = "2023-06-01"
+                    start_param = "2024-06-01"
 
                 # Set end date from context
                 lte = context["data_interval_end"].format("YYYY-MM-DD")
@@ -230,6 +230,9 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         while has_next_page:
             page_count += 1
             self.log.info(f"Fetching page {page_count}")
+
+            # Add NOT condition to filter out Point of Sale orders
+            order_query = f'updated_at:>={start_param} AND updated_at:<={lte} AND NOT source_name:"Point of Sale"'
 
             query = f"""
     query($query: String!, $after: String) {{
@@ -412,7 +415,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
     }}
     """
 
-            variables = {"query": f"updated_at:>={start_param} AND updated_at:<={lte}", "after": after}
+            variables = {"query": order_query, "after": after}
 
             self.log.info(f"Fetching orders with variables: {variables}")
 
@@ -458,38 +461,40 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             publication_app = publication.get("app", {}) or {}
             shipping_address = order.get("shippingAddress") or {}
 
+            # Safely get shipping line info
+            shipping_lines = order.get("shippingLines", {}).get("edges", [])
+            shipping_cost = 0.0
+            shipping_cost_currency = None
+            if shipping_lines:
+                shipping_line = shipping_lines[0].get("node", {})
+                shipping_cost = self._safe_float(
+                    shipping_line.get("discountedPriceSet", {}).get("shopMoney", {}).get("amount")
+                )
+                shipping_cost_currency = (
+                    shipping_line.get("discountedPriceSet", {}).get("shopMoney", {}).get("currencyCode")
+                )
+
             flat_order = {
                 # Basic Order Info
                 "publication_name": publication.get("name"),
                 "app_title": publication_app.get("title"),
-                "id": order["id"],
-                "name": order["name"],
-                "created_at": order["createdAt"],
-                "updated_at": order["updatedAt"],
-                "cancelled_at": order["cancelledAt"],
+                "id": order.get("id"),
+                "name": order.get("name"),
+                "created_at": order.get("createdAt"),
+                "updated_at": order.get("updatedAt"),
+                "cancelled_at": order.get("cancelledAt"),
                 "is_cancelled": 1 if order.get("cancelledAt") and order.get("cancelledAt").strip() else 0,
-                "cancel_reason": order["cancelReason"],
-                "display_fulfillment_status": order["displayFulfillmentStatus"],
-                "display_financial_status": order["displayFinancialStatus"],
-                # Shipping Address
+                "cancel_reason": order.get("cancelReason"),
+                "display_fulfillment_status": order.get("displayFulfillmentStatus"),
+                "display_financial_status": order.get("displayFinancialStatus"),
                 # Shipping Address - with null safety
                 "shipping_city": shipping_address.get("city"),
                 "shipping_country": shipping_address.get("country"),
                 "shipping_country_code": shipping_address.get("countryCode"),
                 "shipping_province": shipping_address.get("province"),
                 "shipping_province_code": shipping_address.get("provinceCode"),
-                "shipping_cost": self._safe_float(
-                    order.get("shippingLine", {})
-                    .get("currentDiscountedPriceSet", {})
-                    .get("shopMoney", {})
-                    .get("amount", 0)
-                ),
-                "shipping_cost_currency": (
-                    order.get("shippingLine", {})
-                    .get("currentDiscountedPriceSet", {})
-                    .get("shopMoney", {})
-                    .get("currencyCode")
-                ),
+                "shipping_cost": shipping_cost,
+                "shipping_cost_currency": shipping_cost_currency,
                 # Additional fields
                 "customer_id": None,
                 "customer_created_at": None,
@@ -497,35 +502,54 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 "customer_state": None,
                 "customer_tags": None,
                 "customer_total_spent": 0.0,
+                "customer_total_spent_currency": None,
                 "customer_numberOfOrders": 0.0,
-                "total_refund_amount": 0.0,
+                # "total_refund_amount": 0.0,
                 "total_refund_quantity": 0,
                 "tags": order.get("tags"),
                 "test": order.get("test", False),
                 # Payment Info
                 "payment_gateway_names": order["paymentGatewayNames"],
-                # Monetary Values
+                # Safe access for monetary fields
+                # Update the monetary values in flat_order
                 "current_subtotal_price": self._safe_float(
                     order.get("currentSubtotalPriceSet", {}).get("presentmentMoney", {}).get("amount")
                 ),
-                "current_subtotal_price_currency": order["currentSubtotalPriceSet"]["presentmentMoney"][
-                    "currencyCode"
-                ],
-                "current_subtotal_line_items_quantity": order["currentSubtotalLineItemsQuantity"],
-                "current_total_price": self._safe_float(order["currentTotalPriceSet"]["shopMoney"]["amount"]),
-                "current_total_price_currency": order["currentTotalPriceSet"]["shopMoney"]["currencyCode"],
-                "current_total_tax": self._safe_float(order["currentTotalTaxSet"]["shopMoney"]["amount"]),
-                "current_total_tax_currency": order["currentTotalTaxSet"]["shopMoney"]["currencyCode"],
-                "current_total_discounts": self._safe_float(order["currentTotalDiscountsSet"]["shopMoney"]["amount"]),
-                "current_total_discounts_currency": order["currentTotalDiscountsSet"]["shopMoney"]["currencyCode"],
-                "total_refunded": self._safe_float(order["totalRefundedSet"]["shopMoney"]["amount"]),
-                "total_refunded_currency": order["totalRefundedSet"]["shopMoney"]["currencyCode"],
-                "total_price": self._safe_float(order["totalPriceSet"]["shopMoney"]["amount"]),
-                "total_price_currency": order["totalPriceSet"]["shopMoney"]["currencyCode"],
-                "total_tax": self._safe_float(order["totalTaxSet"]["shopMoney"]["amount"]),
-                "total_tax_currency": order["totalTaxSet"]["shopMoney"]["currencyCode"],
-                "total_discounts": self._safe_float(order["totalDiscountsSet"]["shopMoney"]["amount"]),
-                "total_discounts_currency": order["totalDiscountsSet"]["shopMoney"]["currencyCode"],
+                "current_subtotal_price_currency": order.get("currentSubtotalPriceSet", {})
+                .get("presentmentMoney", {})
+                .get("currencyCode"),
+                "current_total_price": self._safe_float(
+                    order.get("currentTotalPriceSet", {}).get("shopMoney", {}).get("amount")
+                ),
+                "current_total_price_currency": order.get("currentTotalPriceSet", {})
+                .get("shopMoney", {})
+                .get("currencyCode"),
+                "current_total_tax": self._safe_float(
+                    order.get("currentTotalTaxSet", {}).get("shopMoney", {}).get("amount")
+                ),
+                "current_total_tax_currency": order.get("currentTotalTaxSet", {})
+                .get("shopMoney", {})
+                .get("currencyCode"),
+                "current_total_discounts": self._safe_float(
+                    order.get("currentTotalDiscountsSet", {}).get("shopMoney", {}).get("amount")
+                ),
+                "current_total_discounts_currency": order.get("currentTotalDiscountsSet", {})
+                .get("shopMoney", {})
+                .get("currencyCode"),
+                "total_refunded": self._safe_float(
+                    order.get("totalRefundedSet", {}).get("shopMoney", {}).get("amount")
+                ),
+                "total_refunded_currency": order.get("totalRefundedSet", {}).get("shopMoney", {}).get("currencyCode"),
+                "total_price": self._safe_float(order.get("totalPriceSet", {}).get("shopMoney", {}).get("amount")),
+                "total_price_currency": order.get("totalPriceSet", {}).get("shopMoney", {}).get("currencyCode"),
+                "total_tax": self._safe_float(order.get("totalTaxSet", {}).get("shopMoney", {}).get("amount")),
+                "total_tax_currency": order.get("totalTaxSet", {}).get("shopMoney", {}).get("currencyCode"),
+                "total_discounts": self._safe_float(
+                    order.get("totalDiscountsSet", {}).get("shopMoney", {}).get("amount")
+                ),
+                "total_discounts_currency": order.get("totalDiscountsSet", {})
+                .get("shopMoney", {})
+                .get("currencyCode"),
                 # Calculate total quantity from line items
                 "items_quantity": (
                     sum(edge["node"]["quantity"] for edge in order["lineItems"]["edges"])
@@ -537,36 +561,47 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             # Add customer fields if we have access
             if has_customer_access:
                 customer = order.get("customer", {})
+                if customer is not None:  # Only process if customer exists
+                    amount_spent = customer.get("amountSpent", {}) or {}
+                    flat_order.update(
+                        {
+                            "customer_id": customer.get("id"),
+                            "customer_created_at": customer.get("createdAt"),
+                            "customer_updated_at": customer.get("updatedAt"),
+                            "customer_numberOfOrders": customer.get("numberOfOrders", 0),
+                            "customer_tags": customer.get("tags"),
+                            "customer_total_spent": self._safe_float(amount_spent.get("amount")),
+                            "customer_total_spent_currency": amount_spent.get("currencyCode"),
+                        }
+                    )
+
+            # Process refunds
+            try:
+                # total_refund_amount = 0.0
+                total_refund_quantity = 0
+                refunds = order.get("refunds", []) or []
+
+                for refund in refunds:
+                    for refund_edge in refund.get("refundLineItems", {}).get("edges", []):
+                        refund_node = refund_edge.get("node", {})
+                        total_refund_quantity += refund_node.get("quantity", 0)
+                        # price_set = refund_node.get("priceSet", {}).get("shopMoney", {})
+                    # total_refund_amount += self._safe_float(price_set.get("amount"))
+
                 flat_order.update(
                     {
-                        "customer_id": customer.get("id"),
-                        "customer_created_at": customer.get("createdAt"),
-                        "customer_updated_at": customer.get("updatedAt"),
-                        "customer_numberOfOrders": customer.get("numberOfOrders"),
-                        "customer_tags": customer.get("tags"),
-                        "customer_total_spent": (
-                            float(customer["amountSpent"]["amount"]) if customer.get("amountSpent") else 0.0
-                        ),
+                        # "total_refund_amount": total_refund_amount,
+                        "total_refund_quantity": total_refund_quantity,
                     }
                 )
-
-            # Add refund fields
-            refunds = order.get("refunds", [])
-            total_refund_amount = 0.0
-            total_refund_quantity = 0
-
-            for refund in refunds:
-                for refund_edge in refund.get("refundLineItems", {}).get("edges", []):
-                    refund_node = refund_edge["node"]
-                    total_refund_quantity += refund_node["quantity"]
-                    total_refund_amount += self._safe_float(refund_node["priceSet"]["shopMoney"]["amount"])
-
-            flat_order.update(
-                {
-                    "total_refund_amount": total_refund_amount,
-                    "total_refund_quantity": total_refund_quantity,
-                }
-            )
+            except Exception as e:
+                self.log.warning(f"Error processing refunds for order {id}: {str(e)}")
+                flat_order.update(
+                    {
+                        # "total_refund_amount": 0.0,
+                        "total_refund_quantity": 0,
+                    }
+                )
 
             flattened_orders.append(flat_order)
 
@@ -584,8 +619,8 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
 
         # Calculate net values
         n_cols = len(df.columns)
-        df.insert(n_cols - 4, "net_price_ex_shipping", df["total_price_ex_shipping"] - df["total_refund_amount"])
-        df.insert(n_cols - 5, "net_items_quantity", df["items_quantity"] - df["total_refund_quantity"])
+        df.insert(n_cols - 4, "net_price", (df["total_price"] - df["shipping_cost"] - df["total_refunded"]))
+        df.insert(n_cols - 5, "net_items_quantity", (df["items_quantity"] - df["total_refund_quantity"]))
 
         # Convert date columns
         date_columns = [
@@ -696,6 +731,15 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
 
         return df
 
+    def _safe_float(self, value) -> float:
+        """Safely convert value to float, returning 0.0 if conversion fails."""
+        if value is None:
+            return 0.0
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return 0.0
+
     def _write_to_database(self, df: pd.DataFrame, conn) -> None:
         # Check if table exists and delete existing records for this partner/day
         ds = df["airflow_sync_ds"].iloc[0] if not df.empty else None
@@ -716,15 +760,6 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             f"CREATE INDEX IF NOT EXISTS {self.destination_table}_idx "
             f"ON {self.destination_schema}.{self.destination_table} (id);"
         )
-
-    def _safe_float(self, value) -> float:
-        """Safely convert value to float, returning 0.0 if conversion fails."""
-        if value is None:
-            return 0.0
-        try:
-            return float(value)
-        except (ValueError, TypeError):
-            return 0.0
 
     def _clean_existing_partner_data(self, conn, ds):
         """Clean existing data for the partner before a fresh import."""
