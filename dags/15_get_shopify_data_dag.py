@@ -9,6 +9,7 @@ from airflow.sensors.external_task import ExternalTaskSensor
 from plugins.utils.calculate_start_date import fixed_date_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 from plugins.utils.found_records_to_process import found_records_to_process
+from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
 
 from plugins.operators.drop_table import DropPostgresTableOperator
 from plugins.operators.analyze_table import RefreshPostgresTableStatisticsOperator
@@ -27,6 +28,7 @@ default_args = {
     "retries": 3,
     "retry_exponential_backoff": True,
     "max_retry_delay": timedelta(minutes=30),
+    "on_failure_callback": [send_harper_failure_notification()],
 }
 
 dag = DAG(
@@ -40,6 +42,11 @@ dag = DAG(
 
 base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
 
+doc = """
+Skip the subsequent tasks if
+    a) the execution_date is in past
+    b) there multiple dag runs are currently active
+"""
 is_latest_dagrun_task = ShortCircuitOperator(
     task_id="skip_check",
     python_callable=is_latest_dagrun,
@@ -92,10 +99,10 @@ drop_transient_table = DropPostgresTableOperator(
     dag=dag,
 )
 
-# Create a list to store all partner tasks
-partner_tasks = []
-
 # Create tasks for each partner
+first_task = None
+migration_tasks = []
+
 for partner in partners:
     task_id = f"get_{partner}_shopify_data_task"
     shopify_task = ShopifyGraphQLPartnerDataOperator(
@@ -108,17 +115,24 @@ for partner in partners:
         dag=dag,
         pool="shopify_import_pool",
     )
-    partner_tasks.append(shopify_task)
+    # Do this so that the first task can run and create the "transient_data.destination_table"
+    # and avoid a race condition whereby to df.to_sql try to create the table simultaneously.
+    # Doing one first, ensure the table is created with a race condition
+    # and subsequent df.to_sql will result in an append.
+    if first_task is None:
+        first_task = shopify_task
+    else:
+        migration_tasks.append(shopify_task)
 
 # Chain the partner tasks sequentially
-for i in range(len(partner_tasks) - 1):
-    partner_tasks[i] >> partner_tasks[i + 1]
+for i in range(len(migration_tasks) - 1):
+    migration_tasks[i] >> migration_tasks[i + 1]
 
 task_id = f"{destination_table}_has_records_to_process"
 has_records_to_process = ShortCircuitOperator(
     task_id=task_id,
     python_callable=found_records_to_process,
-    op_kwargs={"parent_task_id": partner_tasks[-1].task_id, "xcom_key": "documents_found"},
+    op_kwargs={"parent_task_id": migration_tasks[-1].task_id, "xcom_key": "documents_found"},
     dag=dag,
 )
 
@@ -168,6 +182,20 @@ append_transient_table_data = AppendTransientTableDataOperator(
     source_table=destination_table,
     destination_schema="public",
     destination_table=f"raw__{destination_table}",
+    delete_template="""
+        -- First, delete any existing records that we're going to update
+        DELETE FROM {{ destination_schema }}.{{ destination_table }}
+        WHERE id IN (
+            SELECT id
+            FROM {{ source_schema }}.{{ source_table }}
+        );
+
+        -- Then, delete any older versions of records in the transient table
+        DELETE FROM {{ source_schema }}.{{ source_table }} a
+        USING {{ source_schema }}.{{ source_table }} b
+        WHERE a.id = b.id
+        AND a.updated_at < b.updated_at;
+    """,
     dag=dag,
 )
 
@@ -186,12 +214,12 @@ ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsOperator(
 )
 
 # Set up the task dependencies
-wait_for_things_to_exist >> is_latest_dagrun_task >> drop_transient_table >> partner_tasks[0]
-
-partner_tasks[-1] >> has_records_to_process
-
 (
-    has_records_to_process
+    wait_for_things_to_exist
+    >> is_latest_dagrun_task
+    >> drop_transient_table
+    >> first_task
+    >> migration_tasks
     >> refresh_transient_table
     >> ensure_datalake_table
     >> refresh_datalake_table

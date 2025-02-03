@@ -231,8 +231,16 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             page_count += 1
             self.log.info(f"Fetching page {page_count}")
 
-            # Add NOT condition to filter out Point of Sale orders
-            order_query = f'updated_at:>={start_param} AND updated_at:<={lte} AND NOT source_name:"Point of Sale"'
+            # Add date optimization and test order filter
+            order_query = (
+                f"updated_at:>={start_param} AND updated_at:<={lte} "
+                f'AND NOT source_name:"Point of Sale" '
+                f"AND shipping_address_country_code:GB "
+                f'AND (app_title:"Harper Concierge" OR app_title:"Harper" OR app_title:"Online Store") '
+                f"AND test:false "  # Exclude test orders
+                # Ensure we don't get future updates (using current time as ceiling)
+                f"AND updated_at:<now "
+            )
 
             query = f"""
     query($query: String!, $after: String) {{
@@ -448,7 +456,6 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         # if len(orders) > 0:
         # self.log.info("Sample of first 2 orders before flattening:")
         # for i, order in enumerate(orders[:2]):
-        # self.log.info(f"\nOrder {i + 1}:")
         # self.log.info(json.dumps(order, indent=2, default=str))
         return orders, has_customer_access
 
@@ -779,7 +786,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 # Get the count of records for the partner before deletion
                 before_count = conn.execute(
                     f"SELECT COUNT(*) FROM {self.destination_schema}.{self.destination_table} "
-                    f"WHERE partner__name = '{self.partner_ref}'"
+                    f"WHERE partner_name = '{self.partner_ref}'"
                 ).scalar()
                 self.log.info(f"Records for {self.partner_ref} before delete: {before_count}")
 
@@ -793,7 +800,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 # Get the count of records for the partner after deletion
                 after_count = conn.execute(
                     f"SELECT COUNT(*) FROM {self.destination_schema}.{self.destination_table} "
-                    f"WHERE partner__name = '{self.partner_ref}'"
+                    f"WHERE partner_name = '{self.partner_ref}'"
                 ).scalar()
                 self.log.info(f"Records for {self.partner_ref} after delete: {after_count}")
 
