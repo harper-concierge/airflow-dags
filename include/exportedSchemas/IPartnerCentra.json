@@ -95,6 +95,10 @@
             "bsonType": "string",
             "type": "string"
         },
+        "platform_admin_base_url": {
+            "bsonType": "string",
+            "type": "string"
+        },
         "market_id": {
             "type": "integer",
             "bsonType": "int"
@@ -178,6 +182,7 @@
     "additionalProperties": false,
     "required": [
         "configured_payment_method",
+        "platform_admin_base_url",
         "checkoutApiVersion"
     ]
 }

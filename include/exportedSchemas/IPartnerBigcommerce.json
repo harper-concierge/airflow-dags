@@ -12,6 +12,10 @@
                 "type": "string"
             }
         },
+        "platform_admin_base_url": {
+            "bsonType": "string",
+            "type": "string"
+        },
         "__v": {
             "bsonType": [
                 "int"

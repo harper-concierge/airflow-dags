@@ -23,6 +23,7 @@ class StripeChargesToPostgresOperator(
         self,
         postgres_conn_id,
         stripe_conn_id,
+        rebuild,
         destination_schema,
         destination_table,
         *args,
@@ -32,14 +33,21 @@ class StripeChargesToPostgresOperator(
         self.destination_schema = destination_schema
         self.destination_table = destination_table
         self.postgres_conn_id = postgres_conn_id
+        self.rebuild = rebuild
         self.stripe_conn_id = stripe_conn_id
         self.discard_fields = [
             "source",
         ]  # discard unnecessary fields like source
         self.discard_flattened_fields = [
-            "payment_method_details__card__wallet__apple_pay__type"
+            "payment_method_details__card__wallet__apple_pay__type",
+            "fraud_details__stripe_report",
         ]  # fields to discard after flattening
         # self.discard_flattened_fields = ["outcome__network_advice_code"]  # discard unnecessary fields like source
+        self.preserve_fields = [
+            ("fraud_details__stripe_report", "string"),
+            ("outcome__rule", "string"),
+            ("failure_reason", "string"),
+        ]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_charge_id"
         self.separator = "__"  # separator for nested field names
@@ -91,7 +99,8 @@ END $$;
                 self.log.info("Deleting previous Data for this Dagrun")
                 self.delete_sql = render_template(self.delete_template, context=extra_context)
                 self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
-                conn.execute(self.delete_sql)
+                if not self.rebuild:
+                    conn.execute(self.delete_sql)
 
             created = {
                 "gt": last_successful_dagrun_ts.int_timestamp,
@@ -140,6 +149,8 @@ END $$;
                         col for col in self.discard_flattened_fields if col in df.columns
                     ]
                     df.drop(existing_flattened_discard_fields, axis=1, inplace=True)
+
+                df = self.align_to_schema_df(df)
 
                 # Write processed data to PostgreSQL
                 df.to_sql(
@@ -192,3 +203,27 @@ END $$;
 
     def get_last_successful_item_id(self, conn, context):
         return self.get_task_var(conn, context, self.last_successful_item_key)
+
+    def align_to_schema_df(self, df):
+        # Check if the column exists
+        if "metadata__harper_invoice_subtype" not in df.columns:
+            # Create the column with default value "checkout" for all rows
+            df["metadata__harper_invoice_subtype"] = "checkout"
+        else:
+            # Fill NaN values in the existing column with "checkout"
+            df["metadata__harper_invoice_subtype"].fillna("checkout", inplace=True)
+        if "metadata__harper_invoice_type" not in df.columns:
+            # Create the column with default value "checkout" for all rows
+            df["metadata__harper_invoice_type"] = ""
+        else:
+            # Fill NaN values in the existing column with "checkout"
+            df["metadata__harper_invoice_type"].fillna("", inplace=True)
+
+        # Check if the column exists
+        for field, dtype in self.preserve_fields:
+            if field not in df.columns:
+                df[field] = None  # because zettle is rubbish
+            print(f"aligning column {field} as type {dtype}")
+            df[field] = df[field].astype(dtype)
+
+        return df

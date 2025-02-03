@@ -24,6 +24,7 @@ class StripeInvoicesToPostgresOperator(
     def __init__(
         self,
         postgres_conn_id,
+        rebuild: bool,
         stripe_conn_id,
         destination_schema,
         destination_table,
@@ -34,6 +35,7 @@ class StripeInvoicesToPostgresOperator(
         self.destination_schema = destination_schema
         self.destination_table = destination_table
         self.postgres_conn_id = postgres_conn_id
+        self.rebuild = rebuild
         self.stripe_conn_id = stripe_conn_id
         self.discard_fields = ["payment_method_details", "source", "rendering"]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
@@ -93,7 +95,8 @@ END $$;
                 self.log.info("StripeInvoicesToPostgresOperator Deleting previous Data from this Dagrun")  # noqa
                 self.delete_sql = render_template(self.delete_template, context=extra_context)
                 self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
-                conn.execute(self.delete_sql)
+                if not self.rebuild:
+                    conn.execute(self.delete_sql)
 
             created = {
                 "gt": last_successful_dagrun_ts.int_timestamp,
@@ -137,14 +140,6 @@ END $$;
 
                 df = self.flatten_dataframe_columns_precisely(df)
                 df = self.align_to_schema_df(df)
-
-                # Check if the column exists
-                if "metadata__harper_invoice_subtype" not in df.columns:
-                    # Create the column with default value "checkout" for all rows
-                    df["metadata__harper_invoice_subtype"] = "checkout"
-                else:
-                    # Fill NaN values in the existing column with "checkout"
-                    df["metadata__harper_invoice_subtype"].fillna("checkout", inplace=True)
 
                 df.columns = df.columns.str.lower()
 
@@ -212,6 +207,13 @@ END $$;
         else:
             # Fill NaN values in the existing column with "checkout"
             df["metadata__harper_invoice_subtype"].fillna("checkout", inplace=True)
+        if "metadata__harper_invoice_type" not in df.columns:
+            # Create the column with default value "checkout" for all rows
+            df["metadata__harper_invoice_type"] = ""
+        else:
+            # Fill NaN values in the existing column with "checkout"
+            df["metadata__harper_invoice_type"].fillna("", inplace=True)
+
         for field, dtype in self.preserve_fields:
             if field not in df.columns:
                 df[field] = None  # because zettle is rubbish

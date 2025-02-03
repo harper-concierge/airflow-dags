@@ -30,8 +30,8 @@ dag = DAG(
 )
 
 wait_for_reports = ExternalTaskSensor(
-    task_id="wait_for_dimensions_to_complete",
-    external_dag_id="30_create_dimensions_dag",  # The ID of the DAG you're waiting for
+    task_id="wait_for_reset_concurrently_var",
+    external_dag_id="900_reset_concurrently_var",  # The ID of the DAG you're waiting for
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
     allowed_states=["success"],  # You might need to customize this part
     dag=dag,
