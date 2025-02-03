@@ -7,12 +7,12 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_dashboard_b
     WITH
 ship_directs AS (
    SELECT previous_original_order_name, id
-   FROM public.rep__ship_direct_orders
+    FROM {{ schema }}.rep__ship_direct_orders
 ),
 
 monthly_kpi_data AS (
-   SELECT
-       partner__name,
+   SELECT DISTINCT
+       partner_name,
        year_month,
        analysis_region,
        orders,
@@ -20,13 +20,13 @@ monthly_kpi_data AS (
        net_ATV,
        net_UPT,
        net_ASP
-   FROM public.rep__shopify_partner_monthly_summary
+   FROM {{ schema }}.rep__shopify_partner_monthly_summary
    WHERE channel = 'Online Store'
 ),
 
 daily_summary AS (
-   SELECT
-       partner__name,
+   SELECT DISTINCT
+       partner_name,
        day,
        analysis_region,
        orders as daily_orders,
@@ -34,7 +34,7 @@ daily_summary AS (
        net_ATV as daily_atv,
        net_UPT as daily_upt,
        net_ASP as daily_asp
-   FROM public.rep__shopify_partner_daily_summary
+   FROM {{ schema }}.rep__shopify_partner_daily_summary
    WHERE channel = 'Online Store'
 ),
 
@@ -74,8 +74,8 @@ base_orders AS (
        i.is_inspire_me AS item_is_inspire_me,
        i.is_initiated_sale AS item_is_initiated_sale
 
-   FROM public.rep__deduped_order_items i
-   LEFT JOIN public.clean__order__summary o ON o.id = i.order_id
+   FROM {{ schema }}.rep__deduped_order_items i
+   LEFT JOIN {{ schema }}.clean__order__summary o ON o.id = i.order_id
    LEFT JOIN ship_directs sd ON o.id = sd.id
    WHERE i.is_link_order_child_item = 0 AND o.link_order__is_child = 0
 )
@@ -205,14 +205,14 @@ SELECT
 
 FROM base_orders bo
 LEFT JOIN daily_summary ds
-   ON ds.partner__name = bo.brand_name
+   ON ds.partner_name = bo.brand_name
    AND DATE(ds.day) = bo.order__createdat__dim_date
    AND CASE
        WHEN harper_product_type = 'harper_concierge' THEN ds.analysis_region = 'London'
        ELSE ds.analysis_region = 'Regional'
    END
 LEFT JOIN monthly_kpi_data m
-   ON m.partner__name = bo.brand_name
+   ON m.partner_name = bo.brand_name
    AND TO_CHAR(DATE(m.year_month), 'YYYY/MM') = bo.order__createdat__dim_yearmonth
    AND CASE
        WHEN harper_product_type = 'harper_concierge' THEN m.analysis_region = 'London'
@@ -286,12 +286,9 @@ CREATE INDEX idx_time_analysis ON {{ schema }}.rep__partnership_dashboard_base_v
 CREATE INDEX idx_brand_metrics ON {{ schema }}.rep__partnership_dashboard_base_view
 (completion_date, brand_name, order__type) INCLUDE (ordered_value, purchased_value, number_items_ordered);
 -- Unique index
-CREATE UNIQUE INDEX rep__partnership_dashboard_base_view_unique_idx
-ON {{ schema }}.rep__partnership_dashboard_base_view (order__name, order_created_date,order__type);
+--CREATE UNIQUE INDEX rep__partnership_dashboard_base_view_unique_idx
+--ON {{ schema }}.rep__partnership_dashboard_base_view (order__name, order_created_date,order__type);
 {% endif %}
 
 -- Refresh the view
 REFRESH MATERIALIZED VIEW {{ schema }}.rep__partnership_dashboard_base_view;
-
--- Analyze for query optimization
-ANALYZE {{ schema }}.rep__partnership_dashboard_base_view;
