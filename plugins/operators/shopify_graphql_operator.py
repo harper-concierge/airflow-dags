@@ -77,7 +77,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                     start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
                 else:
                     self.log.info("No previous successful run found, using default start date")
-                    start_param = "2025-01-01"
+                    start_param = "2024-01-01"
 
                 # Set end date from context
                 lte = context["data_interval_end"].format("YYYY-MM-DD")
