@@ -20,7 +20,7 @@ from plugins.operators.append_transient_table_data_operator import AppendTransie
 
 default_args = {
     "owner": "airflow",
-    "start_date": fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 6, 1)),
+    "start_date": fixed_date_start_date("SHOPIFY_START_DATE", datetime(2025, 1, 1)),
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),
@@ -33,7 +33,7 @@ dag = DAG(
     "15_get_shopify_data_dag",
     catchup=False,
     default_args=default_args,
-    start_date=fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 6, 1)),
+    start_date=fixed_date_start_date("SHOPIFY_START_DATE", datetime(2025, 1, 1)),
     max_active_runs=1,
     template_searchpath="/usr/local/airflow/dags",
 )
@@ -55,23 +55,32 @@ wait_for_things_to_exist = ExternalTaskSensor(
     dag=dag,
 )
 
+
 partners = [
-    "shrimps",
-    "harper_production",
-    "chinti_parker",
+    # "aw",
     "beckham",
-    "jigsaw",
-    "rixo",
     "cefinn",
-    "temperley",
-    "snicholson",
-    # "self-portrait",
-    "lestrange",
-    "ro-zo",
-    "kitri",
-    "live-unlimited",
-    "needle-thread",
+    "chinti_parker",
+    # "donna_ida",
     "fcuk",
+    # "iris",
+    "jigsaw",
+    "kitri",
+    "lestrange",
+    "live-unlimited",
+    # "marykat",
+    "needle-thread",
+    "nobodys-child",
+    # "pangaia",
+    # "represent",
+    "rixo",
+    "ro-zo",
+    # "self-portrait",
+    # "Seren",
+    "shrimps",
+    "snicholson",
+    "temperley",
+    "universal-works",
 ]
 
 destination_table = "shopify_partner_orders"
