@@ -15,7 +15,7 @@ CREATE VIEW {{ schema }}.rep__shopify_partner_daily_summary AS
     po.value_ordered,
     po.value_returned,
     po.cancelled_at,
-    po.channel,
+    po.publication_name,
     po.keep
    FROM {{ schema }}.clean__shopify_partner_orders po
    LEFT JOIN {{ schema }}.clean__order__summary co ON po.name = co.order_name
@@ -41,7 +41,7 @@ SELECT
    TO_CHAR(created_at, 'YYYY-MM-01') AS year_month,
    partner__name,
    partner__reference,
-   channel,
+   publication_name,
    harper__product,
    analysis_region,
    COUNT(DISTINCT name) AS orders,
@@ -63,7 +63,7 @@ SELECT
    COALESCE((ROUND((SUM(value_returned)/NULLIF(SUM(value_ordered), 0))::decimal, 2))::decimal, 0) AS return_rate_value,
    ROUND((SUM(keep)::numeric/NULLIF(COUNT(DISTINCT name), 0)),2) AS keep_rate
 FROM london_data
-WHERE channel IN ('Online Store','Harper')
+WHERE publication_name IN ('Online Store','Harper Concierge')
 AND analysis_region IS NOT NULL
 GROUP BY
    partner__name,
