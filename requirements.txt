@@ -7,9 +7,12 @@ apache-airflow-providers-slack==8.7.0
 # jpype1
 numpy
 pandas
+pendulum
 psycopg2
 pymongo
 python-bsonjs
 python-dateutil
+requests
 ShopifyAPI
+sqlalchemy
 stripe
