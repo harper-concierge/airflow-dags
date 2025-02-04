@@ -244,7 +244,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             order_query = (
                 f"updated_at:>={start_param} AND updated_at:<={lte} "
                 f'AND NOT source_name:"Point of Sale" '
-                f"AND shipping_address_country_code:GB "
+                f"AND shipping_address_country_code:GB "  # change when we are global
                 f'AND (app_title:"Harper Concierge" OR app_title:"Harper" OR app_title:"Online Store") '
                 f"AND test:false "  # Exclude test orders
                 # Ensure we don't get future updates (using current time as ceiling)
