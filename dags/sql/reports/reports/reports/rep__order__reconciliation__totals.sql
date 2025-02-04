@@ -21,7 +21,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
             SELECT
                 regexp_matches(e.message, '[0-9]+(?:\.[0-9]{2})?$', 'g') AS match_array
         ) AS matches
-        WHERE e.message LIKE '%partial refund -%'
+        WHERE e.message LIKE '%%partial refund -%%'
         GROUP BY o.id
     ),
     shipping_fee_refunds AS (
