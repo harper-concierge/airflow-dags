@@ -30,21 +30,38 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
           1 AS shipping_fee_refunded
         FROM clean__order__summary o
         WHERE o.orderstatusevent__shippingfeerefundedbywarehouse_at IS NOT NULL
+    ),
+    transactionlog_totals AS (
+        SELECT
+            order_id,
+            SUM(CASE
+                    -- Normal purchases and refunds for non-discount categories
+                    WHEN transaction_type IN ('purchase', 'adjusted_purchase')
+                         AND lineitem_category NOT IN ('item_discount', 'order_discount', 'harper_item_discount', 'harper_order_discount')
+                    THEN COALESCE(lineitem_amount, 0)
+
+                    WHEN transaction_type IN ('refund', 'adjusted_refund')
+                         AND lineitem_category NOT IN ('item_discount', 'order_discount', 'harper_item_discount', 'harper_order_discount')
+                    THEN -COALESCE(lineitem_amount, 0)
+
+                    -- Inverse logic for discount-related categories
+                    WHEN transaction_type IN ('discount', 'purchase', 'adjusted_purchase')
+                         AND lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount', 'harper_order_discount')
+                    THEN -COALESCE(lineitem_amount, 0)
+
+                    WHEN transaction_type IN ('refund', 'adjusted_refund')
+                         AND lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount', 'harper_order_discount')
+                    THEN COALESCE(lineitem_amount, 0)
+
+                    -- Try-on transactions have no impact
+                    ELSE 0
+                END
+            ) AS transactionlog_total
+        FROM
+            public.clean__transaction__items
+        GROUP BY
+            order_id
     )
-    -- WITH transactionlog_totals AS (
-        -- SELECT
-        -- COUNT(DISTINCT harper_order_name)::INTEGER AS num_orders_paid, -- Cast to integer
-        -- SUM(transaction_info__item_count) AS total_items_purchased,
-        -- SUM(transaction_info__payment_invoiced_amount) AS total_amount_purchased
-    -- FROM
-        -- {{ schema }}.rep__transactionlog__view
-    -- WHERE
-        -- harper_order__order_status = 'completed'
-        -- AND lineitem_type = 'purchase'
-        -- AND lineitem_category = 'product'
-    -- GROUP BY
---
-    -- ),
     SELECT
         o.order_id,
         cos.order_type,
@@ -63,6 +80,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
             ELSE 0
         END as shipping_fee_refunded,
         s.stripe_total,
+        tt.transactionlog_total,
         COALESCE(pr.total_partial_refund_amount, 0) AS total_partial_refund_amount
 
     FROM {{ schema }}.clean__order__item__summary o
@@ -70,6 +88,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
     LEFT JOIN shipping_fee_refunds sfr ON sfr.order_id = o.order_id
     LEFT JOIN partial_refunds pr ON pr.order_id = o.order_id
     LEFT JOIN clean__order__summary cos ON cos.id = o.order_id
+    LEFT JOIN transactionlog_totals tt ON tt.order_id = o.order_id
 WITH NO DATA;
 {% if is_modified %}
 CREATE UNIQUE INDEX IF NOT EXISTS rep__order__reconciliation__totals_idx ON {{ schema }}.rep__order__reconciliation__totals (order_id);
