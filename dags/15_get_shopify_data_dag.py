@@ -8,7 +8,8 @@ from airflow.sensors.external_task import ExternalTaskSensor
 
 from plugins.utils.calculate_start_date import fixed_date_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
-from plugins.utils.found_records_to_process import found_records_to_process
+
+# from plugins.utils.found_records_to_process import found_records_to_process
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
 
 from plugins.operators.drop_table import DropPostgresTableOperator
@@ -65,6 +66,7 @@ wait_for_things_to_exist = ExternalTaskSensor(
 
 partners = [
     # "aw",
+    "harper_production",
     "beckham",
     "cefinn",
     "chinti_parker",
@@ -127,14 +129,6 @@ for partner in partners:
 # Chain the partner tasks sequentially
 for i in range(len(migration_tasks) - 1):
     migration_tasks[i] >> migration_tasks[i + 1]
-
-task_id = f"{destination_table}_has_records_to_process"
-has_records_to_process = ShortCircuitOperator(
-    task_id=task_id,
-    python_callable=found_records_to_process,
-    op_kwargs={"parent_task_id": migration_tasks[-1].task_id, "xcom_key": "documents_found"},
-    dag=dag,
-)
 
 task_id = f"{destination_table}_refresh_transient_table_stats"
 refresh_transient_table = RefreshPostgresTableStatisticsOperator(
