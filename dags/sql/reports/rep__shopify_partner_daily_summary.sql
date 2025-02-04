@@ -17,8 +17,8 @@ WITH london_data AS (
 
 SELECT
    ROW_NUMBER() OVER (ORDER BY TO_CHAR(created_at, 'YYYY-MM-dd'), partner_name) as id,
-   TO_CHAR(created_at, 'YYYY-MM-dd') AS day,
-   TO_CHAR(created_at, 'YYYY-MM-01') AS year_month,
+   TO_CHAR(created_at, 'YYYY-MM-dd') AS day_created,
+   TO_CHAR(created_at, 'YYYY-MM-01') AS year_month_created,
    partner_name,
    partner_reference,
    channel,
