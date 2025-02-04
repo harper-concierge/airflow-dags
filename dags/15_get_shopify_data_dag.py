@@ -8,7 +8,6 @@ from airflow.sensors.external_task import ExternalTaskSensor
 
 from plugins.utils.calculate_start_date import fixed_date_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
-from plugins.utils.found_records_to_process import found_records_to_process
 
 from plugins.operators.drop_table import DropPostgresTableOperator
 from plugins.operators.analyze_table import RefreshPostgresTableStatisticsOperator
@@ -18,13 +17,16 @@ from plugins.operators.ensure_datalake_table_exists import EnsurePostgresDatalak
 from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDatalakeTableViewExistsOperator
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
 
+# from plugins.utils.found_records_to_process import found_records_to_process
+
+
 default_args = {
     "owner": "airflow",
     "start_date": fixed_date_start_date("SHOPIFY_START_DATE", datetime(2025, 1, 1)),
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),
-    "retries": 3,
+    "retries": 2,
     "retry_exponential_backoff": True,
     "max_retry_delay": timedelta(minutes=30),
 }
@@ -113,13 +115,6 @@ for partner in partners:
     else:
         first_task = shopify_task
 
-task_id = f"{destination_table}_has_records_to_process"
-has_records_to_process = ShortCircuitOperator(
-    task_id=task_id,
-    python_callable=found_records_to_process,
-    op_kwargs={"parent_task_id": first_task.task_id, "xcom_key": "documents_found"},
-    dag=dag,
-)
 
 task_id = f"{destination_table}_refresh_transient_table_stats"
 refresh_transient_table = RefreshPostgresTableStatisticsOperator(
