@@ -8,9 +8,7 @@ from airflow.sensors.external_task import ExternalTaskSensor
 
 from plugins.utils.calculate_start_date import fixed_date_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
-
-# from plugins.utils.found_records_to_process import found_records_to_process
-from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
+from plugins.utils.found_records_to_process import found_records_to_process
 
 from plugins.operators.drop_table import DropPostgresTableOperator
 from plugins.operators.analyze_table import RefreshPostgresTableStatisticsOperator
@@ -22,32 +20,26 @@ from plugins.operators.append_transient_table_data_operator import AppendTransie
 
 default_args = {
     "owner": "airflow",
-    "start_date": fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 1, 1)),
+    "start_date": fixed_date_start_date("SHOPIFY_START_DATE", datetime(2025, 1, 1)),
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),
     "retries": 3,
     "retry_exponential_backoff": True,
     "max_retry_delay": timedelta(minutes=30),
-    "on_failure_callback": [send_harper_failure_notification()],
 }
 
 dag = DAG(
     "15_get_shopify_data_dag",
     catchup=False,
     default_args=default_args,
-    start_date=fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 1, 1)),
+    start_date=fixed_date_start_date("SHOPIFY_START_DATE", datetime(2025, 1, 1)),
     max_active_runs=1,
     template_searchpath="/usr/local/airflow/dags",
 )
 
 base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
 
-doc = """
-Skip the subsequent tasks if
-    a) the execution_date is in past
-    b) there multiple dag runs are currently active
-"""
 is_latest_dagrun_task = ShortCircuitOperator(
     task_id="skip_check",
     python_callable=is_latest_dagrun,
@@ -66,7 +58,6 @@ wait_for_things_to_exist = ExternalTaskSensor(
 
 partners = [
     # "aw",
-    "harper_production",
     "beckham",
     "cefinn",
     "chinti_parker",
@@ -102,9 +93,8 @@ drop_transient_table = DropPostgresTableOperator(
 )
 
 # Create tasks for each partner
-first_task = None
 migration_tasks = []
-
+first_task = None
 for partner in partners:
     task_id = f"get_{partner}_shopify_data_task"
     shopify_task = ShopifyGraphQLPartnerDataOperator(
@@ -117,18 +107,19 @@ for partner in partners:
         dag=dag,
         pool="shopify_import_pool",
     )
-    # Do this so that the first task can run and create the "transient_data.destination_table"
-    # and avoid a race condition whereby to df.to_sql try to create the table simultaneously.
-    # Doing one first, ensure the table is created with a race condition
-    # and subsequent df.to_sql will result in an append.
-    if first_task is None:
-        first_task = shopify_task
-    else:
-        migration_tasks.append(shopify_task)
 
-# Chain the partner tasks sequentially
-for i in range(len(migration_tasks) - 1):
-    migration_tasks[i] >> migration_tasks[i + 1]
+    if first_task:
+        migration_tasks.append(shopify_task)
+    else:
+        first_task = shopify_task
+
+task_id = f"{destination_table}_has_records_to_process"
+has_records_to_process = ShortCircuitOperator(
+    task_id=task_id,
+    python_callable=found_records_to_process,
+    op_kwargs={"parent_task_id": first_task.task_id, "xcom_key": "documents_found"},
+    dag=dag,
+)
 
 task_id = f"{destination_table}_refresh_transient_table_stats"
 refresh_transient_table = RefreshPostgresTableStatisticsOperator(
@@ -176,20 +167,6 @@ append_transient_table_data = AppendTransientTableDataOperator(
     source_table=destination_table,
     destination_schema="public",
     destination_table=f"raw__{destination_table}",
-    delete_template="""
-        -- First, delete any existing records that we're going to update
-        DELETE FROM {{ destination_schema }}.{{ destination_table }}
-        WHERE id IN (
-            SELECT id
-            FROM {{ source_schema }}.{{ source_table }}
-        );
-
-        -- Then, delete any older versions of records in the transient table
-        DELETE FROM {{ source_schema }}.{{ source_table }} a
-        USING {{ source_schema }}.{{ source_table }} b
-        WHERE a.id = b.id
-        AND a.updated_at < b.updated_at;
-    """,
     dag=dag,
 )
 

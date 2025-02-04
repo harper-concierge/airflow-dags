@@ -58,6 +58,13 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         AND reference = '{self.partner_ref}'
         """
 
+        # Add delete template for cleaning up existing data
+        self.delete_template = f"""
+        DELETE FROM {self.destination_schema}.{self.destination_table}
+        WHERE partner_reference = '{self.partner_ref}'
+        AND airflow_sync_ds = '{{{{ ds }}}}'
+        """
+
     def execute(self, context):
         # Get database connection
         hook = BaseHook.get_hook(self.postgres_conn_id)
@@ -67,6 +74,8 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             with engine.connect() as conn:
                 run_id = context["run_id"]
                 self.partner_config = self._get_partner_config(conn)
+                # Store context for use in other methods
+                self.context = context
 
                 # Get last successful dagrun timestamp using the mixin
                 last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
@@ -791,7 +800,11 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 self.log.info(f"Records for {self.partner_ref} before delete: {before_count}")
 
                 # Render the delete SQL template with the provided context and Airflow's execution date
-                self.delete_sql = render_template(self.delete_template, context={"ds": ds, **self.context})
+                # Only use ds if context is not available (for backwards compatibility)
+                context_dict = {"ds": ds}
+                if hasattr(self, "context"):
+                    context_dict.update(self.context)
+                self.delete_sql = render_template(self.delete_template, context=context_dict)
                 self.log.info(f"Executing delete SQL: {self.delete_sql}")
 
                 # Execute the delete SQL query
