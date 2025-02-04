@@ -22,7 +22,7 @@ from plugins.operators.append_transient_table_data_operator import AppendTransie
 
 default_args = {
     "owner": "airflow",
-    "start_date": fixed_date_start_date("SHOPIFY_START_DATE", datetime(2025, 1, 1)),
+    "start_date": fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 1, 1)),
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),
@@ -35,7 +35,7 @@ dag = DAG(
     "15_get_shopify_data_dag",
     catchup=False,
     default_args=default_args,
-    start_date=fixed_date_start_date("SHOPIFY_START_DATE", datetime(2025, 1, 1)),
+    start_date=fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 1, 1)),
     max_active_runs=1,
     template_searchpath="/usr/local/airflow/dags",
 )
