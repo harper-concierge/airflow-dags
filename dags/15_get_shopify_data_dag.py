@@ -230,6 +230,7 @@ if rebuild:
         >> append_transient_table_data
         >> ensure_table_view_exists
         >> base_tables_completed
+        >> reset_rebuild_var_task
     )
 
 else:
