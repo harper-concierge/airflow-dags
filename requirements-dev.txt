@@ -1,0 +1,4 @@
+black==24.2.0
+flake8==3.9.2
+-e git+ssh://git@github.com/robinedwards/gitfeatures.git@v0.1.11#egg=gitfeatures
+isort==5.8.0
