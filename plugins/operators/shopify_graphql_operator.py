@@ -107,11 +107,11 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 # Check if we have a stored cursor for this run
                 after = context["task_instance"].xcom_pull(task_ids=context["task"].task_id, key="last_cursor")
 
-                ds = context["ds"]
+                # ds = context["ds"]
 
                 if not after:
                     # Only clean data if we're starting fresh
-                    self._clean_existing_partner_data(conn, ds)
+                    self._clean_existing_partner_data(conn)
                 else:
                     self.log.info(f"Continuing from cursor: {after}")
 
@@ -806,13 +806,11 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             f"ON {self.destination_schema}.{self.destination_table} (id);"
         )
 
-    def _clean_existing_partner_data(self, conn, ds):
+    def _clean_existing_partner_data(self, conn):
         """Clean existing data for the partner before a fresh import."""
         try:
-            context_dict = {"ds": ds}
-            if hasattr(self, "context"):
-                context_dict.update(self.context)
-            self.delete_sql = render_template(self.delete_template, context=context_dict)
+            # context_dict = {"ds": ds}
+            self.delete_sql = render_template(self.delete_template, context=self.context)
             self.log.info(f"Cleaning existing data for partner {self.partner_ref} with SQL: {self.delete_sql}")
             # Execute the delete SQL query
             conn.execute(self.delete_sql)
