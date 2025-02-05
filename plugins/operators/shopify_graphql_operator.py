@@ -95,7 +95,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 # Get last successful dagrun timestamp using the mixin
                 last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
 
-                self.log.info(f"Flast successful run timestamp: {last_successful_dagrun_ts}")
+                self.log.info(f"last successful run timestamp: {last_successful_dagrun_ts}")
                 start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
 
                 # Set end date from context

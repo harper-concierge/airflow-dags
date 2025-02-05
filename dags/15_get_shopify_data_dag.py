@@ -45,10 +45,12 @@ dag = DAG(
     "15_get_shopify_data_dag",
     catchup=False,
     default_args=default_args,
-    start_date=get_days_ago_start_date("SHOPIFY_START_DATE", 550),
+    start_date=get_days_ago_start_date("SHOPIFY_START_DAYS_AGO", 550),
     max_active_runs=1,
     template_searchpath="/usr/local/airflow/dags",
 )
+
+base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
 
 reset_rebuild_var_task = PythonOperator(
     task_id="reset_rebuild_var_task",
@@ -56,8 +58,6 @@ reset_rebuild_var_task = PythonOperator(
     python_callable=reset_rebuild_var,
     dag=dag,
 )
-base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
-
 is_latest_dagrun_task = ShortCircuitOperator(
     task_id="skip_check",
     python_callable=is_latest_dagrun,
@@ -142,6 +142,7 @@ for partner in partners:
         destination_schema="transient_data",
         destination_table=destination_table,
         partner_ref=partner,
+        rebuild=rebuild,
         dag=dag,
         pool="shopify_import_pool",
     )

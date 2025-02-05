@@ -22,6 +22,7 @@ class LastSuccessfulDagrunMixin:
         except AttributeError:
             rebuild = False
 
+        self.log.info(f"[LastSuccessfulDagrunMixin] rebuild={rebuild}")
         if not rebuild:
             query = XCom.get_many(
                 include_prior_dates=True,
