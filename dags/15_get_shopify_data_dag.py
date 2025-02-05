@@ -78,7 +78,7 @@ partners = [
     # "aw",
     # "beckham",
     "cefinn",
-    "chinti_parker",
+    # "chinti_parker",
     # "donna_ida",
     # "fcuk",
     # "iris",
