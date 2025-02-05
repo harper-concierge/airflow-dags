@@ -30,6 +30,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         destination_schema: str,
         destination_table: str,
         partner_ref: str,
+        rebuild: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -38,7 +39,15 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         self.destination_schema = destination_schema
         self.destination_table = destination_table
         self.partner_ref = partner_ref
+        self.rebuild = rebuild
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
+
+        self.context = {
+            "schema": schema,
+            "destination_schema": destination_schema,
+            "destination_table": destination_table,
+            "partner_ref": partner_ref,
+        }
 
         # Template for fetching partner configuration
         self.get_partner_config_template = f"""
@@ -58,11 +67,17 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         AND reference = '{self.partner_ref}'
         """
 
-        # Add delete template for cleaning up existing data
-        self.delete_template = f"""
-        DELETE FROM {self.destination_schema}.{self.destination_table}
-        WHERE partner_reference = '{self.partner_ref}'
-        AND airflow_sync_ds = '{{{{ ds }}}}'
+        self.delete_template = """DO $$
+        BEGIN
+        IF EXISTS (
+            SELECT FROM pg_tables WHERE schemaname = '{{destination_schema}}'
+            AND tablename = '{{destination_table}}'
+            ) THEN
+            DELETE FROM "{{ destination_schema }}.{{destination_table}}"
+            WHERE partner__name = '{{partner_ref}}'
+            ;
+        END IF;
+        END $$;
         """
 
     def execute(self, context):
@@ -80,19 +95,25 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 # Get last successful dagrun timestamp using the mixin
                 last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
 
-                # Set start date based on last successful run or default
-                if last_successful_dagrun_ts:
-                    self.log.info(f"Found last successful run timestamp: {last_successful_dagrun_ts}")
-                    start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
-                else:
-                    self.log.info("No previous successful run found, using default start date")
-                    start_param = "2024-01-01"
+                self.log.info(f"Flast successful run timestamp: {last_successful_dagrun_ts}")
+                start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
 
                 # Set end date from context
                 lte = context["data_interval_end"].format("YYYY-MM-DD")
 
                 # Log the date range
                 self.log.info(f"Fetching orders from {start_param} to {lte}")
+
+                # ds = context["ds"]
+
+                # Check if we have a stored cursor for this run
+                after = context["task_instance"].xcom_pull(task_ids=context["task"].task_id, key="last_cursor")
+
+                if not after:
+                    # Only clean data if we're starting fresh
+                    self._clean_existing_partner_data(conn)
+                else:
+                    self.log.info(f"Continuing from cursor: {after}")
 
                 # Get partner configuration
                 partner_config = self._get_partner_config(conn)
@@ -102,7 +123,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 self.access_token = partner_config["partner_platform_api_access_token"]
 
                 # Fetch orders
-                orders, has_customer_access = self._fetch_all_orders(start_param, lte)
+                orders, has_customer_access = self._fetch_all_orders(start_param, lte, after)
 
                 # Process and write data if orders exist
                 if orders:
@@ -110,7 +131,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                     df = self._transform_to_dataframe(orders, has_customer_access)
 
                     # Additional processing
-                    df = self._process_dataframe(df, partner_config, context["ds"])
+                    df = self._process_dataframe(df, partner_config)
 
                     # Write to database
                     self._write_to_database(df, conn)
@@ -183,31 +204,30 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                     raise AirflowException(f"Failed to fetch data from Shopify: {str(e)}")
                 # time.sleep(2**attempt)
 
-    def _fetch_all_orders(self, start_param: str, lte: str) -> Tuple[List[Dict], bool]:
+    def _fetch_all_orders(self, start_param: str, lte: str, after: str = None) -> Tuple[List[Dict], bool]:
         """
         Fetch all orders within the given date range using Shopify's GraphQL API.
         First checks for customer access, then fetches all orders with appropriate fields.
         """
         orders = []
-        after = None
         has_next_page = True
         page_count = 0
         has_customer_access = None
 
         # First, test for customer access
         test_query = """
-      query($query: String!) {
-        orders(first: 1, query: $query) {
-          edges {
-            node {
-              customer {
-                id
-              }
+        query($query: String!) {
+            orders(first: 1, query: $query) {
+                edges {
+                    node {
+                        customer {
+                            id
+                        }
+                    }
+                }
             }
-          }
         }
-      }
-      """
+        """
 
         test_variables = {"query": f"updated_at:>={start_param} AND updated_at:<={lte}"}
 
@@ -456,9 +476,18 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 if has_next_page:
                     self.log.info(f"More pages available, next cursor: {after}")
 
+                # Store cursor after each successful page
+                if has_next_page:
+                    self.context["task_instance"].xcom_push(key="last_cursor", value=data["pageInfo"]["endCursor"])
+                    after = data["pageInfo"]["endCursor"]
+                    self.log.info(f"Stored cursor: {after}")
+
             except Exception as e:
                 self.log.error(f"Error fetching orders on page {page_count}: {str(e)}")
                 raise
+
+        # Clear the cursor when we're done
+        self.context["task_instance"].xcom_push(key="last_cursor", value=None)
 
         self.log.info(f"Completed fetching {len(orders)} total orders")
         # Print sample of raw data
@@ -758,8 +787,8 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
 
     def _write_to_database(self, df: pd.DataFrame, conn) -> None:
         # Check if table exists and delete existing records for this partner/day
-        ds = df["airflow_sync_ds"].iloc[0] if not df.empty else None
-        self._clean_existing_partner_data(conn, ds)
+        # ds = df["airflow_sync_ds"].iloc[0] if not df.empty else None
+        # self._clean_existing_partner_data(conn, ds)
 
         # Write new records
         df.to_sql(
@@ -780,49 +809,17 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
     def _clean_existing_partner_data(self, conn, ds):
         """Clean existing data for the partner before a fresh import."""
         try:
-            # Check if table exists first
-            table_exists = conn.execute(
-                f"""
-                SELECT EXISTS (
-                    SELECT FROM pg_tables
-                    WHERE schemaname = '{self.destination_schema}'
-                    AND tablename = '{self.destination_table}'
-                );
-                """
-            ).scalar()
+            context_dict = {"ds": ds}
+            if hasattr(self, "context"):
+                context_dict.update(self.context)
+            self.delete_sql = render_template(self.delete_template, context=context_dict)
+            self.log.info(f"Cleaning existing data for partner {self.partner_ref} with SQL: {self.delete_sql}")
+            # Execute the delete SQL query
+            conn.execute(self.delete_sql)
 
-            if table_exists:
-                # Get the count of records for the partner before deletion
-                before_count = conn.execute(
-                    f"SELECT COUNT(*) FROM {self.destination_schema}.{self.destination_table} "
-                    f"WHERE partner_name = '{self.partner_ref}'"
-                ).scalar()
-                self.log.info(f"Records for {self.partner_ref} before delete: {before_count}")
-
-                # Render the delete SQL template with the provided context and Airflow's execution date
-                # Only use ds if context is not available (for backwards compatibility)
-                context_dict = {"ds": ds}
-                if hasattr(self, "context"):
-                    context_dict.update(self.context)
-                self.delete_sql = render_template(self.delete_template, context=context_dict)
-                self.log.info(f"Executing delete SQL: {self.delete_sql}")
-
-                # Execute the delete SQL query
-                conn.execute(self.delete_sql)
-
-                # Get the count of records for the partner after deletion
-                after_count = conn.execute(
-                    f"SELECT COUNT(*) FROM {self.destination_schema}.{self.destination_table} "
-                    f"WHERE partner_name = '{self.partner_ref}'"
-                ).scalar()
-                self.log.info(f"Records for {self.partner_ref} after delete: {after_count}")
-
-            else:
-                self.log.info(
-                    f"Table {self.destination_schema}.{self.destination_table} does not exist yet. No cleanup needed."
-                )
+            # Log the completion of the cleanup
+            self.log.info(f"Successfully cleared existing data for partner {self.partner_ref}")
 
         except Exception as e:
-            # Handle exceptions, log the error, but allow the process to continue
             self.log.warning(f"Error during cleanup for partner {self.partner_ref}: {str(e)}")
-            # Continue execution since the table will be created during data write if it doesn't exist
+            raise

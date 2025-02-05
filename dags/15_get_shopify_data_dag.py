@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.models import Variable
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import ShortCircuitOperator
+from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
 
@@ -18,6 +19,15 @@ from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDa
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
 
 # from plugins.utils.found_records_to_process import found_records_to_process
+
+
+destination_table = "shopify_partner_orders"
+
+rebuild = Variable.get("REBUILD_SHOPIFY_DATA", "False").lower() in ["true", "1", "yes"]
+
+
+def reset_rebuild_var():
+    Variable.set("REBUILD_SHOPIFY_DATA", "False")
 
 
 default_args = {
@@ -40,6 +50,12 @@ dag = DAG(
     template_searchpath="/usr/local/airflow/dags",
 )
 
+reset_rebuild_var_task = PythonOperator(
+    task_id="reset_rebuild_var_task",
+    depends_on_past=False,
+    python_callable=reset_rebuild_var,
+    dag=dag,
+)
 base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
 
 is_latest_dagrun_task = ShortCircuitOperator(
@@ -60,37 +76,57 @@ wait_for_things_to_exist = ExternalTaskSensor(
 
 partners = [
     # "aw",
-    "beckham",
+    # "beckham",
     "cefinn",
     "chinti_parker",
     # "donna_ida",
-    "fcuk",
+    # "fcuk",
     # "iris",
     # "jigsaw",
-    "kitri",
-    "lestrange",
-    "live-unlimited",
+    # "kitri",
+    # "lestrange",
+    # "live-unlimited",
     # "marykat",
-    "needle-thread",
+    # "needle-thread",
     # "nobodys-child",
     # "pangaia",
     # "represent",
-    "rixo",
-    "ro-zo",
+    # "rixo",
+    # "ro-zo",
     # "self-portrait",
     # "Seren",
-    "shrimps",
-    "snicholson",
-    "temperley",
-    "universal-works",
+    # "shrimps",
+    # "snicholson",
+    # "temperley",
+    # "universal-works",
 ]
 
+"""
 destination_table = "shopify_partner_orders"
 drop_transient_table = DropPostgresTableOperator(
     task_id="drop_shopify_partner_orders_transient_table",
     postgres_conn_id="postgres_datalake_conn_id",
     schema="transient_data",
     table=destination_table,
+    dag=dag,
+)"""
+
+
+drop_shopify_partner_orders_transient_table = DropPostgresTableOperator(
+    task_id="drop_shopify_partner_orders_transient_table",
+    postgres_conn_id="postgres_datalake_conn_id",
+    schema="transient_data",
+    table="shopify_partner_orders",
+    depends_on_past=False,
+    dag=dag,
+)
+drop_shopify_partner_orders_public_table = DropPostgresTableOperator(
+    task_id="drop_shopify_partner_orders_public_table",
+    postgres_conn_id="postgres_datalake_conn_id",
+    schema="public",
+    table="raw__shopify_partner_orders",
+    cascade=True,
+    depends_on_past=False,
     dag=dag,
 )
 
@@ -179,18 +215,36 @@ ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsOperator(
     dag=dag,
 )
 
-# Set up the task dependencies
-(
-    wait_for_things_to_exist
-    >> is_latest_dagrun_task
-    >> drop_transient_table
-    >> first_task
-    >> migration_tasks
-    >> refresh_transient_table
-    >> ensure_datalake_table
-    >> refresh_datalake_table
-    >> ensure_datalake_table_columns
-    >> append_transient_table_data
-    >> ensure_table_view_exists
-    >> base_tables_completed
-)
+if rebuild:
+    (
+        wait_for_things_to_exist
+        >> is_latest_dagrun_task
+        >> drop_shopify_partner_orders_transient_table
+        >> drop_shopify_partner_orders_public_table
+        >> first_task
+        >> migration_tasks
+        >> refresh_transient_table
+        >> ensure_datalake_table
+        >> refresh_datalake_table
+        >> ensure_datalake_table_columns
+        >> append_transient_table_data
+        >> ensure_table_view_exists
+        >> base_tables_completed
+    )
+
+else:
+    # Set up the task dependencies
+    (
+        wait_for_things_to_exist
+        >> is_latest_dagrun_task
+        # >> drop_shopify_partner_orders_transient_table # no longer needed since its within the operator
+        >> first_task
+        >> migration_tasks
+        >> refresh_transient_table
+        >> ensure_datalake_table
+        >> refresh_datalake_table
+        >> ensure_datalake_table_columns
+        >> append_transient_table_data
+        >> ensure_table_view_exists
+        >> base_tables_completed
+    )
