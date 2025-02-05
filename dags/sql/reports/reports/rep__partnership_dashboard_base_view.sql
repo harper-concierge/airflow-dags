@@ -13,7 +13,7 @@ ship_directs AS (
 monthly_kpi_data AS (
    SELECT DISTINCT
        partner_name,
-       year_month,
+       year_month_created,
        analysis_region,
        orders,
        total_value_ordered,
@@ -213,7 +213,7 @@ LEFT JOIN daily_summary ds
    END
 LEFT JOIN monthly_kpi_data m
    ON m.partner_name = bo.brand_name
-   AND TO_CHAR(DATE(m.year_month), 'YYYY/MM') = bo.order__createdat__dim_yearmonth
+   AND TO_CHAR(DATE(m.year_month_created), 'YYYY/MM') = bo.order__createdat__dim_yearmonth
    AND CASE
        WHEN harper_product_type = 'harper_concierge' THEN m.analysis_region = 'London'
        ELSE m.analysis_region = 'Regional'
