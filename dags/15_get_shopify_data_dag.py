@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from airflow import DAG
 from airflow.models import Variable
@@ -7,7 +7,7 @@ from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
 
-from plugins.utils.calculate_start_date import fixed_date_start_date
+from plugins.utils.calculate_start_date import get_days_ago_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 
 from plugins.operators.drop_table import DropPostgresTableOperator
@@ -32,7 +32,7 @@ def reset_rebuild_var():
 
 default_args = {
     "owner": "airflow",
-    "start_date": fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 1, 1)),
+    "start_date": get_days_ago_start_date("SHOPIFY_START_DAYS_AGO", 550),
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),
@@ -45,7 +45,7 @@ dag = DAG(
     "15_get_shopify_data_dag",
     catchup=False,
     default_args=default_args,
-    start_date=fixed_date_start_date("SHOPIFY_START_DATE", datetime(2024, 1, 1)),
+    start_date=get_days_ago_start_date("SHOPIFY_START_DATE", 550),
     max_active_runs=1,
     template_searchpath="/usr/local/airflow/dags",
 )
