@@ -654,11 +654,11 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         df = pd.DataFrame(flattened_orders)
         return df
 
-    def _process_dataframe(self, df: pd.DataFrame, partner_config: Dict, ds: str) -> pd.DataFrame:
+    def _process_dataframe(self, df: pd.DataFrame, partner_config: Dict) -> pd.DataFrame:
         # Add partner information
         df["partner_name"] = partner_config["name"]
         df["partner_reference"] = partner_config["reference"]
-        df["airflow_sync_ds"] = ds
+        # df["airflow_sync_ds"] = ds
 
         df["total_price_ex_shipping"] = df["total_price"] - df["shipping_cost"]
 
