@@ -256,6 +256,9 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             else ""
         )
 
+        # Calculate the date for 550 days ago
+        five_hundred_fifty_days_ago = (pd.Timestamp.now() - pd.DateOffset(days=550)).strftime("%Y-%m-%d")
+
         while has_next_page:
             page_count += 1
             self.log.info(f"Fetching page {page_count}")
@@ -263,6 +266,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             # Add date optimization and test order filter
             order_query = (
                 f"updated_at:>={start_param} AND updated_at:<={lte} "
+                f"AND created_at:>={five_hundred_fifty_days_ago} "  # New condition for created_at
                 f'AND NOT source_name:"Point of Sale" '
                 f"AND shipping_address_country_code:GB "  # change when we are global
                 f'AND (app_title:"Harper Concierge" OR app_title:"Harper" OR app_title:"Online Store") '

@@ -90,7 +90,6 @@ partners = [
     "rixo",
     "ro-zo",
     # "self-portrait",
-    # "Seren",
     "shrimps",
     "snicholson",
     "temperley",

@@ -16,10 +16,7 @@ monthly_kpi_data AS (
        year_month_created,
        analysis_region,
        orders,
-       total_value_ordered,
-       net_ATV,
-       net_UPT,
-       net_ASP
+       total_value_ordered
    FROM {{ schema }}.rep__shopify_partner_monthly_summary
    WHERE channel = 'Online Store'
 ),
@@ -30,10 +27,7 @@ daily_summary AS (
        day_created,
        analysis_region,
        orders as daily_orders,
-       total_value_ordered as daily_value,
-       net_ATV as daily_atv,
-       net_UPT as daily_upt,
-       net_ASP as daily_asp
+       total_value_ordered as daily_value
    FROM {{ schema }}.rep__shopify_partner_daily_summary
    WHERE channel = 'Online Store'
 ),
@@ -152,6 +146,7 @@ SELECT
    SUM(CASE WHEN purchased = 1 THEN item__item_value_pence ELSE 0 END)/100 AS purchased_value,
    SUM(CASE WHEN returned = 1 THEN item__item_value_pence ELSE 0 END)/100 AS returned_value,
    SUM(CASE WHEN missing = 1 THEN item__item_value_pence ELSE 0 END)/100 AS missing_value,
+   SUM(CASE WHEN received = 1 THEN item__item_value_pence ELSE 0 END)/100 AS received_value,
 
    CASE
        WHEN harper_product_type = 'harper_concierge' THEN 'London'
@@ -167,19 +162,6 @@ SELECT
        WHEN harper_product_type = 'harper_concierge' THEN ds.daily_value
        ELSE ds.daily_value
    END as daily_brand_value,
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN ds.daily_atv
-       ELSE ds.daily_atv
-   END as daily_brand_atv,
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN ds.daily_upt
-       ELSE ds.daily_upt
-   END as daily_brand_upt,
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN ds.daily_asp
-       ELSE ds.daily_asp
-   END as daily_brand_asp,
-
 
    -- Monthly KPIs
    CASE
@@ -189,19 +171,7 @@ SELECT
    CASE
        WHEN harper_product_type = 'harper_concierge' THEN m.total_value_ordered
        ELSE m.total_value_ordered
-   END as monthly_brand_value,
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN m.net_ATV
-       ELSE m.net_ATV
-   END as monthly_brand_atv,
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN m.net_UPT
-       ELSE m.net_UPT
-   END as monthly_brand_upt,
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN m.net_ASP
-       ELSE m.net_ASP
-   END as monthly_brand_asp
+   END as monthly_brand_value
 
 FROM base_orders bo
 LEFT JOIN daily_summary ds
@@ -241,14 +211,8 @@ GROUP BY
    discount_total,
    ds.daily_orders,
    ds.daily_value,
-   ds.daily_atv,
-   ds.daily_upt,
-   ds.daily_asp,
    m.orders,
-   m.total_value_ordered,
-   m.net_ATV,
-   m.net_UPT,
-   m.net_ASP
+   m.total_value_ordered
 
 WITH NO DATA;
 
@@ -267,13 +231,10 @@ CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_completion_date_
 -- Composite indexes for common query patterns
 -- For KPI analysis
 CREATE INDEX idx_brand_kpi_daily ON {{ schema }}.rep__partnership_dashboard_base_view
-(brand_name, order_created_date) INCLUDE (daily_brand_orders, daily_brand_value, daily_brand_atv, daily_brand_upt,daily_brand_asp);
-
-CREATE INDEX idx_brand_kpi_monthly ON {{ schema }}.rep__partnership_dashboard_base_view
-(brand_name, order__createdat__dim_yearmonth) INCLUDE (monthly_brand_orders, monthly_brand_value, monthly_brand_atv, monthly_brand_upt,monthly_brand_asp);
+(brand_name, order_created_date) INCLUDE (daily_brand_orders, daily_brand_value);
 
 CREATE INDEX idx_brand_kpi_type ON {{ schema }}.rep__partnership_dashboard_base_view
-(brand_name, harper_product_type) INCLUDE (daily_brand_orders, monthly_brand_orders);
+(brand_name, order_created_date) INCLUDE (monthly_brand_orders, monthly_brand_orders);
 
 CREATE INDEX idx_brand_date ON {{ schema }}.rep__partnership_dashboard_base_view
     (brand_name, order_created_date);
