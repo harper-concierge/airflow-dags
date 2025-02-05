@@ -104,14 +104,14 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 # Log the date range
                 self.log.info(f"Fetching orders from {start_param} to {lte}")
 
-                # ds = context["ds"]
-
                 # Check if we have a stored cursor for this run
                 after = context["task_instance"].xcom_pull(task_ids=context["task"].task_id, key="last_cursor")
 
+                ds = context["ds"]
+
                 if not after:
                     # Only clean data if we're starting fresh
-                    self._clean_existing_partner_data(conn)
+                    self._clean_existing_partner_data(conn, ds)
                 else:
                     self.log.info(f"Continuing from cursor: {after}")
 
