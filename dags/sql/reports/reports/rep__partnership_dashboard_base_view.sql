@@ -27,7 +27,7 @@ monthly_kpi_data AS (
 daily_summary AS (
    SELECT DISTINCT
        partner_name,
-       day,
+       day_created,
        analysis_region,
        orders as daily_orders,
        total_value_ordered as daily_value,
@@ -206,7 +206,7 @@ SELECT
 FROM base_orders bo
 LEFT JOIN daily_summary ds
    ON ds.partner_name = bo.brand_name
-   AND DATE(ds.day) = bo.order__createdat__dim_date
+   AND DATE(ds.day_created) = bo.order__createdat__dim_date
    AND CASE
        WHEN harper_product_type = 'harper_concierge' THEN ds.analysis_region = 'London'
        ELSE ds.analysis_region = 'Regional'
