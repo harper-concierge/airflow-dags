@@ -26,6 +26,7 @@ class DropPostgresTableOperator(BaseOperator):
         cascade: bool = False,
         schema: str,
         table: str,
+        skip: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -34,15 +35,20 @@ class DropPostgresTableOperator(BaseOperator):
         self.schema = schema
         self.table = table
         self.cascade = cascade
+        self.skip = skip
 
         cascade = ""
         if self.cascade:
             cascade = "CASCADE"
-        self.log.info("Initialised DropPostgresTableOperator")
+        self.log.info(f"[DropPostgresTableOperator] Initialised to run and skip={self.skip}")
         self.template_func = f" DROP TABLE IF EXISTS  {self.schema}.{self.table} {cascade};"  # noqa
 
     def execute(self, context):
         try:
+
+            if self.skip:
+                self.log.info(f"[DropPostgresTableOperator] Skipping {self.skip}")
+                return f"skipped dropping {self.schema}.{self.table}"
 
             hook = BaseHook.get_hook(self.postgres_conn_id)
 

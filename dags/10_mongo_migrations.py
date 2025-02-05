@@ -111,21 +111,20 @@ for config in migrations:
         postgres_conn_id="postgres_datalake_conn_id",
         schema="transient_data",
         table=config["destination_table"],
+        skip=not rebuild,
         dag=dag,
     )
     task_id = f"{config['task_name']}_drop_destination_table_if_exists"
-    last_drop_table_task = drop_transient_table
-    if rebuild:
-        drop_destination_table = DropPostgresTableOperator(
-            task_id=task_id,
-            postgres_conn_id="postgres_datalake_conn_id",
-            schema="public",
-            table=f"raw_{config['destination_table']}",
-            depends_on_past=False,
-            dag=dag,
-        )
-        drop_transient_table >> drop_destination_table
-        last_drop_table_task = drop_destination_table
+    drop_destination_table = DropPostgresTableOperator(
+        task_id=task_id,
+        postgres_conn_id="postgres_datalake_conn_id",
+        schema="public",
+        table=f"raw_{config['destination_table']}",
+        depends_on_past=False,
+        skip=not rebuild,
+        dag=dag,
+    )
+    drop_transient_table >> drop_destination_table
 
     task_id = f"{config['task_name']}_migrate_to_postgres"
     mongo_to_postgres = MongoDBToPostgresViaDataframeOperator(
@@ -216,7 +215,7 @@ for config in migrations:
         dag=dag,
     )
     (
-        last_drop_table_task
+        drop_destination_table
         >> mongo_to_postgres
         >> has_records_to_process
         >> refresh_transient_table
@@ -227,10 +226,9 @@ for config in migrations:
         >> ensure_table_view_exists
         >> base_tables_completed
         >> reset_rebuild_var_task
+        >> set_concurrently_var_task
     )
     # append_transient_table_data >> base_tables_completed
     migration_tasks.append(drop_transient_table)
 
-if rebuild:
-    reset_rebuild_var_task >> set_concurrently_var_task
 (wait_for_things_to_exist >> start_task >> migration_tasks)

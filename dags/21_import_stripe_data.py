@@ -131,45 +131,37 @@ stripe_invoices_ensure_table_view_exists = EnsurePostgresDatalakeTableViewExists
     prepend_fields=["id"],
     dag=dag,
 )
-if rebuild:
-    drop_invoices_transient_table = DropPostgresTableOperator(
-        task_id="drop_invoices_transient_table",
-        postgres_conn_id="postgres_datalake_conn_id",
-        schema="transient_data",
-        table="stripe__invoices",
-        depends_on_past=False,
-        dag=dag,
-    )
-    drop_invoices_public_table = DropPostgresTableOperator(
-        task_id="drop_invoices_public_table",
-        postgres_conn_id="postgres_datalake_conn_id",
-        schema="public",
-        table="raw__stripe__invoices",
-        cascade=True,
-        depends_on_past=False,
-        dag=dag,
-    )
+drop_invoices_transient_table = DropPostgresTableOperator(
+    task_id="drop_invoices_transient_table",
+    postgres_conn_id="postgres_datalake_conn_id",
+    schema="transient_data",
+    table="stripe__invoices",
+    depends_on_past=False,
+    skip=not rebuild,
+    dag=dag,
+)
+drop_invoices_public_table = DropPostgresTableOperator(
+    task_id="drop_invoices_public_table",
+    postgres_conn_id="postgres_datalake_conn_id",
+    schema="public",
+    table="raw__stripe__invoices",
+    cascade=True,
+    depends_on_past=False,
+    skip=not rebuild,
+    dag=dag,
+)
 
-    (
-        drop_invoices_transient_table
-        >> drop_invoices_public_table
-        >> stripe_invoices_task
-        >> stripe_invoices_has_records_to_process
-        >> stripe_invoices_ensure_datalake_table
-        >> stripe_invoices_ensure_datalake_table_columns
-        >> stripe_invoices_append_transient_table_data
-        >> stripe_invoices_ensure_table_view_exists
-        >> reset_rebuild_var_task
-    )
-else:
-    (
-        stripe_invoices_task
-        >> stripe_invoices_has_records_to_process
-        >> stripe_invoices_ensure_datalake_table
-        >> stripe_invoices_ensure_datalake_table_columns
-        >> stripe_invoices_append_transient_table_data
-        >> stripe_invoices_ensure_table_view_exists
-    )
+(
+    drop_invoices_transient_table
+    >> drop_invoices_public_table
+    >> stripe_invoices_task
+    >> stripe_invoices_has_records_to_process
+    >> stripe_invoices_ensure_datalake_table
+    >> stripe_invoices_ensure_datalake_table_columns
+    >> stripe_invoices_append_transient_table_data
+    >> stripe_invoices_ensure_table_view_exists
+    >> reset_rebuild_var_task
+)
 
 stripe_charges_task = StripeChargesToPostgresOperator(
     task_id="import_stripe_charges_to_datalake",
@@ -233,46 +225,37 @@ stripe_charges_ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsO
     prepend_fields=["id"],
     dag=dag,
 )
-if rebuild:
-    drop_charges_transient_table = DropPostgresTableOperator(
-        task_id="drop_charges_transient_table",
-        postgres_conn_id="postgres_datalake_conn_id",
-        schema="transient_data",
-        table="stripe__charges",
-        depends_on_past=False,
-        dag=dag,
-    )
-    drop_charges_public_table = DropPostgresTableOperator(
-        task_id="drop_charges_public_table",
-        postgres_conn_id="postgres_datalake_conn_id",
-        schema="public",
-        table="raw__stripe__charges",
-        cascade=True,
-        depends_on_past=False,
-        dag=dag,
-    )
+drop_charges_transient_table = DropPostgresTableOperator(
+    task_id="drop_charges_transient_table",
+    postgres_conn_id="postgres_datalake_conn_id",
+    schema="transient_data",
+    table="stripe__charges",
+    depends_on_past=False,
+    skip=not rebuild,
+    dag=dag,
+)
+drop_charges_public_table = DropPostgresTableOperator(
+    task_id="drop_charges_public_table",
+    postgres_conn_id="postgres_datalake_conn_id",
+    schema="public",
+    table="raw__stripe__charges",
+    cascade=True,
+    depends_on_past=False,
+    skip=not rebuild,
+    dag=dag,
+)
 
-    (
-        drop_charges_transient_table
-        >> drop_charges_public_table
-        >> stripe_charges_task
-        >> stripe_charges_has_records_to_process
-        >> stripe_charges_ensure_datalake_table
-        >> stripe_charges_ensure_datalake_table_columns
-        >> stripe_charges_append_transient_table_data
-        >> stripe_charges_ensure_table_view_exists
-        >> reset_rebuild_var_task
-    )
-else:
-
-    (
-        stripe_charges_task
-        >> stripe_charges_has_records_to_process
-        >> stripe_charges_ensure_datalake_table
-        >> stripe_charges_ensure_datalake_table_columns
-        >> stripe_charges_append_transient_table_data
-        >> stripe_charges_ensure_table_view_exists
-    )
+(
+    drop_charges_transient_table
+    >> drop_charges_public_table
+    >> stripe_charges_task
+    >> stripe_charges_has_records_to_process
+    >> stripe_charges_ensure_datalake_table
+    >> stripe_charges_ensure_datalake_table_columns
+    >> stripe_charges_append_transient_table_data
+    >> stripe_charges_ensure_table_view_exists
+    >> reset_rebuild_var_task
+)
 
 stripe_refunds_task = StripeRefundsToPostgresOperator(
     task_id="import_stripe_refunds_to_datalake",
@@ -337,56 +320,42 @@ stripe_refunds_ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsO
     dag=dag,
 )
 
-if rebuild:
-    drop_refunds_transient_table = DropPostgresTableOperator(
-        task_id="drop_refunds_transient_table",
-        postgres_conn_id="postgres_datalake_conn_id",
-        schema="transient_data",
-        table="stripe__refunds",
-        depends_on_past=False,
-        dag=dag,
-    )
-    drop_refunds_public_table = DropPostgresTableOperator(
-        task_id="drop_refunds_public_table",
-        postgres_conn_id="postgres_datalake_conn_id",
-        schema="public",
-        table="raw__stripe__refunds",
-        cascade=True,
-        depends_on_past=False,
-        dag=dag,
-    )
+drop_refunds_transient_table = DropPostgresTableOperator(
+    task_id="drop_refunds_transient_table",
+    postgres_conn_id="postgres_datalake_conn_id",
+    schema="transient_data",
+    table="stripe__refunds",
+    depends_on_past=False,
+    dag=dag,
+)
+drop_refunds_public_table = DropPostgresTableOperator(
+    task_id="drop_refunds_public_table",
+    postgres_conn_id="postgres_datalake_conn_id",
+    schema="public",
+    table="raw__stripe__refunds",
+    cascade=True,
+    depends_on_past=False,
+    dag=dag,
+)
 
-    (
-        drop_refunds_transient_table
-        >> drop_refunds_public_table
-        >> stripe_refunds_task
-        >> stripe_refunds_has_records_to_process
-        >> stripe_refunds_ensure_datalake_table
-        >> stripe_refunds_ensure_datalake_table_columns
-        >> stripe_refunds_append_transient_table_data
-        >> stripe_refunds_ensure_table_view_exists
-        >> reset_rebuild_var_task
-    )
-else:
-
-    (
-        stripe_refunds_task
-        >> stripe_refunds_has_records_to_process
-        >> stripe_refunds_ensure_datalake_table
-        >> stripe_refunds_ensure_datalake_table_columns
-        >> stripe_refunds_append_transient_table_data
-        >> stripe_refunds_ensure_table_view_exists
-    )
-
-if rebuild:
-    (
-        wait_for_things_to_exist
-        >> is_latest_dagrun_task
-        >> [drop_invoices_transient_table, drop_charges_transient_table, drop_refunds_transient_table]
-    )
-else:
-    (
-        wait_for_things_to_exist
-        >> is_latest_dagrun_task
-        >> [stripe_invoices_task, stripe_charges_task, stripe_refunds_task]
-    )
+(
+    drop_refunds_transient_table
+    >> drop_refunds_public_table
+    >> stripe_refunds_task
+    >> stripe_refunds_has_records_to_process
+    >> stripe_refunds_ensure_datalake_table
+    >> stripe_refunds_ensure_datalake_table_columns
+    >> stripe_refunds_append_transient_table_data
+    >> stripe_refunds_ensure_table_view_exists
+    >> reset_rebuild_var_task
+)
+(
+    wait_for_things_to_exist
+    >> is_latest_dagrun_task
+    >> [drop_invoices_transient_table, drop_charges_transient_table, drop_refunds_transient_table]
+)
+# (
+#     wait_for_things_to_exist
+#     >> is_latest_dagrun_task
+#     >> [stripe_invoices_task, stripe_charges_task, stripe_refunds_task]
+# )

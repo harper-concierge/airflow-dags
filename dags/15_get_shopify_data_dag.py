@@ -118,14 +118,17 @@ drop_shopify_partner_orders_transient_table = DropPostgresTableOperator(
     schema="transient_data",
     table="shopify_partner_orders",
     depends_on_past=False,
+    skip=not rebuild,
     dag=dag,
 )
+
 drop_shopify_partner_orders_public_table = DropPostgresTableOperator(
     task_id="drop_shopify_partner_orders_public_table",
     postgres_conn_id="postgres_datalake_conn_id",
     schema="public",
     table="raw__shopify_partner_orders",
     cascade=True,
+    skip=not rebuild,
     depends_on_past=False,
     dag=dag,
 )
@@ -216,37 +219,19 @@ ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsOperator(
     dag=dag,
 )
 
-if rebuild:
-    (
-        wait_for_things_to_exist
-        >> is_latest_dagrun_task
-        >> drop_shopify_partner_orders_transient_table
-        >> drop_shopify_partner_orders_public_table
-        >> first_task
-        >> migration_tasks
-        >> refresh_transient_table
-        >> ensure_datalake_table
-        >> refresh_datalake_table
-        >> ensure_datalake_table_columns
-        >> append_transient_table_data
-        >> ensure_table_view_exists
-        >> base_tables_completed
-        >> reset_rebuild_var_task
-    )
-
-else:
-    # Set up the task dependencies
-    (
-        wait_for_things_to_exist
-        >> is_latest_dagrun_task
-        # >> drop_shopify_partner_orders_transient_table # no longer needed since its within the operator
-        >> first_task
-        >> migration_tasks
-        >> refresh_transient_table
-        >> ensure_datalake_table
-        >> refresh_datalake_table
-        >> ensure_datalake_table_columns
-        >> append_transient_table_data
-        >> ensure_table_view_exists
-        >> base_tables_completed
-    )
+(
+    wait_for_things_to_exist
+    >> is_latest_dagrun_task
+    >> drop_shopify_partner_orders_transient_table
+    >> drop_shopify_partner_orders_public_table
+    >> first_task
+    >> migration_tasks
+    >> refresh_transient_table
+    >> ensure_datalake_table
+    >> refresh_datalake_table
+    >> ensure_datalake_table_columns
+    >> append_transient_table_data
+    >> ensure_table_view_exists
+    >> base_tables_completed
+    >> reset_rebuild_var_task
+)
