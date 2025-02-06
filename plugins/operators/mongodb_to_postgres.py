@@ -109,9 +109,11 @@ class MongoDBToPostgresViaDataframeOperator(LastSuccessfulDagrunMixin, BaseOpera
         self.delete_template = f"""DO $$
 BEGIN
    IF EXISTS (
-    SELECT FROM pg_tables WHERE schemaname = '{{destination_schema}}'
-    AND tablename = '{{destination_table}}') THEN
-      { self.preoperation }
+      SELECT 1 FROM pg_tables
+      WHERE schemaname = '{destination_schema}'
+      AND tablename = '{destination_table}'
+   ) THEN
+      EXECUTE format('DELETE FROM %%I.%%I', '{destination_schema}', '{destination_table}');
    END IF;
 END $$;
 """  # noqa
@@ -157,8 +159,8 @@ END $$;
                     limit = 5000  # Set your desired chunk size
 
                     aggregation_query = self._prepare_aggregation_query()
-                    self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
                     if not self.rebuild:
+                        self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
                         conn.execute(self.delete_sql)
 
                     while True:
