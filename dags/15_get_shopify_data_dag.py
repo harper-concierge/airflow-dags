@@ -45,7 +45,7 @@ dag = DAG(
     "15_get_shopify_data_dag",
     catchup=False,
     default_args=default_args,
-    start_date=get_days_ago_start_date("SHOPIFY_START_DAYS_AGO", 550),
+    start_date=get_days_ago_start_date("SHOPIFY_START_DAYS_AGO", 396),
     max_active_runs=1,
     template_searchpath="/usr/local/airflow/dags",
 )

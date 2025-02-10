@@ -84,6 +84,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         # Get database connection
         hook = BaseHook.get_hook(self.postgres_conn_id)
         engine = create_engine(hook.get_uri())
+        self.log.info(f"Destination Table: {self.destination_schema}.{self.destination_table}")
 
         try:
             with engine.connect() as conn:
@@ -794,6 +795,9 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         # ds = df["airflow_sync_ds"].iloc[0] if not df.empty else None
         # self._clean_existing_partner_data(conn, ds)
 
+        self.log.info(f"Destination Table: {self.destination_schema}.{self.destination_table}")
+
+        # Write new records
         # Write new records
         df.to_sql(
             self.destination_table,
@@ -807,7 +811,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         # Create index if it doesn't exist
         conn.execute(
             f"CREATE INDEX IF NOT EXISTS {self.destination_table}_idx "
-            f"ON {self.destination_schema}.{self.destination_table} (id);"
+            f"ON {self.destination_schema}.{self.destination_table} (id,updated_at);"
         )
 
     def _clean_existing_partner_data(self, conn):
