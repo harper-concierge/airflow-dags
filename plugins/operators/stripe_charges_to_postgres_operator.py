@@ -42,6 +42,7 @@ class StripeChargesToPostgresOperator(
         ]  # discard unnecessary fields like source
         self.discard_flattened_fields = [
             "payment_method_details__card__wallet__apple_pay__type",
+            "payment_method_details__link__country",
             "fraud_details__stripe_report",
         ]  # fields to discard after flattening
         # self.discard_flattened_fields = ["outcome__network_advice_code"]  # discard unnecessary fields like source
