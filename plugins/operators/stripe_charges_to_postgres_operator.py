@@ -26,6 +26,7 @@ class StripeChargesToPostgresOperator(
         rebuild,
         destination_schema,
         destination_table,
+        start_days_ago=45,
         *args,
         **kwargs,
     ):
@@ -34,6 +35,7 @@ class StripeChargesToPostgresOperator(
         self.destination_table = destination_table
         self.postgres_conn_id = postgres_conn_id
         self.rebuild = rebuild
+        self.start_days_ago = start_days_ago
         self.stripe_conn_id = stripe_conn_id
         self.discard_fields = [
             "source",
@@ -74,7 +76,13 @@ END $$;
         stripe.api_key = stripe_conn.password
         ds = context["ds"]
         run_id = context["run_id"]
-        last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
+        last_successful_dagrun = self.get_last_successful_dagrun_ts(run_id=run_id)
+        # Go back in time and reimport latest versions as we can't get by updated timestamp so keep a
+        # rolling 45 days reimport
+        self.log.info(
+            f"Executing StripeChargesToPostgresOperator since last successful dagrun {last_successful_dagrun} - starting {self.start_days_ago} days back on {last_successful_dagrun_ts}"  # noqa
+        )
+        last_successful_dagrun_ts = last_successful_dagrun.subtract(days=self.start_days_ago)
 
         engine = self.get_postgres_sqlalchemy_engine(hook)
 
@@ -87,20 +95,16 @@ END $$;
                 f"{self.last_successful_dagrun_xcom_key}": last_successful_dagrun_ts,
             }
 
-            self.log.info(
-                f"Executing StripeChargesToPostgresOperator since last successful dagrun {last_successful_dagrun_ts}"
-            )
-
             if starting_after:
                 self.log.info(
                     f"Restarting task for this Dagrun from the last successful charge_id {starting_after} after last successful dagrun {last_successful_dagrun_ts}"  # noqa
                 )
             else:
                 self.log.info(f"Starting Task Fresh for this dagrun from {last_successful_dagrun_ts}")
-                self.log.info("Deleting previous Data for this Dagrun")
-                self.delete_sql = render_template(self.delete_template, context=extra_context)
-                self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
                 if not self.rebuild:
+                    self.log.info("Deleting previous Data for this Dagrun")
+                    self.delete_sql = render_template(self.delete_template, context=extra_context)
+                    self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
                     conn.execute(self.delete_sql)
 
             created = {

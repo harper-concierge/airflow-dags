@@ -28,6 +28,7 @@ class StripeInvoicesToPostgresOperator(
         stripe_conn_id,
         destination_schema,
         destination_table,
+        start_days_ago=45,
         *args,
         **kwargs,
     ):
@@ -37,6 +38,7 @@ class StripeInvoicesToPostgresOperator(
         self.postgres_conn_id = postgres_conn_id
         self.rebuild = rebuild
         self.stripe_conn_id = stripe_conn_id
+        self.start_days_ago = start_days_ago
         self.discard_fields = ["payment_method_details", "source", "rendering"]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_invoice_id"
@@ -67,7 +69,13 @@ END $$;
         stripe.api_key = stripe_conn.password
         ds = context["ds"]
         run_id = context["run_id"]
-        last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
+        last_successful_dagrun = self.get_last_successful_dagrun_ts(run_id=run_id)
+        # Go back in time and reimport latest versions as we can't get by updated timestamp so keep a
+        # rolling 45 days reimport
+        self.log.info(
+            f"Executing StripeInvoicesToPostgresOperator since last successful dagrun {last_successful_dagrun} - starting {self.start_days_ago} days back on {last_successful_dagrun_ts}"  # noqa
+        )
+        last_successful_dagrun_ts = last_successful_dagrun.subtract(days=self.start_days_ago)
 
         engine = self.get_postgres_sqlalchemy_engine(hook)
 
@@ -80,10 +88,6 @@ END $$;
                 f"{self.last_successful_dagrun_xcom_key}": last_successful_dagrun_ts,
             }
 
-            self.log.info(
-                f"Executing StripeInvoicesToPostgresOperator since last successful dagrun {last_successful_dagrun_ts}"  # noqa
-            )
-
             if starting_after:
                 self.log.info(
                     f"StripeInvoicesToPostgresOperator Restarting task for this Dagrun from the last successful invoice_id {starting_after} after last successful dagrun {last_successful_dagrun_ts}"  # noqa
@@ -92,10 +96,10 @@ END $$;
                 self.log.info(
                     f"StripeInvoicesToPostgresOperator Starting Task Fresh for this dagrun from {last_successful_dagrun_ts}"  # noqa
                 )
-                self.log.info("StripeInvoicesToPostgresOperator Deleting previous Data from this Dagrun")  # noqa
-                self.delete_sql = render_template(self.delete_template, context=extra_context)
-                self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
                 if not self.rebuild:
+                    self.log.info("StripeInvoicesToPostgresOperator Deleting previous Data from this Dagrun")  # noqa
+                    self.delete_sql = render_template(self.delete_template, context=extra_context)
+                    self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
                     conn.execute(self.delete_sql)
 
             created = {
