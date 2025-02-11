@@ -72,10 +72,10 @@ END $$;
         last_successful_dagrun = self.get_last_successful_dagrun_ts(run_id=run_id)
         # Go back in time and reimport latest versions as we can't get by updated timestamp so keep a
         # rolling 45 days reimport
+        last_successful_dagrun_ts = last_successful_dagrun.subtract(days=self.start_days_ago)
         self.log.info(
             f"Executing StripeInvoicesToPostgresOperator since last successful dagrun {last_successful_dagrun} - starting {self.start_days_ago} days back on {last_successful_dagrun_ts}"  # noqa
         )
-        last_successful_dagrun_ts = last_successful_dagrun.subtract(days=self.start_days_ago)
 
         engine = self.get_postgres_sqlalchemy_engine(hook)
 
