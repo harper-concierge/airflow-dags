@@ -68,9 +68,12 @@ END $$;
         ds = context["ds"]
         run_id = context["run_id"]
         last_successful_dagrun = self.get_last_successful_dagrun_ts(run_id=run_id)
-        # Go back in time and reimport latest versions as we can't get by updated timestamp so keep a
-        # rolling 45 days reimport
-        last_successful_dagrun_ts = last_successful_dagrun.subtract(days=self.start_days_ago)
+        if self.rebuild:
+            last_successful_dagrun_ts = last_successful_dagrun
+        else:
+            # Go back in time and reimport latest versions as we can't get by updated timestamp so keep a
+            # rolling 45 days reimport
+            last_successful_dagrun_ts = last_successful_dagrun.subtract(days=self.start_days_ago)
         self.log.info(
             f"Executing StripeRefundsToPostgresOperator since last successful dagrun {last_successful_dagrun} - starting {self.start_days_ago} days back on {last_successful_dagrun_ts}"  # noqa
         )
