@@ -112,7 +112,7 @@ END $$;
                 result = stripe.Invoice.list(
                     limit=limit,
                     starting_after=starting_after,
-                    status="paid",
+                    # status="paid",
                     created=created,
                     expand=[],
                 )

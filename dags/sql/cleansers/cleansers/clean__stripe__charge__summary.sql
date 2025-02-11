@@ -30,8 +30,8 @@ CREATE VIEW {{ schema }}.clean__stripe__charge__summary AS
           c.payment_method_details__card__fingerprint AS card_fingerprint,
           c.payment_method_details__card__funding AS card_funding_type,
           c.outcome__network_status AS reason,
-          -- c.balance_transaction__id AS balance_transaction_id,
-          -- c.balance_transaction__amount,
+          c.balance_transaction__id AS balance_transaction_id,
+          c.balance_transaction__amount,
           c.disputed,
           c.customer as stripe_customer_id,
           dt.*
