@@ -46,6 +46,7 @@ class StripeInvoicesToPostgresOperator(
         self.preserve_fields = [
             ("failure_balance_transaction", "string"),
             ("from_invoice__action", "string"),
+            ("from_invoice__invoice", "string"),
         ]
 
         self.context = {
