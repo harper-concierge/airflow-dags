@@ -100,7 +100,6 @@ wait_for_things_to_exist = ExternalTaskSensor(
     dag=dag,
 )
 
-
 drop_shopify_partner_orders_transient_table = DropPostgresTableOperator(
     task_id="drop_shopify_partner_orders_transient_table",
     postgres_conn_id="postgres_datalake_conn_id",
