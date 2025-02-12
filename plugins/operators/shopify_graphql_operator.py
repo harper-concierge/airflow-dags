@@ -102,6 +102,11 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                 # Set end date from context
                 lte = context["data_interval_end"].format("YYYY-MM-DD")
 
+                # Check for failed cursor from previous attempt
+                failed_cursor = context["task_instance"].xcom_pull(key="failed_cursor")
+                if failed_cursor:
+                    self.log.info(f"Resuming from failed cursor position: {failed_cursor}")
+
                 # Log the date range
                 self.log.info(f"Fetching orders from {start_param} to {lte}")
 
@@ -215,199 +220,232 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         page_count = 0
         has_customer_access = None
 
-        # First, test for customer access
-        test_query = """
-        query($query: String!) {
-            orders(first: 1, query: $query) {
-                edges {
-                    node {
-                        customer {
-                            id
+        # Log the parameters being used for fetching orders
+        if after:
+            self.log.info(f"Fetching orders starting from cursor: {after}")
+        else:
+            self.log.info(f"Fetching orders from {start_param} to {lte}")
+
+        try:
+
+            # First, test for customer access
+            test_query = """
+            query($query: String!) {
+                orders(first: 1, query: $query) {
+                    edges {
+                        node {
+                            customer {
+                                id
+                            }
                         }
                     }
                 }
             }
-        }
-        """
-
-        test_variables = {"query": f"updated_at:>={start_param} AND updated_at:<={lte}"}
-
-        self.log.info("Testing for customer data access...")
-        test_result = self._make_graphql_request(test_query, test_variables)
-        has_customer_access = "errors" not in test_result
-        self.log.info(f"Customer data access: {'Available' if has_customer_access else 'Not available'}")
-        # self.log.info(f"Test query result: {test_result}")
-
-        # Define customer section based on access
-        customer_section = (
             """
-            customer {
-              id
-              createdAt
-              updatedAt
-              tags
-              numberOfOrders
-              amountSpent {
-                amount
-                currencyCode
-              }
-            }
-            """
-            if has_customer_access
-            else ""
-        )
 
-        # Calculate the date for 550 days ago
-        five_hundred_fifty_days_ago = (pd.Timestamp.now() - pd.DateOffset(days=550)).strftime("%Y-%m-%d")
+            test_variables = {"query": f"updated_at:>={start_param} AND updated_at:<={lte}"}
 
-        while has_next_page:
-            page_count += 1
-            self.log.info(f"Fetching page {page_count}")
+            self.log.info("Testing for customer data access...")
+            test_result = self._make_graphql_request(test_query, test_variables)
+            has_customer_access = "errors" not in test_result
+            self.log.info(f"Customer data access: {'Available' if has_customer_access else 'Not available'}")
+            # self.log.info(f"Test query result: {test_result}")
 
-            # Add date optimization and test order filter
-            order_query = (
-                f"updated_at:>={start_param} AND updated_at:<={lte} "
-                f"AND created_at:>={five_hundred_fifty_days_ago} "  # New condition for created_at
-                f'AND NOT source_name:"Point of Sale" '
-                f"AND shipping_address_country_code:GB "  # change when we are global
-                f'AND (app_title:"Harper Concierge" OR app_title:"Harper" OR app_title:"Online Store") '
-                f"AND test:false "  # Exclude test orders
-                # Ensure we don't get future updates (using current time as ceiling)
-                f"AND updated_at:<now "
+            # Define customer section based on access
+            customer_section = (
+                """
+                customer {
+                id
+                createdAt
+                updatedAt
+                tags
+                numberOfOrders
+                amountSpent {
+                    amount
+                    currencyCode
+                }
+                }
+                """
+                if has_customer_access
+                else ""
             )
 
-            query = f"""
-    query($query: String!, $after: String) {{
-        orders(first: 250, after: $after, query: $query) {{
-            pageInfo {{
-                hasNextPage
-                endCursor
-            }}
-            edges {{
-                node {{
-                    # Basic Order Info
-                    publication {{
-                        name
-                        app {{
-                            title
-                        }}
-                    }}
-                    id
-                    name
-                    createdAt
-                    updatedAt
-                    currencyCode
-                    cancelledAt
-                    cancelReason
-                    displayFulfillmentStatus
-                    displayFinancialStatus
+            # Calculate the date for 550 days ago
+            five_hundred_fifty_days_ago = (pd.Timestamp.now() - pd.DateOffset(days=550)).strftime("%Y-%m-%d")
 
-                    # Totals and Pricing
-                    currentSubtotalLineItemsQuantity
-                    taxesIncluded
+            while has_next_page:
+                page_count += 1
+                self.log.info(f"Fetching page {page_count}")
 
-                    # Money Sets
-                    # Money Sets
-                    currentSubtotalPriceSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    currentTotalPriceSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    currentTotalTaxSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    currentTotalDiscountsSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    totalDiscountsSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    totalPriceSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    totalRefundedSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    totalTaxSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
+                # Add date optimization and test order filter
+                order_query = (
+                    f"updated_at:>={start_param} AND updated_at:<={lte} "
+                    f"AND created_at:>={five_hundred_fifty_days_ago} "  # New condition for created_at
+                    f'AND NOT source_name:"Point of Sale" '
+                    f"AND shipping_address_country_code:GB "  # change when we are global
+                    f'AND (app_title:"Harper Concierge" OR app_title:"Harper" OR app_title:"Online Store") '
+                    f"AND test:false "  # Exclude test orders
+                    # Ensure we don't get future updates (using current time as ceiling)
+                    f"AND updated_at:<now "
+                )
 
-
-                    # Line Items
-                    lineItems(first: 100) {{
-                        edges {{
-                            node {{
-                                id
-                                quantity
-                                sku
+                query = f"""
+        query($query: String!, $after: String) {{
+            orders(first: 250, after: $after, query: $query) {{
+                pageInfo {{
+                    hasNextPage
+                    endCursor
+                }}
+                edges {{
+                    node {{
+                        # Basic Order Info
+                        publication {{
+                            name
+                            app {{
                                 title
                             }}
                         }}
-                    }}
+                        id
+                        name
+                        createdAt
+                        updatedAt
+                        currencyCode
+                        cancelledAt
+                        cancelReason
+                        displayFulfillmentStatus
+                        displayFinancialStatus
 
-                    refunds {{
-                        refundLineItems(first: 50) {{
+                        # Totals and Pricing
+                        currentSubtotalLineItemsQuantity
+                        taxesIncluded
+
+                        # Money Sets
+                        # Money Sets
+                        currentSubtotalPriceSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        currentTotalPriceSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        currentTotalTaxSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        currentTotalDiscountsSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        totalDiscountsSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        totalPriceSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        totalRefundedSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        totalTaxSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+
+
+                        # Line Items
+                        lineItems(first: 100) {{
                             edges {{
                                 node {{
+                                    id
                                     quantity
-                                    priceSet {{
+                                    sku
+                                    title
+                                }}
+                            }}
+                        }}
+
+                        refunds {{
+                            refundLineItems(first: 50) {{
+                                edges {{
+                                    node {{
+                                        quantity
+                                        priceSet {{
+                                            shopMoney {{
+                                                amount
+                                                currencyCode
+                                            }}
+                                        }}
+                                    }}
+                                }}
+                            }}
+                        }}
+
+                        # Shipping Address
+                        shippingAddress {{
+                            city
+                            country
+                            countryCode
+                            province
+                            provinceCode
+                        }}
+
+                        # Shipping Line
+                        shippingLines(first: 10) {{
+                            edges {{
+                                node {{
+                                    title
+                                    discountedPriceSet {{
                                         shopMoney {{
                                             amount
                                             currencyCode
@@ -416,91 +454,70 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                                 }}
                             }}
                         }}
+
+                        # Payment Info
+                        paymentGatewayNames
+
+                        # Additional Fields
+                        test
+                        tags
+
+                        {customer_section}  # Dynamically insert customer section here if has_customer_access is True
+
                     }}
-
-                    # Shipping Address
-                    shippingAddress {{
-                        city
-                        country
-                        countryCode
-                        province
-                        provinceCode
-                    }}
-
-                    # Shipping Line
-                    shippingLines(first: 10) {{
-                        edges {{
-                            node {{
-                                title
-                                discountedPriceSet {{
-                                    shopMoney {{
-                                        amount
-                                        currencyCode
-                                    }}
-                                }}
-                            }}
-                        }}
-                    }}
-
-                    # Payment Info
-                    paymentGatewayNames
-
-                    # Additional Fields
-                    test
-                    tags
-
-                    {customer_section}  # Dynamically insert customer section here if has_customer_access is True
-
                 }}
             }}
         }}
-    }}
-    """
+        """
 
-            variables = {"query": order_query, "after": after}
+                variables = {"query": order_query, "after": after}
 
-            self.log.info(f"Fetching orders with variables: {variables}")
+                self.log.info(f"Fetching orders with variables: {variables}")
 
-            try:
-                result = self._make_graphql_request(query, variables)
+                try:
+                    result = self._make_graphql_request(query, variables)
 
-                if "errors" in result:
-                    error_message = result.get("errors", [{}])[0].get("message", "Unknown GraphQL error")
-                    raise AirflowException(f"GraphQL query failed: {error_message}")
+                    if "errors" in result:
+                        error_message = result.get("errors", [{}])[0].get("message", "Unknown GraphQL error")
+                        raise AirflowException(f"GraphQL query failed: {error_message}")
 
-                data = result["data"]["orders"]
-                page_orders = [edge["node"] for edge in data["edges"]]
-                orders.extend(page_orders)
+                    data = result["data"]["orders"]
+                    page_orders = [edge["node"] for edge in data["edges"]]
+                    orders.extend(page_orders)
 
-                self.log.info(f"Retrieved {len(page_orders)} orders on page {page_count}")
+                    self.log.info(f"Retrieved {len(page_orders)} orders on page {page_count}")
 
-                # Update pagination info
-                has_next_page = data["pageInfo"]["hasNextPage"]
-                after = data["pageInfo"]["endCursor"] if has_next_page else None
+                    # Update pagination info
+                    has_next_page = data["pageInfo"]["hasNextPage"]
+                    after = data["pageInfo"]["endCursor"] if has_next_page else None
 
-                if has_next_page:
-                    self.log.info(f"More pages available, next cursor: {after}")
+                    if has_next_page:
+                        self.log.info(f"More pages available, next cursor: {after}")
 
-                # Store cursor after each successful page
-                if has_next_page:
-                    self.context["task_instance"].xcom_push(key="last_cursor", value=data["pageInfo"]["endCursor"])
-                    after = data["pageInfo"]["endCursor"]
-                    self.log.info(f"Stored cursor: {after}")
+                    # Store cursor after each successful page
+                    if has_next_page:
+                        self.context["task_instance"].xcom_push(key="last_cursor", value=data["pageInfo"]["endCursor"])
+                        after = data["pageInfo"]["endCursor"]
+                        self.log.info(f"Stored cursor: {after}")
 
-            except Exception as e:
-                self.log.error(f"Error fetching orders on page {page_count}: {str(e)}")
-                raise
+                except Exception as e:
+                    self.log.error(f"Error fetching orders on page {page_count}: {str(e)}")
+                    raise
 
-        # Clear the cursor when we're done
-        self.context["task_instance"].xcom_push(key="last_cursor", value=None)
+            # Clear the cursor when we're done
+            self.context["task_instance"].xcom_push(key="last_cursor", value=None)
 
-        self.log.info(f"Completed fetching {len(orders)} total orders")
-        # Print sample of raw data
-        # if len(orders) > 0:
-        # self.log.info("Sample of first 2 orders before flattening:")
-        # for i, order in enumerate(orders[:2]):
-        # self.log.info(json.dumps(order, indent=2, default=str))
-        return orders, has_customer_access
+            self.log.info(f"Completed fetching {len(orders)} total orders")
+            # Print sample of raw data
+            # if len(orders) > 0:
+            # self.log.info("Sample of first 2 orders before flattening:")
+            # for i, order in enumerate(orders[:2]):
+            # self.log.info(json.dumps(order, indent=2, default=str))
+            return orders, has_customer_access
+
+        except Exception as e:
+            self.log.error(f"Error in _fetch_all_orders: {str(e)}")
+            raise
 
     def _transform_to_dataframe(self, orders: List[Dict], has_customer_access: bool) -> pd.DataFrame:
         flattened_orders = []
