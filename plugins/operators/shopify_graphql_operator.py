@@ -12,9 +12,10 @@ from airflow.hooks.base import BaseHook
 from plugins.utils.render_template import render_template
 
 from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
+from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
 
 
-class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator):
+class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, BaseOperator):
     """
     Operator for fetching Shopify data using GraphQL API
     """
@@ -40,7 +41,10 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         self.destination_table = destination_table
         self.partner_ref = partner_ref
         self.rebuild = rebuild
+        self.separator = "__"
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
+        # Add cursor tracking key
+        self.last_successful_cursor_key = f"last_successful_cursor_{partner_ref}"
 
         self.context = {
             "schema": schema,
@@ -81,7 +85,6 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         """
 
     def execute(self, context):
-        # Get database connection
         hook = BaseHook.get_hook(self.postgres_conn_id)
         engine = create_engine(hook.get_uri())
         self.log.info(f"Destination Table: {self.destination_schema}.{self.destination_table}")
@@ -90,65 +93,48 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             with engine.connect() as conn:
                 run_id = context["run_id"]
                 self.partner_config = self._get_partner_config(conn)
-                # Store context for use in other methods
-                self.context = context
+
+                # Ensure task communications table exists
+                self.ensure_task_comms_table_exists(conn)
+
+                # Get cursor from previous run if exists
+                after = self.get_last_successful_cursor(conn, context)
 
                 # Get last successful dagrun timestamp using the mixin
                 last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
 
                 self.log.info(f"last successful run timestamp: {last_successful_dagrun_ts}")
                 start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
-
-                # Set end date from context
                 lte = context["data_interval_end"].format("YYYY-MM-DD")
 
-                # Check for failed cursor from previous attempt
-                failed_cursor = context["task_instance"].xcom_pull(key="failed_cursor")
-                if failed_cursor:
-                    self.log.info(f"Resuming from failed cursor position: {failed_cursor}")
-
-                # Log the date range
-                self.log.info(f"Fetching orders from {start_param} to {lte}")
-
-                # Check if we have a stored cursor for this run
-                after = context["task_instance"].xcom_pull(task_ids=context["task"].task_id, key="last_cursor")
-
-                # ds = context["ds"]
-
-                if not after:
-                    # Only clean data if we're starting fresh
-                    self._clean_existing_partner_data(conn)
-                else:
+                if after:
                     self.log.info(f"Continuing from cursor: {after}")
+                else:
+                    self.log.info(f"Starting fresh fetch from {start_param} to {lte}")
 
-                # Get partner configuration
-                partner_config = self._get_partner_config(conn)
-
-                # Setup shop URL and access token
-                self.shop_url = f"https://{partner_config['partner_platform_base_url']}"
-                self.access_token = partner_config["partner_platform_api_access_token"]
-
-                # Fetch orders
-                orders, has_customer_access = self._fetch_all_orders(start_param, lte, after)
+                # Pass conn and context to _fetch_all_orders
+                orders, has_customer_access = self._fetch_all_orders(conn, context, start_param, lte, after)
 
                 # Process and write data if orders exist
                 if orders:
-                    # Transform orders to DataFrame
                     df = self._transform_to_dataframe(orders, has_customer_access)
+                    df = self._process_dataframe(df, self.partner_config)
 
-                    # Additional processing
-                    df = self._process_dataframe(df, partner_config)
-
-                    # Write to database
-                    self._write_to_database(df, conn)
+                    # Write to database using to_sql
+                    df.to_sql(
+                        self.destination_table, conn, schema=self.destination_schema, if_exists="append", index=False
+                    )
 
                     # Push number of processed orders to XCom
-                    context["ti"].xcom_push(key="documents_found", value=len(df))
+                    # context["ti"].xcom_push(key="documents_found", value=len(df))
 
                     self.log.info(f"Successfully processed {len(df)} orders")
                 else:
                     self.log.info("No orders found in the specified date range")
                     context["ti"].xcom_push(key="documents_found", value=0)
+
+                # Clear pagination cursor when done
+                self.clear_task_vars(conn, context)
 
                 # Update last successful run timestamp
                 self.set_last_successful_dagrun_ts(context)
@@ -210,7 +196,9 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                     raise AirflowException(f"Failed to fetch data from Shopify: {str(e)}")
                 # time.sleep(2**attempt)
 
-    def _fetch_all_orders(self, start_param: str, lte: str, after: str = None) -> Tuple[List[Dict], bool]:
+    def _fetch_all_orders(
+        self, conn, context, start_param: str, lte: str, after: str = None
+    ) -> Tuple[List[Dict], bool]:
         """
         Fetch all orders within the given date range using Shopify's GraphQL API.
         First checks for customer access, then fetches all orders with appropriate fields.
@@ -492,11 +480,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                     after = data["pageInfo"]["endCursor"] if has_next_page else None
 
                     if has_next_page:
-                        self.log.info(f"More pages available, next cursor: {after}")
-
-                    # Store cursor after each successful page
-                    if has_next_page:
-                        self.context["task_instance"].xcom_push(key="last_cursor", value=data["pageInfo"]["endCursor"])
+                        self.set_last_successful_cursor(conn, context, data["pageInfo"]["endCursor"])
                         after = data["pageInfo"]["endCursor"]
                         self.log.info(f"Stored cursor: {after}")
 
@@ -505,7 +489,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                     raise
 
             # Clear the cursor when we're done
-            self.context["task_instance"].xcom_push(key="last_cursor", value=None)
+            self.clear_task_vars(conn, context)
 
             self.log.info(f"Completed fetching {len(orders)} total orders")
             # Print sample of raw data
@@ -828,7 +812,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         # Create index if it doesn't exist
         conn.execute(
             f"CREATE INDEX IF NOT EXISTS {self.destination_table}_idx "
-            f"ON {self.destination_schema}.{self.destination_table} (id,updated_at);"
+            f"ON {self.destination_schema}.{self.destination_table} (id);"
         )
 
     def _clean_existing_partner_data(self, conn):
@@ -846,3 +830,9 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         except Exception as e:
             self.log.warning(f"Error during cleanup for partner {self.partner_ref}: {str(e)}")
             raise
+
+    def set_last_successful_cursor(self, conn, context, cursor):
+        return self.set_task_var(conn, context, self.last_successful_cursor_key, cursor)
+
+    def get_last_successful_cursor(self, conn, context):
+        return self.get_task_var(conn, context, self.last_successful_cursor_key)

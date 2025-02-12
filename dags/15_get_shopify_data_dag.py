@@ -1,5 +1,4 @@
-import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from airflow import DAG
 from airflow.models import Variable
@@ -8,7 +7,7 @@ from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
 
-# from plugins.utils.calculate_start_date import get_days_ago_start_date
+from plugins.utils.calculate_start_date import get_days_ago_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 
 from plugins.operators.drop_table import DropPostgresTableOperator
@@ -16,7 +15,6 @@ from plugins.operators.analyze_table import RefreshPostgresTableStatisticsOperat
 from plugins.operators.ensure_missing_columns import EnsureMissingPostgresColumnsOperator
 from plugins.operators.shopify_graphql_operator import ShopifyGraphQLPartnerDataOperator
 from plugins.operators.ensure_datalake_table_exists import EnsurePostgresDatalakeTableExistsOperator
-from plugins.operators.delete_from_postgres_operator import DeleteFromPostgresOperator
 from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDatalakeTableViewExistsOperator
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
 
@@ -27,20 +25,29 @@ destination_table = "shopify_partner_orders"
 
 rebuild = Variable.get("REBUILD_SHOPIFY_DATA", "False").lower() in ["true", "1", "yes"]
 
-# Get SHOPIFY_START_DATE from environment variable with a fallback
-SHOPIFY_START_DATE = os.getenv("SHOPIFY_START_DATE", "2024-01-01")
+# Default list of Shopify partners
+DEFAULT_SHOPIFY_PARTNERS = [
+    "beckham",
+    "cefinn",
+    "chinti_parker",
+    "fcuk",
+    "jigsaw",
+    "kitri",
+    "lestrange",
+    "live-unlimited",
+    "needle-thread",
+    "nobodys-child",
+    "rixo",
+    "ro-zo",
+    "shrimps",
+    "snicholson",
+    "temperley",
+    "universal-works",
+]
 
-# Convert string to datetime
-try:
-    start_date = datetime.strptime(SHOPIFY_START_DATE, "%Y-%m-%d")
-except ValueError:
-    # Fallback to 90 days ago if env var is invalid
-    start_date = "2024-01-01"
-
-# Shopify partners env variable is a comma separated list of partner names
-
-enabled_partners = Variable.get("SHOPIFY_PARTNERS", "harper_production,shrimps").split(",")
-partners = [p.strip() for p in enabled_partners] or ["harper_production"]
+# Default list of Shopify partners else configure in environment
+SHOPIFY_PARTNERS = Variable.get("SHOPIFY_PARTNERS", default_var=DEFAULT_SHOPIFY_PARTNERS, deserialize_json=True)
+partners = SHOPIFY_PARTNERS
 
 
 def reset_rebuild_var():
@@ -49,7 +56,7 @@ def reset_rebuild_var():
 
 default_args = {
     "owner": "airflow",
-    "start_date": start_date,
+    "start_date": get_days_ago_start_date("SHOPIFY_START_DAYS_AGO", 425),  # 1 year and 2 months
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),
@@ -62,7 +69,7 @@ dag = DAG(
     "15_get_shopify_data_dag",
     catchup=False,
     default_args=default_args,
-    start_date=start_date,
+    start_date=get_days_ago_start_date("SHOPIFY_START_DAYS_AGO", 425),  # 1 year and 2 months
     max_active_runs=1,
     template_searchpath="/usr/local/airflow/dags",
 )
@@ -89,17 +96,6 @@ wait_for_things_to_exist = ExternalTaskSensor(
     allowed_states=["success"],
     dag=dag,
 )
-
-
-"""
-destination_table = "shopify_partner_orders"
-drop_transient_table = DropPostgresTableOperator(
-    task_id="drop_shopify_partner_orders_transient_table",
-    postgres_conn_id="postgres_datalake_conn_id",
-    schema="transient_data",
-    table=destination_table,
-    dag=dag,
-)"""
 
 
 drop_shopify_partner_orders_transient_table = DropPostgresTableOperator(
@@ -184,7 +180,7 @@ ensure_datalake_table_columns = EnsureMissingPostgresColumnsOperator(
     dag=dag,
 )
 
-delete_task = DeleteFromPostgresOperator(
+"""delete_task = DeleteFromPostgresOperator(
     task_id="delete_from_datalake",
     postgres_conn_id="postgres_datalake_conn_id",
     source_schema="transient_data",
@@ -192,7 +188,7 @@ delete_task = DeleteFromPostgresOperator(
     destination_schema="public",
     destination_table="raw__shopify_partner_orders",
     dag=dag,
-)
+)"""
 
 task_id = f"{destination_table}_append_to_datalake"
 append_transient_table_data = AppendTransientTableDataOperator(
@@ -230,7 +226,6 @@ ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsOperator(
     >> ensure_datalake_table
     >> refresh_datalake_table
     >> ensure_datalake_table_columns
-    >> delete_task
     >> append_transient_table_data
     >> ensure_table_view_exists
     >> base_tables_completed
