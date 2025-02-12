@@ -2,6 +2,7 @@ DROP VIEW IF EXISTS {{ schema }}.clean__shopify_partner_orders CASCADE;
 CREATE VIEW {{ schema }}.clean__shopify_partner_orders AS
   SELECT
 	p.*,
+    SPLIT_PART(p.id, '/', 5) AS clean_id,
     app_title AS channel,
     CASE
         WHEN LOWER(shipping_city) IN ('london', 'ldn')  THEN 1
@@ -21,7 +22,7 @@ CREATE VIEW {{ schema }}.clean__shopify_partner_orders AS
 	{{ dim__time_columns | prefix_columns('pc', 'createdat') }}
 FROM {{ schema }}.shopify_partner_orders p
 LEFT JOIN {{ schema }}.clean__order__summary co
-    ON p.name = co.order_name
+   p.SPLIT_PART(p.id, '/', 5) = co.integration_order_id
 LEFT JOIN
     {{ schema }}.dim__time pc ON p.created_at::date = pc.dim_date_id
 ;

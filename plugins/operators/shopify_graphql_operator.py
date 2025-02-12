@@ -105,7 +105,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                 else:
                     # Get cursor from previous run if exists
                     after = self.get_last_successful_cursor(conn, context)
-                    self.log.info(f"Continuing from cursor: {after}")
+                    # self.log.info(f"Continuing from cursor: {after}")
 
                 # Get last successful dagrun timestamp using the mixin
                 last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
@@ -116,6 +116,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
 
                 if after:
                     self.log.info(f"Continuing from cursor: {after}")
+                    self.log.info(f"Fetching orders from {start_param} to {lte}")
                 else:
                     self.log.info(f"Starting fresh fetch from {start_param} to {lte}")
                     self._clean_existing_partner_data(conn)
