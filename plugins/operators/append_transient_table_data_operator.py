@@ -111,7 +111,6 @@ class AppendTransientTableDataOperator(BaseOperator):
                     )
                     self.log.info(f"{self.insert_sql}")
                     conn.execute(self.insert_sql)
-
                     transaction.commit()
                 except Exception as e:
                     self.log.error("Error during database operation: %s", e)
