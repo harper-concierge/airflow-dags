@@ -138,126 +138,145 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                         }}
                         id
                         name
-                        app {{
-                            title
-                        }}
-                    }}
-                    id
-                    name
-                    createdAt
-                    updatedAt
-                    currencyCode
-                    cancelledAt
-                    cancelReason
-                    displayFulfillmentStatus
-                    displayFinancialStatus
+                        createdAt
+                        updatedAt
+                        currencyCode
+                        cancelledAt
+                        cancelReason
+                        displayFulfillmentStatus
+                        displayFinancialStatus
 
-                    # Totals and Pricing
-                    currentSubtotalLineItemsQuantity
-                    taxesIncluded
+                        # Totals and Pricing
+                        currentSubtotalLineItemsQuantity
+                        taxesIncluded
 
-                    # Money Sets
-                    # Money Sets
-                    currentSubtotalPriceSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    currentTotalPriceSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    currentTotalTaxSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    currentTotalDiscountsSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    totalDiscountsSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    totalPriceSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    totalRefundedSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-                    totalTaxSet {{
-                        presentmentMoney {{
-                            amount
-                            currencyCode
-                        }}
-                        shopMoney {{
-                            amount
-                            currencyCode
-                        }}
-                    }}
-
-
-                    # Line Items
-                    lineItems(first: 100) {{
-                        edges {{
-                            node {{
-                                id
-                                quantity
-                                sku
-                                title
+                        # Money Sets
+                        # Money Sets
+                        currentSubtotalPriceSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
                             }}
                         }}
-                    }}
+                        currentTotalPriceSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        currentTotalTaxSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        currentTotalDiscountsSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        totalDiscountsSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        totalPriceSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        totalRefundedSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
+                        totalTaxSet {{
+                            presentmentMoney {{
+                                amount
+                                currencyCode
+                            }}
+                            shopMoney {{
+                                amount
+                                currencyCode
+                            }}
+                        }}
 
-                    refunds {{
-                        refundLineItems(first: 50) {{
+
+                        # Line Items
+                        lineItems(first: 100) {{
                             edges {{
                                 node {{
+                                    id
                                     quantity
-                                    priceSet {{
+                                    sku
+                                    title
+                                }}
+                            }}
+                        }}
+
+                        refunds {{
+                            refundLineItems(first: 50) {{
+                                edges {{
+                                    node {{
+                                        quantity
+                                        priceSet {{
+                                            shopMoney {{
+                                                amount
+                                                currencyCode
+                                            }}
+                                        }}
+                                    }}
+                                }}
+                            }}
+                        }}
+
+                        # Shipping Address
+                        shippingAddress {{
+                            city
+                            country
+                            countryCode
+                            province
+                            provinceCode
+                        }}
+
+                        # Shipping Line
+                        shippingLines(first: 10) {{
+                            edges {{
+                                node {{
+                                    title
+                                    discountedPriceSet {{
                                         shopMoney {{
                                             amount
                                             currencyCode
@@ -266,42 +285,18 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                                 }}
                             }}
                         }}
-                    }}
 
-                    # Shipping Address
-                    shippingAddress {{
-                        city
-                        country
-                        countryCode
-                        province
-                        provinceCode
-                    }}
+                        # Payment Info
+                        paymentGatewayNames
 
-                    # Shipping Line
-                    shippingLines(first: 10) {{
-                        edges {{
-                            node {{
-                                title
-                                discountedPriceSet {{
-                                    shopMoney {{
-                                        amount
-                                        currencyCode
-                                    }}
-                                }}
-                            }}
-                        }}
-                    }}
-
-                    # Payment Info
-                    paymentGatewayNames
-
-                    # Additional Fields
-                    test
-                    tags
+                        # Additional Fields
+                        test
+                        tags
 
                         {self.customer_section}
                         # Dynamically insert customer section here if has_customer_access is True
 
+                    }}
                 }}
             }}
         }}
@@ -824,6 +819,9 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
         # ds = df["airflow_sync_ds"].iloc[0] if not df.empty else None
         # self._clean_existing_partner_data(self, conn)
 
+        self.log.info(f"Destination Table: {self.destination_schema}.{self.destination_table}")
+
+        # Write new records
         # Write new records
         df.to_sql(
             self.destination_table,
