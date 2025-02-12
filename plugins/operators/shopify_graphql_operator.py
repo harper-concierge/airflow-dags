@@ -102,15 +102,23 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
         END $$;
         """
 
-        # Define the customer section template
-        self.customer_section = """
+        self.customer_section = (
+            """
             customer {
                 id
                 createdAt
                 updatedAt
                 tags
+                numberOfOrders
+                amountSpent {
+                    amount
+                    currencyCode
+                }
             }
-        """
+            """
+            if self.has_customer_access
+            else ""
+        )
 
         self.main_query = f"""
         query($query: String!, $after: String) {{
