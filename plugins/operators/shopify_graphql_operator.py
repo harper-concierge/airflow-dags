@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import pandas as pd
 import requests
@@ -12,15 +12,34 @@ from airflow.hooks.base import BaseHook
 from plugins.utils.render_template import render_template
 
 from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
+from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
 
 
-class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator):
+class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, BaseOperator):
     """
     Operator for fetching Shopify data using GraphQL API
     """
 
     MAX_RETRIES = 3
     RATE_LIMIT_DELAY = 1.0  # 1 second between requests
+
+    # Test query for checking customer access
+    TEST_CUSTOMER_ACCESS_QUERY = """
+    query($query: String!) {
+        orders(first: 1, query: $query) {
+            edges {
+                node {
+                    customer {
+                        id
+                        createdAt
+                        updatedAt
+                        tags
+                    }
+                }
+            }
+        }
+    }
+    """
 
     def __init__(
         self,
@@ -40,7 +59,10 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
         self.destination_table = destination_table
         self.partner_ref = partner_ref
         self.rebuild = rebuild
+        self.separator = "__"
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
+        self.last_successful_cursor_key = f"last_successful_cursor_{partner_ref}"
+        self.has_customer_access = False  # Initialize customer access flag
 
         self.context = {
             "schema": schema,
@@ -73,219 +95,48 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
             SELECT FROM pg_tables WHERE schemaname = '{{destination_schema}}'
             AND tablename = '{{destination_table}}'
             ) THEN
-            DELETE FROM "{{ destination_schema }}.{{destination_table}}"
-            WHERE partner__name = '{{partner_ref}}'
+            DELETE FROM {{destination_schema}}.{{destination_table}}
+            WHERE partner_reference = '{{partner_ref}}'
             ;
         END IF;
         END $$;
         """
 
-    def execute(self, context):
-        # Get database connection
-        hook = BaseHook.get_hook(self.postgres_conn_id)
-        engine = create_engine(hook.get_uri())
-
-        try:
-            with engine.connect() as conn:
-                run_id = context["run_id"]
-                self.partner_config = self._get_partner_config(conn)
-                # Store context for use in other methods
-                self.context = context
-
-                # Get last successful dagrun timestamp using the mixin
-                last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
-
-                self.log.info(f"last successful run timestamp: {last_successful_dagrun_ts}")
-                start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
-
-                # Set end date from context
-                lte = context["data_interval_end"].format("YYYY-MM-DD")
-
-                # Log the date range
-                self.log.info(f"Fetching orders from {start_param} to {lte}")
-
-                # Check if we have a stored cursor for this run
-                after = context["task_instance"].xcom_pull(task_ids=context["task"].task_id, key="last_cursor")
-
-                # ds = context["ds"]
-
-                if not after:
-                    # Only clean data if we're starting fresh
-                    self._clean_existing_partner_data(conn)
-                else:
-                    self.log.info(f"Continuing from cursor: {after}")
-
-                # Get partner configuration
-                partner_config = self._get_partner_config(conn)
-
-                # Setup shop URL and access token
-                self.shop_url = f"https://{partner_config['partner_platform_base_url']}"
-                self.access_token = partner_config["partner_platform_api_access_token"]
-
-                # Fetch orders
-                orders, has_customer_access = self._fetch_all_orders(start_param, lte, after)
-
-                # Process and write data if orders exist
-                if orders:
-                    # Transform orders to DataFrame
-                    df = self._transform_to_dataframe(orders, has_customer_access)
-
-                    # Additional processing
-                    df = self._process_dataframe(df, partner_config)
-
-                    # Write to database
-                    self._write_to_database(df, conn)
-
-                    # Push number of processed orders to XCom
-                    context["ti"].xcom_push(key="documents_found", value=len(df))
-
-                    self.log.info(f"Successfully processed {len(df)} orders")
-                else:
-                    self.log.info("No orders found in the specified date range")
-                    context["ti"].xcom_push(key="documents_found", value=0)
-
-                # Update last successful run timestamp
-                self.set_last_successful_dagrun_ts(context)
-
-                return len(orders) if orders else 0
-
-        except Exception as e:
-            self.log.error(f"Error processing partner {self.partner_ref}: {str(e)}")
-            raise
-
-    def _get_partner_config(self, conn) -> Dict:
-        result = conn.execute(self.get_partner_config_template).fetchone()
-        if not result:
-            raise AirflowException(f"No configuration found for partner {self.partner_ref}")
-        return dict(result)
-
-    def _make_graphql_request(self, query: str, variables: Dict = None) -> Dict:
-        # Log the details before making the request
-        self.log.info(f"Shop URL: {self.shop_url}")
-        # self.log.info(f"Query: {query}")
-        # elf.log.info(f"Variables: {json.dumps(variables, indent=2) if variables else 'None'}")
-
-        headers = {
-            "X-Shopify-Access-Token": self.access_token,
-            "Content-Type": "application/json",
-        }
-        if self.partner_config["partner_shopify_app_type"] == "private":
-            # Construct URL with auth credentials in it
-            url = (
-                f"https://{self.partner_config['partner_platform_api_key']}"
-                f":{self.partner_config['partner_platform_api_secret']}"
-                f"@{self.partner_config['partner_platform_base_url']}/admin/api/"
-                f"{self.partner_config['partner_platform_api_version']}/graphql.json"
-            )
-            auth = None  # Don't use separate auth since it's in URL
-        else:
-            url = (
-                f"https://{self.partner_config['partner_platform_base_url']}"
-                f"/admin/api/{self.partner_config['partner_platform_api_version']}/graphql.json"
-            )
-            headers["X-Shopify-Access-Token"] = self.partner_config["partner_platform_api_access_token"]
-            auth = None
-
-        for attempt in range(self.MAX_RETRIES):
-            try:
-                payload = {"query": query}
-                if variables:
-                    payload["variables"] = variables
-
-                response = requests.post(url, headers=headers, json=payload, auth=auth)
-                response.raise_for_status()
-
-                time.sleep(self.RATE_LIMIT_DELAY)
-                return response.json()
-
-            except requests.exceptions.RequestException as e:
-                self.log.error(f"Request attempt {attempt + 1} failed: {str(e)}")
-                if attempt == self.MAX_RETRIES - 1:
-                    raise AirflowException(f"Failed to fetch data from Shopify: {str(e)}")
-                # time.sleep(2**attempt)
-
-    def _fetch_all_orders(self, start_param: str, lte: str, after: str = None) -> Tuple[List[Dict], bool]:
-        """
-        Fetch all orders within the given date range using Shopify's GraphQL API.
-        First checks for customer access, then fetches all orders with appropriate fields.
-        """
-        orders = []
-        has_next_page = True
-        page_count = 0
-        has_customer_access = None
-
-        # First, test for customer access
-        test_query = """
-        query($query: String!) {
-            orders(first: 1, query: $query) {
-                edges {
-                    node {
-                        customer {
-                            id
-                        }
-                    }
-                }
-            }
-        }
-        """
-
-        test_variables = {"query": f"updated_at:>={start_param} AND updated_at:<={lte}"}
-
-        self.log.info("Testing for customer data access...")
-        test_result = self._make_graphql_request(test_query, test_variables)
-        has_customer_access = "errors" not in test_result
-        self.log.info(f"Customer data access: {'Available' if has_customer_access else 'Not available'}")
-        # self.log.info(f"Test query result: {test_result}")
-
-        # Define customer section based on access
-        customer_section = (
+        self.customer_section = (
             """
             customer {
-              id
-              createdAt
-              updatedAt
-              tags
-              numberOfOrders
-              amountSpent {
-                amount
-                currencyCode
-              }
+                id
+                createdAt
+                updatedAt
+                tags
+                numberOfOrders
+                amountSpent {
+                    amount
+                    currencyCode
+                }
             }
             """
-            if has_customer_access
+            if self.has_customer_access
             else ""
         )
 
-        # Calculate the date for 550 days ago
-        five_hundred_fifty_days_ago = (pd.Timestamp.now() - pd.DateOffset(days=550)).strftime("%Y-%m-%d")
-
-        while has_next_page:
-            page_count += 1
-            self.log.info(f"Fetching page {page_count}")
-
-            # Add date optimization and test order filter
-            order_query = (
-                f"updated_at:>={start_param} AND updated_at:<={lte} "
-                f"AND created_at:>={five_hundred_fifty_days_ago} "  # New condition for created_at
-                f'AND NOT source_name:"Point of Sale" '
-                f"AND shipping_address_country_code:GB "  # change when we are global
-                f'AND (app_title:"Harper Concierge" OR app_title:"Harper" OR app_title:"Online Store") '
-                f"AND test:false "  # Exclude test orders
-                # Ensure we don't get future updates (using current time as ceiling)
-                f"AND updated_at:<now "
-            )
-
-            query = f"""
-    query($query: String!, $after: String) {{
-        orders(first: 250, after: $after, query: $query) {{
-            pageInfo {{
-                hasNextPage
-                endCursor
-            }}
-            edges {{
-                node {{
-                    # Basic Order Info
-                    publication {{
+        self.main_query = f"""
+        query($query: String!, $after: String) {{
+            orders(first: 250, after: $after, query: $query) {{
+                pageInfo {{
+                    hasNextPage
+                    endCursor
+                }}
+                edges {{
+                    node {{
+                        # Basic Order Info
+                        publication {{
+                            name
+                            app {{
+                                title
+                            }}
+                        }}
+                        id
                         name
                         app {{
                             title
@@ -448,63 +299,242 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
                     test
                     tags
 
-                    {customer_section}  # Dynamically insert customer section here if has_customer_access is True
+                        {self.customer_section}
+                        # Dynamically insert customer section here if has_customer_access is True
 
                 }}
             }}
         }}
-    }}
-    """
+        """
+
+    def execute(self, context):
+        hook = BaseHook.get_hook(self.postgres_conn_id)
+        engine = create_engine(hook.get_uri())
+        self.log.info(f"Destination Table: {self.destination_schema}.{self.destination_table}")
+
+        try:
+            with engine.connect() as conn:
+                run_id = context["run_id"]
+                self.partner_config = self._get_partner_config(conn)
+
+                # Ensure task communications table exists
+                self.ensure_task_comms_table_exists(conn)
+
+                # If rebuilding,
+                if self.rebuild:
+                    after = None
+                else:
+                    # Get cursor from previous run if exists
+                    after = self.get_last_successful_cursor(conn, context)
+                    # self.log.info(f"Continuing from cursor: {after}")
+
+                # Get last successful dagrun timestamp using the mixin
+                last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
+
+                self.log.info(f"last successful run timestamp: {last_successful_dagrun_ts}")
+                start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
+                lte = context["data_interval_end"].format("YYYY-MM-DD")
+
+                if after:
+                    self.log.info(f"Continuing from cursor: {after}")
+                    self.log.info(f"Fetching orders from {start_param} to {lte}")
+                else:
+                    self.log.info(f"Starting fresh fetch from {start_param} to {lte}")
+                    self._clean_existing_partner_data(conn)
+
+                # Setup shop URL and access token
+                self.shop_url = f"https://{self.partner_config['partner_platform_base_url']}"
+                self.access_token = self.partner_config["partner_platform_api_access_token"]
+
+                # orders, has_customer_access = self._fetch_all_orders(conn, context, start_param, lte, after)
+                orders = self._fetch_and_process_orders(conn, context, start_param, lte, after)
+
+                # Update last successful run timestamp
+                self.set_last_successful_dagrun_ts(context)
+
+                return (orders) if orders else 0
+
+        except Exception as e:
+            self.log.error(f"Error processing partner {self.partner_ref}: {str(e)}")
+            raise
+
+    def _get_partner_config(self, conn) -> Dict:
+        result = conn.execute(self.get_partner_config_template).fetchone()
+        if not result:
+            raise AirflowException(f"No configuration found for partner {self.partner_ref}")
+        return dict(result)
+
+    def _make_graphql_request(self, query: str, variables: Dict = None) -> Dict:
+        # Log the details before making the request
+        # self.log.info(f"Shop URL: {self.shop_url}")
+        # self.log.info(f"Query: {query}")
+        # elf.log.info(f"Variables: {json.dumps(variables, indent=2) if variables else 'None'}")
+
+        headers = {
+            "X-Shopify-Access-Token": self.access_token,
+            "Content-Type": "application/json",
+        }
+        if self.partner_config["partner_shopify_app_type"] == "private":
+            # Construct URL with auth credentials in it
+            url = (
+                f"https://{self.partner_config['partner_platform_api_key']}"
+                f":{self.partner_config['partner_platform_api_secret']}"
+                f"@{self.partner_config['partner_platform_base_url']}/admin/api/"
+                f"{self.partner_config['partner_platform_api_version']}/graphql.json"
+            )
+            auth = None  # Don't use separate auth since it's in URL
+        else:
+            url = (
+                f"https://{self.partner_config['partner_platform_base_url']}"
+                f"/admin/api/{self.partner_config['partner_platform_api_version']}/graphql.json"
+            )
+            headers["X-Shopify-Access-Token"] = self.partner_config["partner_platform_api_access_token"]
+            auth = None
+
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                payload = {"query": query}
+                if variables:
+                    payload["variables"] = variables
+
+                response = requests.post(url, headers=headers, json=payload, auth=auth)
+                response.raise_for_status()
+
+                time.sleep(self.RATE_LIMIT_DELAY)
+                return response.json()
+
+            except requests.exceptions.RequestException as e:
+                self.log.error(f"Request attempt {attempt + 1} failed: {str(e)}")
+                if attempt == self.MAX_RETRIES - 1:
+                    raise AirflowException(f"Failed to fetch data from Shopify: {str(e)}")
+                # time.sleep(2**attempt)
+
+        # return url
+
+    def _fetch_and_process_orders(self, conn, context, start_param: str, lte: str, after: str = None) -> int:
+        """
+        Fetch all orders within the given date range using Shopify's GraphQL API.
+        Process and write orders in batches as they are retrieved.
+
+        Args:
+            conn: Database connection
+            context: Airflow context
+            start_param: Start date for fetching orders
+            lte: End date for fetching orders
+            after: Cursor for pagination
+
+        Returns:
+            int: Total number of orders processed
+        """
+        total_processed = 0
+        has_next_page = True
+        page_count = 0
+
+        # Initialize empty DataFrame
+        df = pd.DataFrame()
+        page_orders = []
+
+        # Check if we have customer access first
+        self.log.info("Testing for customer data access...")
+        test_variables = {"query": f"updated_at:>={start_param} AND updated_at:<={lte}"}
+        test_result = self._make_graphql_request(self.TEST_CUSTOMER_ACCESS_QUERY, test_variables)
+        self.has_customer_access = "errors" not in test_result
+        self.log.info(f"Customer data access: {'Available' if self.has_customer_access else 'Not available'}")
+
+        # Calculate the date for 550 days ago
+        five_hundred_fifty_days_ago = (pd.Timestamp.now() - pd.DateOffset(days=550)).strftime("%Y-%m-%d")
+
+        while has_next_page:
+            page_count += 1
+            self.log.info(f"Fetching page {page_count}")
+
+            # Add date optimization and test order filter
+            order_query = (
+                f"updated_at:>={start_param} AND updated_at:<={lte} "
+                f"AND created_at:>={five_hundred_fifty_days_ago} "
+                f'AND NOT source_name:"Point of Sale" '
+                f"AND shipping_address_country_code:GB "
+                f'AND (app_title:"Harper Concierge" OR app_title:"Harper" OR app_title:"Online Store") '
+                f"AND test:false "
+                f"AND updated_at:<now "
+            )
+
+            # query = self.main_query.format(query=order_query, after=after)
 
             variables = {"query": order_query, "after": after}
 
             self.log.info(f"Fetching orders with variables: {variables}")
 
             try:
-                result = self._make_graphql_request(query, variables)
+                result = self._make_graphql_request(self.main_query, variables)
 
                 if "errors" in result:
                     error_message = result.get("errors", [{}])[0].get("message", "Unknown GraphQL error")
                     raise AirflowException(f"GraphQL query failed: {error_message}")
 
                 data = result["data"]["orders"]
+                self.log.info("Example of fetched order data:")
+                self.log.info(json.dumps(page_orders, indent=2))
                 page_orders = [edge["node"] for edge in data["edges"]]
-                orders.extend(page_orders)
+                # orders.extend(page_orders)
 
-                self.log.info(f"Retrieved {len(page_orders)} orders on page {page_count}")
+                if page_orders:
+                    # Transform and write this batch
 
-                # Update pagination info
-                has_next_page = data["pageInfo"]["hasNextPage"]
-                after = data["pageInfo"]["endCursor"] if has_next_page else None
+                    df = self._transform_to_dataframe(page_orders, self.has_customer_access)
+                    df = self._process_dataframe(df, self.partner_config)
+                    self.log.info(
+                        f"Writing orders from page {page_count}to {self.destination_schema}.{self.destination_table}"
+                    )
 
-                if has_next_page:
-                    self.log.info(f"More pages available, next cursor: {after}")
+                    print(df.columns)
 
-                # Store cursor after each successful page
-                if has_next_page:
-                    self.context["task_instance"].xcom_push(key="last_cursor", value=data["pageInfo"]["endCursor"])
-                    after = data["pageInfo"]["endCursor"]
-                    self.log.info(f"Stored cursor: {after}")
+                    df.to_sql(
+                        self.destination_table,
+                        conn,
+                        schema=self.destination_schema,
+                        if_exists="append",
+                        index=False,
+                        chunksize=500,
+                    )
+
+                    total_processed += len(page_orders)
+                    self.log.info(f"Processed {len(page_orders)} orders on page {page_count}")
+
+                    # Update pagination info
+                    has_next_page = data["pageInfo"]["hasNextPage"]
+                    if has_next_page:
+                        after = data["pageInfo"]["endCursor"]
+                        self.set_last_successful_cursor(conn, context, after)
+                        self.log.info(f"Stored cursor: {after}")
+
+                else:
+                    self.log.info("No orders found in the specified date range")
+                    context["ti"].xcom_push(key="documents_found", value=0)
 
             except Exception as e:
-                self.log.error(f"Error fetching orders on page {page_count}: {str(e)}")
+                self.log.error(f"Error fetching/processing orders on page {page_count}: {str(e)}")
                 raise
 
-        # Clear the cursor when we're done
-        self.context["task_instance"].xcom_push(key="last_cursor", value=None)
+            time.sleep(self.RATE_LIMIT_DELAY)  # Respect rate limits
 
-        self.log.info(f"Completed fetching {len(orders)} total orders")
-        # Print sample of raw data
-        # if len(orders) > 0:
-        # self.log.info("Sample of first 2 orders before flattening:")
-        # for i, order in enumerate(orders[:2]):
-        # self.log.info(json.dumps(order, indent=2, default=str))
-        return orders, has_customer_access
+            self.log.info(f"Completed processing {total_processed} total orders")
+            return total_processed
 
-    def _transform_to_dataframe(self, orders: List[Dict], has_customer_access: bool) -> pd.DataFrame:
+    def _transform_to_dataframe(self, page_orders: List[Dict], has_customer_access: bool) -> pd.DataFrame:
+        """
+        Transform a page of orders into a pandas DataFrame.
+
+        Args:
+            page_orders: List of order dictionaries from the current page
+            has_customer_access: Boolean indicating if we have access to customer data
+
+        Returns:
+            pd.DataFrame: Transformed orders data
+        """
         flattened_orders = []
 
-        for order in orders:
+        for order in page_orders:
             # Safely get publication info with fallbacks for None values
             publication = order.get("publication", {}) or {}
             publication_app = publication.get("app", {}) or {}
@@ -792,7 +822,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
     def _write_to_database(self, df: pd.DataFrame, conn) -> None:
         # Check if table exists and delete existing records for this partner/day
         # ds = df["airflow_sync_ds"].iloc[0] if not df.empty else None
-        # self._clean_existing_partner_data(conn, ds)
+        # self._clean_existing_partner_data(self, conn)
 
         # Write new records
         df.to_sql(
@@ -812,16 +842,16 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, BaseOperator)
 
     def _clean_existing_partner_data(self, conn):
         """Clean existing data for the partner before a fresh import."""
-        try:
-            # context_dict = {"ds": ds}
-            self.delete_sql = render_template(self.delete_template, context=self.context)
-            self.log.info(f"Cleaning existing data for partner {self.partner_ref} with SQL: {self.delete_sql}")
-            # Execute the delete SQL query
-            conn.execute(self.delete_sql)
+        self.delete_sql = render_template(self.delete_template, context=self.context)
+        self.log.info(f"Cleaning existing data for partner {self.partner_ref} with SQL: {self.delete_sql}")
+        # Execute the delete SQL query
+        conn.execute(self.delete_sql)
 
-            # Log the completion of the cleanup
-            self.log.info(f"Successfully cleared existing data for partner {self.partner_ref}")
+        # Log the completion of the cleanup
+        self.log.info(f"Successfully cleared existing data for partner {self.partner_ref}")
 
-        except Exception as e:
-            self.log.warning(f"Error during cleanup for partner {self.partner_ref}: {str(e)}")
-            raise
+    def set_last_successful_cursor(self, conn, context, cursor):
+        return self.set_task_var(conn, context, self.last_successful_cursor_key, cursor)
+
+    def get_last_successful_cursor(self, conn, context):
+        return self.get_task_var(conn, context, self.last_successful_cursor_key)
