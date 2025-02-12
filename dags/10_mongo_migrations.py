@@ -124,7 +124,6 @@ for config in migrations:
         skip=not rebuild,
         dag=dag,
     )
-    drop_transient_table >> drop_destination_table
 
     task_id = f"{config['task_name']}_migrate_to_postgres"
     mongo_to_postgres = MongoDBToPostgresViaDataframeOperator(
@@ -215,10 +214,11 @@ for config in migrations:
         dag=dag,
     )
     (
-        drop_destination_table
+        drop_transient_table
         >> mongo_to_postgres
         >> has_records_to_process
         >> refresh_transient_table
+        >> drop_destination_table
         >> ensure_datalake_table
         >> refresh_datalake_table
         >> ensure_datalake_table_columns

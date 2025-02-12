@@ -153,9 +153,9 @@ drop_invoices_public_table = DropPostgresTableOperator(
 
 (
     drop_invoices_transient_table
-    >> drop_invoices_public_table
     >> stripe_invoices_task
     >> stripe_invoices_has_records_to_process
+    >> drop_invoices_public_table
     >> stripe_invoices_ensure_datalake_table
     >> stripe_invoices_ensure_datalake_table_columns
     >> stripe_invoices_append_transient_table_data
@@ -247,9 +247,9 @@ drop_charges_public_table = DropPostgresTableOperator(
 
 (
     drop_charges_transient_table
-    >> drop_charges_public_table
     >> stripe_charges_task
     >> stripe_charges_has_records_to_process
+    >> drop_charges_public_table
     >> stripe_charges_ensure_datalake_table
     >> stripe_charges_ensure_datalake_table_columns
     >> stripe_charges_append_transient_table_data
@@ -340,9 +340,9 @@ drop_refunds_public_table = DropPostgresTableOperator(
 
 (
     drop_refunds_transient_table
-    >> drop_refunds_public_table
     >> stripe_refunds_task
     >> stripe_refunds_has_records_to_process
+    >> drop_refunds_public_table
     >> stripe_refunds_ensure_datalake_table
     >> stripe_refunds_ensure_datalake_table_columns
     >> stripe_refunds_append_transient_table_data

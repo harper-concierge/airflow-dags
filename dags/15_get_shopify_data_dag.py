@@ -223,10 +223,10 @@ ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsOperator(
     wait_for_things_to_exist
     >> is_latest_dagrun_task
     >> drop_shopify_partner_orders_transient_table
-    >> drop_shopify_partner_orders_public_table
     >> first_task
     >> migration_tasks
     >> refresh_transient_table
+    >> drop_shopify_partner_orders_public_table
     >> ensure_datalake_table
     >> refresh_datalake_table
     >> ensure_datalake_table_columns
