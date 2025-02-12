@@ -25,7 +25,7 @@ destination_table = "shopify_partner_orders"
 
 rebuild = Variable.get("REBUILD_SHOPIFY_DATA", "False").lower() in ["true", "1", "yes"]
 
-# Default list of Shopify partners
+# Default list of all partners
 DEFAULT_SHOPIFY_PARTNERS = [
     "beckham",
     "cefinn",
@@ -45,9 +45,11 @@ DEFAULT_SHOPIFY_PARTNERS = [
     "universal-works",
 ]
 
-# Default list of Shopify partners else configure in environment
-SHOPIFY_PARTNERS = Variable.get("SHOPIFY_PARTNERS", default_var=DEFAULT_SHOPIFY_PARTNERS, deserialize_json=True)
-partners = SHOPIFY_PARTNERS
+# Get comma-separated list from Variable, default to all partners
+enabled_partners = Variable.get("SHOPIFY_PARTNERS", default_var=",".join(DEFAULT_SHOPIFY_PARTNERS)).split(",")
+
+# Clean up whitespace and use full list if none specified
+partners = [p.strip() for p in enabled_partners] or DEFAULT_SHOPIFY_PARTNERS
 
 
 def reset_rebuild_var():
@@ -123,9 +125,10 @@ drop_shopify_partner_orders_public_table = DropPostgresTableOperator(
 migration_tasks = []
 first_task = None
 for partner in partners:
-    task_id = f"get_{partner}_shopify_data_task"
-    shopify_task = ShopifyGraphQLPartnerDataOperator(
-        task_id=task_id,
+    partner_task_id = f"get_{partner}_shopify_data_task"
+
+    get_shopify_data_task = ShopifyGraphQLPartnerDataOperator(
+        task_id=partner_task_id,
         postgres_conn_id="postgres_datalake_conn_id",
         schema="public",
         destination_schema="transient_data",
@@ -137,9 +140,9 @@ for partner in partners:
     )
 
     if first_task:
-        migration_tasks.append(shopify_task)
+        migration_tasks.append(get_shopify_data_task)
     else:
-        first_task = shopify_task
+        first_task = get_shopify_data_task
 
 
 task_id = f"{destination_table}_refresh_transient_table_stats"

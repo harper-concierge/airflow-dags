@@ -97,8 +97,15 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                 # Ensure task communications table exists
                 self.ensure_task_comms_table_exists(conn)
 
-                # Get cursor from previous run if exists
-                after = self.get_last_successful_cursor(conn, context)
+                # If rebuilding, clear task vars first
+                if self.rebuild:
+                    self.log.info("Rebuild mode: Clearing task vars")
+                    self.clear_task_vars(conn, context)
+                    after = None
+                else:
+                    # Get cursor from previous run if exists
+                    after = self.get_last_successful_cursor(conn, context)
+                    self.log.info(f"Continuing from cursor: {after}")
 
                 # Get last successful dagrun timestamp using the mixin
                 last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
@@ -111,6 +118,11 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                     self.log.info(f"Continuing from cursor: {after}")
                 else:
                     self.log.info(f"Starting fresh fetch from {start_param} to {lte}")
+                    self._clean_existing_partner_data(conn)
+
+                # Setup shop URL and access token
+                self.shop_url = f"https://{self.partner_config['partner_platform_base_url']}"
+                self.access_token = self.partner_config["partner_platform_api_access_token"]
 
                 # Pass conn and context to _fetch_all_orders
                 orders, has_customer_access = self._fetch_all_orders(conn, context, start_param, lte, after)
@@ -488,7 +500,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                     self.log.error(f"Error fetching orders on page {page_count}: {str(e)}")
                     raise
 
-            # Clear the cursor when we're done
+            # Clear the cursor when we're done with all pages
             self.clear_task_vars(conn, context)
 
             self.log.info(f"Completed fetching {len(orders)} total orders")
@@ -794,7 +806,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
     def _write_to_database(self, df: pd.DataFrame, conn) -> None:
         # Check if table exists and delete existing records for this partner/day
         # ds = df["airflow_sync_ds"].iloc[0] if not df.empty else None
-        # self._clean_existing_partner_data(conn, ds)
+        # self._clean_existing_partner_data(self, conn)
 
         self.log.info(f"Destination Table: {self.destination_schema}.{self.destination_table}")
 
