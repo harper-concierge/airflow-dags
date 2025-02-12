@@ -13,6 +13,7 @@ from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 from plugins.operators.drop_table import DropPostgresTableOperator
 from plugins.operators.analyze_table import RefreshPostgresTableStatisticsOperator
 from plugins.operators.ensure_missing_columns import EnsureMissingPostgresColumnsOperator
+from plugins.operators.clear_task_vars_operator import ClearTaskVarsOperator
 from plugins.operators.shopify_graphql_operator import ShopifyGraphQLPartnerDataOperator
 from plugins.operators.ensure_datalake_table_exists import EnsurePostgresDatalakeTableExistsOperator
 from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDatalakeTableViewExistsOperator
@@ -218,14 +219,25 @@ ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsOperator(
     dag=dag,
 )
 
+clear_vars_pre_import = ClearTaskVarsOperator(
+    task_id="clear_vars_pre_import", postgres_conn_id="postgres_datalake_conn_id", dag=dag
+)
+
+clear_vars_post_import = ClearTaskVarsOperator(
+    task_id="clear_vars_post_import", postgres_conn_id="postgres_datalake_conn_id", dag=dag
+)
+
+
 (
     wait_for_things_to_exist
     >> is_latest_dagrun_task
     >> drop_shopify_partner_orders_transient_table
+    >> drop_shopify_partner_orders_public_table
+    >> clear_vars_pre_import
     >> first_task
     >> migration_tasks
+    >> clear_vars_post_import
     >> refresh_transient_table
-    >> drop_shopify_partner_orders_public_table
     >> ensure_datalake_table
     >> refresh_datalake_table
     >> ensure_datalake_table_columns
