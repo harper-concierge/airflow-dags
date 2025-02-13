@@ -15,7 +15,7 @@ class ClearTaskVarsOperator(DagRunTaskCommsMixin, BaseOperator):
     def __init__(
         self,
         *,
-        postgres_conn_id: str = "postgres_conn_id",
+        postgres_conn_id: str = "postgres_datalake_conn_id",
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -45,7 +45,7 @@ class ClearTaskVarsOperator(DagRunTaskCommsMixin, BaseOperator):
             # Ensure task communications table exists
             self.ensure_task_comms_table_exists(conn)
 
-            # Clear all task variables
+            # Clear all task variables using the mixin method
             self.clear_task_vars(conn, context)
 
-            self.log.info("Successfully cleared all task variables")
+            self.log.info(f"Successfully cleared task variables for task {self.task_id}")
