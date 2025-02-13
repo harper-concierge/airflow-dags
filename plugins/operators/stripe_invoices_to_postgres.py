@@ -47,9 +47,9 @@ class StripeInvoicesToPostgresOperator(
             ("failure_balance_transaction", "string"),
             ("from_invoice__action", "string"),
             ("from_invoice__invoice", "string"),
-            ("due_date", "int64"),
-            ("status_transitions__paid_at", "int64"),
-            ("next_payment_attempt", "int64"),
+            ("due_date", "Int64"),
+            ("status_transitions__paid_at", "Int64"),
+            ("next_payment_attempt", "Int64"),
         ]
 
         self.context = {
