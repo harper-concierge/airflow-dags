@@ -25,6 +25,7 @@
                 "trial_end_replacement",
                 "reconciliation",
                 "ppr",
+                "pp_discount",
                 "shipping_fee_refund"
             ]
         },
