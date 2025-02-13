@@ -318,16 +318,19 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                 # If rebuilding,
                 if self.rebuild:
                     after = None
+                    start_param = context["dag"].default_args["start_date"].strftime("%Y-%m-%d")
+
                 else:
                     # Get cursor from previous run if exists
                     after = self.get_last_successful_cursor(conn, context)
                     # self.log.info(f"Continuing from cursor: {after}")
 
-                # Get last successful dagrun timestamp using the mixin
-                last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
+                    # Get last successful dagrun timestamp using the mixin
+                    last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
 
-                self.log.info(f"last successful run timestamp: {last_successful_dagrun_ts}")
-                start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
+                    self.log.info(f"last successful run timestamp: {last_successful_dagrun_ts}")
+                    start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
+
                 lte = context["data_interval_end"].format("YYYY-MM-DD")
 
                 if after:
@@ -468,8 +471,8 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                     raise AirflowException(f"GraphQL query failed: {error_message}")
 
                 data = result["data"]["orders"]
-                self.log.info("Example of fetched order data:")
-                self.log.info(json.dumps(page_orders, indent=2))
+                # self.log.info("Example of fetched order data:")
+                # self.log.info(json.dumps(page_orders, indent=2))
                 page_orders = [edge["node"] for edge in data["edges"]]
                 # orders.extend(page_orders)
 
@@ -498,10 +501,10 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
 
                     # Update pagination info
                     has_next_page = data["pageInfo"]["hasNextPage"]
-                    if has_next_page:
-                        after = data["pageInfo"]["endCursor"]
-                        self.set_last_successful_cursor(conn, context, after)
-                        self.log.info(f"Stored cursor: {after}")
+
+                    after = data["pageInfo"]["endCursor"]
+                    self.set_last_successful_cursor(conn, context, after)
+                    self.log.info(f"Stored cursor: {after}")
 
                 else:
                     self.log.info("No orders found in the specified date range")
