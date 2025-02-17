@@ -457,10 +457,7 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                 f"AND updated_at:<now "
             )
 
-            # query = self.main_query.format(query=order_query, after=after)
-
             variables = {"query": order_query, "after": after}
-
             self.log.info(f"Fetching orders with variables: {variables}")
 
             try:
@@ -471,21 +468,12 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                     raise AirflowException(f"GraphQL query failed: {error_message}")
 
                 data = result["data"]["orders"]
-                # self.log.info("Example of fetched order data:")
-                # self.log.info(json.dumps(page_orders, indent=2))
                 page_orders = [edge["node"] for edge in data["edges"]]
-                # orders.extend(page_orders)
 
                 if page_orders:
-                    # Transform and write this batch
-
                     df = self._transform_to_dataframe(page_orders, self.has_customer_access)
                     df = self._process_dataframe(df, self.partner_config)
-                    self.log.info(
-                        f"Writing orders from page {page_count}to {self.destination_schema}.{self.destination_table}"
-                    )
-
-                    print(df.columns)
+                    self.log.info(f"Writing {len(page_orders)} orders from page {page_count}")
 
                     df.to_sql(
                         self.destination_table,
@@ -499,16 +487,24 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
                     total_processed += len(page_orders)
                     self.log.info(f"Processed {len(page_orders)} orders on page {page_count}")
 
+                    self.clear_task_vars(conn, context)
+
                     # Update pagination info
                     has_next_page = data["pageInfo"]["hasNextPage"]
-
                     after = data["pageInfo"]["endCursor"]
-                    self.set_last_successful_cursor(conn, context, after)
-                    self.log.info(f"Stored cursor: {after}")
+
+                    if has_next_page:
+                        # Store cursor for recovery if there's more data to fetch
+                        self.set_last_successful_cursor(conn, context, after)
+                        self.log.info(f"Stored cursor for recovery: {after}")
+                    else:
+                        # Clear cursor when we've successfully processed all pages
+                        self.clear_task_vars(conn, context)
+                        self.log.info("Successfully completed all pages, cleared cursor")
 
                 else:
                     self.log.info("No orders found in the specified date range")
-                    context["ti"].xcom_push(key="documents_found", value=0)
+                    has_next_page = False  # Exit loop if no orders found
 
             except Exception as e:
                 self.log.error(f"Error fetching/processing orders on page {page_count}: {str(e)}")
@@ -516,8 +512,8 @@ class ShopifyGraphQLPartnerDataOperator(LastSuccessfulDagrunMixin, DagRunTaskCom
 
             time.sleep(self.RATE_LIMIT_DELAY)  # Respect rate limits
 
-            self.log.info(f"Completed processing {total_processed} total orders")
-            return total_processed
+        self.log.info(f"Completed processing {total_processed} total orders")
+        return total_processed
 
     def _transform_to_dataframe(self, page_orders: List[Dict], has_customer_access: bool) -> pd.DataFrame:
         """

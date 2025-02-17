@@ -219,12 +219,16 @@ ensure_table_view_exists = EnsurePostgresDatalakeTableViewExistsOperator(
 )
 
 clear_vars_pre_import = ClearTaskVarsOperator(
-    task_id="clear_vars_pre_import", postgres_conn_id="postgres_datalake_conn_id", dag=dag
+    task_id="clear_vars_pre_import",
+    postgres_conn_id="postgres_datalake_conn_id",
+    dag=dag,
+    rebuild=rebuild,
+    task_id_pattern="%%get_shopify_data_task",  # Will match any task ending with this pattern
 )
 
-clear_vars_post_import = ClearTaskVarsOperator(
-    task_id="clear_vars_post_import", postgres_conn_id="postgres_datalake_conn_id", dag=dag
-)
+"""clear_vars_post_import = ClearTaskVarsOperator(
+    task_id="clear_vars_post_import", postgres_conn_id="postgres_datalake_conn_id", dag=dag, rebuild=rebuild
+)"""
 
 
 (
@@ -235,7 +239,6 @@ clear_vars_post_import = ClearTaskVarsOperator(
     >> clear_vars_pre_import
     >> first_task
     >> migration_tasks
-    >> clear_vars_post_import
     >> refresh_transient_table
     >> ensure_datalake_table
     >> refresh_datalake_table
