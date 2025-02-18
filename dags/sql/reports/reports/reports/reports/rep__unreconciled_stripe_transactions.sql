@@ -18,7 +18,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__unreconciled_stripe_tra
     FROM {{ schema }}.rep__order__reconciliation__totals r
     WHERE (stripe_total <> order_total OR stripe_total <> transactionlog_total OR order_total <> transactionlog_total)
         AND trial_period_ended = 1
-    ORDER BY r.trial_period_actually_ended_at DESC;
+    ORDER BY r.trial_period_actually_ended_at DESC
 WITH NO DATA;
 {% if is_modified %}
 CREATE UNIQUE INDEX IF NOT EXISTS rep__unreconciled_stripe_transactions_idx ON {{ schema }}.rep__unreconciled_stripe_transactions (order_id);
