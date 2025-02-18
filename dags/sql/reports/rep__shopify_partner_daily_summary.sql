@@ -42,7 +42,9 @@ SELECT
    COALESCE((ROUND((SUM(total_refund_quantity)/NULLIF(SUM(items_quantity), 0))::decimal, 2))::decimal, 0) AS return_rate_items,
    COALESCE((ROUND((SUM(total_refunded)/NULLIF(SUM(total_price_ex_shipping), 0))::decimal, 2))::decimal, 0) AS return_rate_value,
    ROUND((SUM(keep)::numeric/NULLIF(COUNT(DISTINCT name), 0)),2) AS keep_rate,
-   COALESCE((ROUND((SUM(no_sale)::numeric/NULLIF(COUNT(DISTINCT name), 0)), 2))::decimal, 0) AS no_sale_rate
+   COALESCE((ROUND((SUM(no_sale)::numeric/NULLIF(COUNT(DISTINCT name), 0)), 2))::decimal, 0) AS no_sale_rate,
+   COALESCE(COUNT(DISTINCT CASE WHEN customer_type = 'First-time' THEN name END), 0) AS new_customer_orders,
+   COALESCE((ROUND((COUNT(DISTINCT CASE WHEN customer_type = 'First-time' THEN name END)::numeric/NULLIF(COUNT(DISTINCT name), 0)), 2))::decimal, 0) AS new_customer_rate
 FROM london_data
 WHERE publication_name IN ('Online Store','Harper Concierge')
 AND analysis_region IS NOT NULL

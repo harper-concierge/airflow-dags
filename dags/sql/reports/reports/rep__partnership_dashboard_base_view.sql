@@ -9,29 +9,37 @@ ship_directs AS (
    SELECT previous_original_order_name, id
     FROM {{ schema }}.rep__ship_direct_orders
 ),
-
+-- monthly shopify brand data
 monthly_kpi_data AS (
    SELECT DISTINCT
        partner_name,
        year_month_created,
        analysis_region,
        orders,
-       total_value_ordered
+       total_value_ordered,
+       total_value_kept,
+       total_items_kept,
+       total_items_ordered,
+       daily_new_customer_orders
    FROM {{ schema }}.rep__shopify_partner_monthly_summary
    WHERE channel = 'Online Store'
 ),
-
+-- daily shopify brand data
 daily_summary AS (
    SELECT DISTINCT
        partner_name,
        day_created,
        analysis_region,
        orders as daily_orders,
-       total_value_ordered as daily_value
+       total_value_ordered as daily_value,
+       total_value_kept as daily_net_value_purchased,
+       total_items_kept as daily_net_items_purchased,
+       total_items_ordered as daily_items_ordered,
+       new_customer_orders as daily_new_customer_orders
    FROM {{ schema }}.rep__shopify_partner_daily_summary
    WHERE channel = 'Online Store'
 ),
-
+-- Harper orders
 base_orders AS (
    SELECT
        o.*,
@@ -154,32 +162,28 @@ SELECT
    END as kpi_source,
 
    -- Daily KPIs
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN ds.daily_orders
-       ELSE ds.daily_orders
-   END as daily_brand_orders,
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN ds.daily_value
-       ELSE ds.daily_value
-   END as daily_brand_value,
+   ds.daily_orders as daily_brand_orders,
+   ds.daily_value as daily_brand_value,
+   ds.daily_net_value_purchased,
+   ds.daily_net_items_purchased,
+   ds.daily_items_ordered,
+   ds.daily_new_customer_orders,
 
    -- Monthly KPIs
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN m.orders
-       ELSE m.orders
-   END as monthly_brand_orders,
-   CASE
-       WHEN harper_product_type = 'harper_concierge' THEN m.total_value_ordered
-       ELSE m.total_value_ordered
-   END as monthly_brand_value
+   m.orders as monthly_brand_orders,
+   m.total_value_ordered as monthly_brand_value,
+   m.monthly_net_value_purchased,
+   m.monthly_net_items_purchased,
+   m.monthly_items_ordered,
+   m.monthly_new_customer_orders
 
 FROM base_orders bo
 LEFT JOIN daily_summary ds
    ON ds.partner_name = bo.brand_name
    AND DATE(ds.day_created) = bo.order__createdat__dim_date
-   AND CASE
-       WHEN harper_product_type = 'harper_concierge' THEN ds.analysis_region = 'London'
-       ELSE ds.analysis_region = 'Regional'
+   AND ds.analysis_region = CASE
+       WHEN harper_product_type = 'harper_concierge' THEN 'London'
+       ELSE 'Regional'
    END
 LEFT JOIN monthly_kpi_data m
    ON m.partner_name = bo.brand_name
@@ -211,8 +215,16 @@ GROUP BY
    discount_total,
    ds.daily_orders,
    ds.daily_value,
+   ds.daily_net_value_purchased,
+   ds.daily_net_items_purchased,
+   ds.daily_items_ordered,
+   ds.daily_new_customers,
    m.orders,
-   m.total_value_ordered
+   m.total_value_ordered,
+   m.monthly_net_value_purchased,
+   m.monthly_net_items_purchased,
+   m.monthly_items_ordered,
+   m.monthly_new_customers
 
 WITH NO DATA;
 
