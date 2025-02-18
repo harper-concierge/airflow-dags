@@ -6,7 +6,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
         SELECT
           order_id,
           SUM(amount) as stripe_total
-        FROM rep__stripe__order__transactions
+        FROM {{ schema }}.rep__stripe__order__transactions
         GROUP BY order_id
     ),
     partial_refunds AS (
@@ -15,7 +15,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
             SUM(
                 (CAST((match_array[1]) AS NUMERIC) * 100)::INT
             ) AS total_partial_refund_amount
-        FROM orderevents e
+        FROM {{ schema }}.orderevents e
         JOIN orders o ON o.id = e.order_id
         CROSS JOIN LATERAL (
             SELECT
@@ -25,11 +25,19 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
         GROUP BY o.id
     ),
     shipping_fee_refunds AS (
-        SELECT
-          o.id AS order_id,
-          1 AS shipping_fee_refunded
-        FROM clean__order__summary o
-        WHERE o.orderstatusevent__shippingfeerefundedbywarehouse_at IS NOT NULL
+      SELECT DISTINCT order_id, 1 AS shipping_fee_refunded
+      FROM (
+        SELECT order_id
+        FROM {{ schema }}.orderevents
+        WHERE event_name_id = 'paymentReceived'
+          AND message SIMILAR TO '%(shipping_fee_refund invoice received|shipping_fee_refund invoice paid)%'
+
+        UNION
+
+        SELECT id AS order_id
+        FROM {{ schema }}.clean__order__summary
+        WHERE orderstatusevent__shippingfeerefundedbywarehouse_at IS NOT NULL
+      ) t
     ),
     transactionlog_totals AS (
         SELECT
@@ -58,7 +66,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
                 END
             ) AS transactionlog_total
         FROM
-            public.clean__transaction__items
+            {{ schema }}.clean__transaction__items
         GROUP BY
             order_id
     )
