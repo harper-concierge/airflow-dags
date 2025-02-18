@@ -30,7 +30,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
         SELECT order_id
         FROM {{ schema }}.orderevents
         WHERE event_name_id = 'paymentReceived'
-          AND message SIMILAR TO '%(shipping_fee_refund invoice received|shipping_fee_refund invoice paid)%'
+          AND message SIMILAR TO '%%(shipping_fee_refund invoice received|shipping_fee_refund invoice paid)%%'
 
         UNION
 
