@@ -1,6 +1,5 @@
 from typing import List
 
-from airflow.exceptions import AirflowException
 from sqlalchemy.engine.base import Connection
 
 
@@ -53,6 +52,7 @@ class GetColumnsFromTableMixin:
             column_names = [f'{row["column_name"]}' for row in result]
 
         if not column_names:
-            raise AirflowException(f"No columns found for table {schema_name}.{table_name}")
+            self.log.info(f"No columns found for table {schema_name}.{table_name}")
+            return []
 
         return column_names
