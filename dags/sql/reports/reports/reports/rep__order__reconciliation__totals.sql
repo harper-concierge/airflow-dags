@@ -5,7 +5,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
      WITH stripe_totals AS (
         SELECT
           order_id,
-          SUM(amount) as stripe_total
+          SUM(amount)::bigint as stripe_total
         FROM {{ schema }}.rep__stripe__order__transactions
         GROUP BY order_id
     ),
