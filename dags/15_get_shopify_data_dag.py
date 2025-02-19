@@ -223,7 +223,7 @@ clear_vars_pre_import = ClearTaskVarsOperator(
     postgres_conn_id="postgres_datalake_conn_id",
     dag=dag,
     rebuild=rebuild,
-    task_id_pattern="%get_shopify_data_task",  # Will match any task ending with this pattern
+    task_id_pattern="%shopify_data_task",  # Will match any task ending with this pattern
 )
 
 """clear_vars_post_import = ClearTaskVarsOperator(
