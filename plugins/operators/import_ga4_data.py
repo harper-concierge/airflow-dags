@@ -24,7 +24,6 @@ class GA4ToPostgresOperator(BaseOperator):
     :param end_date: End date for GA4 data pull (templated)
     """
 
-    template_fields = ("start_date", "end_date")
     ui_color = "#f9c915"  # Consistent with other operators
 
     @apply_defaults

@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from airflow import DAG
 from airflow.operators.python import ShortCircuitOperator
 from airflow.sensors.external_task import ExternalTaskSensor
 
+from plugins.utils.calculate_start_date import get_days_ago_start_date
 from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 from plugins.utils.found_records_to_process import found_records_to_process
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
@@ -16,7 +17,7 @@ from plugins.operators.append_transient_table_data_operator import AppendTransie
 
 default_args = {
     "owner": "airflow",
-    "start_date": datetime(2024, 8, 1),
+    "start_date": get_days_ago_start_date("STRIPE_START_DAYS_AGO", 2 * 365),
     "schedule_interval": "@daily",
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),
@@ -28,6 +29,7 @@ dag = DAG(
     "19_ga4_to_postgres_dag",
     catchup=False,
     default_args=default_args,
+    start_date=get_days_ago_start_date("STRIPE_START_DAYS_AGO", 2 * 365),
     max_active_runs=1,
     template_searchpath="/usr/local/airflow/dags",
 )
@@ -54,8 +56,8 @@ ga4_task = GA4ToPostgresOperator(
     google_analytics_conn_id="google_analytics_conn_id",
     destination_schema="transient_data",
     destination_table="ga4__daily_metrics",
-    start_date="{{ macros.ds_add(ds, -30) }}",
-    end_date="{{ ds }}",
+    start_date=get_days_ago_start_date("STRIPE_START_DAYS_AGO", 2 * 365),
+    end_date=get_days_ago_start_date("STRIPE_START_DAYS_AGO", 2 * 1),
     dag=dag,
 )
 
