@@ -49,7 +49,7 @@
         "price": {
             "type": "integer",
             "bsonType": [
-                "double"
+                "int"
             ]
         },
         "currency": {
