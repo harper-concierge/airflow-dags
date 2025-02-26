@@ -5,7 +5,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__daily_total_metrics AS
 WITH
 concierge_purchases AS (
 	SELECT
-		transaction_info__payment_at__dim_date AS metric_date,
+		transaction_info__payment_at__dim_yearmonth_sc AS metric_date,
 		COUNT(DISTINCT harper_order_name)::INTEGER AS total_concierge_orders_paid, -- Cast to integer
 		SUM(transaction_info__item_count)::INTEGER AS total_concierge_items_purchased,
 		SUM(transaction_info__payment_invoiced_amount) AS total_concierge_amount_purchased
@@ -21,7 +21,7 @@ concierge_purchases AS (
 ),
 initiated_concierge_purchases AS (
 	SELECT
-		transaction_info__payment_at__dim_date AS metric_date,
+		transaction_info__payment_at__dim_yearmonth_sc AS metric_date,
 		COUNT(DISTINCT harper_order_name)::INTEGER AS total_initiated_concierge_orders_paid, -- Cast to integer
 		SUM(transaction_info__item_count)::INTEGER AS total_initiated_concierge_items_purchased,
 		SUM(transaction_info__payment_invoiced_amount) AS total_initiated_concierge_amount_purchased
@@ -36,25 +36,23 @@ initiated_concierge_purchases AS (
 	GROUP BY
 		transaction_info__payment_at__dim_date
 ),
-try_purchases AS (
+try_revenue AS (
 	SELECT
-		transaction_info__payment_at__dim_date AS metric_date,
-		COUNT(DISTINCT harper_order_name)::INTEGER AS total_try_orders_paid, -- Cast to integer
-		SUM(transaction_info__item_count)::INTEGER AS total_try_items_purchased,
-		SUM(transaction_info__payment_invoiced_amount) AS total_try_amount_purchased
+		trial_period_ended_at__dim_yearweek AS metric_date,
+		SUM(commission_calculated_amount) AS total_try_revenue
 	FROM
 		{{ schema }}.rep__transactionlog__view
 	WHERE
-		harper_order__order_status = 'completed'
-		AND lineitem_type = 'purchase'
+		-- harper_order__order_status = 'completed'
+		AND lineitem_type = 'try_on'
 		AND lineitem_category = 'product'
         AND harper_product_type = 'harper_try'
 	GROUP BY
-		transaction_info__payment_at__dim_date
+		trial_period_ended_at__dim_yearweek
 ),
 try_orders AS (
     SELECT
-        createdat__dim_date AS metric_date,
+        createdat__dim_yearmonth_sc AS metric_date,
         COUNT(DISTINCT  order_name )::INTEGER AS total_try_orders_created,
 	    SUM(itemsummary__num_items_ordered)::INTEGER AS total_try_items_ordered,
         SUM(itemsummary__total_value_ordered) AS total_try_value_ordered
@@ -68,7 +66,7 @@ try_orders AS (
 ),
 concierge_orders AS (
     SELECT
-        createdat__dim_date AS metric_date,
+        createdat__dim_yearmonth_sc AS metric_date,
         COUNT(DISTINCT  order_name )::INTEGER AS total_concierge_orders,
 	    SUM(itemsummary__num_items_ordered)::INTEGER AS total_concierge_items_ordered,
         SUM(itemsummary__total_value_ordered) AS total_concierge_value_ordered
@@ -82,7 +80,7 @@ concierge_orders AS (
 ),
 initiated_concierge_orders AS (
     SELECT
-        createdat__dim_date AS metric_date,
+        createdat__dim_yearmonth_sc AS metric_date,
         COUNT(DISTINCT  order_name )::INTEGER AS total_initiated_concierge_orders,
 	    SUM(itemsummary__num_items_ordered)::INTEGER AS total_initiated_concierge_items_ordered,
         SUM(itemsummary__total_value_ordered) AS total_initiated_concierge_value_ordered
@@ -97,8 +95,7 @@ initiated_concierge_orders AS (
 ),
 all_orders AS (
     SELECT
-        createdat__dim_date AS metric_date
-        createdat__dim_date AS metric_date
+        createdat__dim_yearmonth_sc AS metric_date
     FROM
         {{ schema }}.clean__order__summary
     WHERE
