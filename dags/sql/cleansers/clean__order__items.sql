@@ -10,12 +10,31 @@ CREATE VIEW {{ schema }}.clean__order__items AS
 	oi.price as item_price_pence,
 	oi.discount AS item_discount_price_pence,
 	oi.price - oi.discount AS item_value_pence,
-  oi.calculated_discount AS calculated_item_discount_price_pence,
+    oi.calculated_discount AS calculated_item_discount_price_pence,
 	oi.price - oi.calculated_discount AS calculated_item_value_pence,
 	oi.qty AS item_quantity,
     -- CASE WHEN oi.commission__amount THEN oi.commission__amount
     --  oi.comission__amount
     -- ELSE
+    -- Need to make this brand dependent
+
+    -- VAT inclusive calc for newer brands oi.price * ( oi.commission__percentage / 100)
+    -- VAT exclusive calc for newer brands (oi.price / 1.2) * ( oi.commission__percentage / 100)
+    -- THIS IS IMPOORTANT!!!!! - MARTIN
+    -- WHEN p.commission__concierge_is_vat_inclusive THEN
+    -- WHEN p.commission__try_is_vat_inclusive THEN
+    -- CASE
+    --     WHEN oi.commission__percentage IS NOT NULL THEN
+    --         CASE
+    --             WHEN p.commission__concierge_is_vat_inclusive THEN
+    --                 oi.price * (oi.commission__percentage / 100)
+    --             ELSE
+    --                 (oi.price / 1.2) * (oi.commission__percentage / 100)
+    --         END
+    --     ELSE
+    --         NULL
+    -- END AS commission__calculated_amount
+
     CASE WHEN oi.commission__percentage IS NOT NULL THEN
          oi.price * ( oi.commission__percentage / 100)
     ELSE
@@ -30,6 +49,10 @@ CREATE VIEW {{ schema }}.clean__order__items AS
 	END AS post_purchase_return,
 	 {{ dim__time_columns | prefix_columns('oc', 'createdat') }}
 FROM {{ schema }}.order__items oi
+LEFT JOIN
+    {{ schema }}.orders o ON oi.order_id = o.id
+LEFT JOIN
+    {{ schema }}.partner p ON o.partner_id = p.id
 LEFT JOIN
     {{ schema }}.dim__time oc ON oi.createdat::date = oc.dim_date_id
 WHERE
