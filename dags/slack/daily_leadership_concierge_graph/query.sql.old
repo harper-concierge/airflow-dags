@@ -1,0 +1,53 @@
+WITH filtered_data AS (
+    SELECT
+        date,
+        TO_CHAR(date, 'Day') AS day_of_week,
+        num_appointments_booked,
+        num_try_orders_created,
+        num_orders_paid,
+        total_items_ordered,
+        total_items_purchased,
+        total_value_ordered,
+        total_amount_purchased
+    FROM
+        public.rep__daily_total_metrics
+    WHERE
+        date >= '{{ (dag_run.data_interval_start - macros.timedelta(days=60)).strftime("%Y-%m-%d") }}'::date
+        AND date <= '{{ dag_run.data_interval_start.strftime("%Y-%m-%d") }}'::date
+        AND EXTRACT(DOW FROM date) = EXTRACT(DOW FROM '{{ dag_run.data_interval_start.strftime("%Y-%m-%d") }}'::date)
+),
+historical_data AS (
+    SELECT
+        date,
+        TO_CHAR(date, 'Day') AS day_of_week,
+        num_appointments_booked,
+        num_try_orders_created,
+        num_orders_paid,
+        total_items_ordered,
+        total_items_purchased,
+        total_value_ordered,
+        total_amount_purchased
+    FROM
+        public.rep__daily_total_metrics
+    WHERE
+        date >= '{{ (dag_run.data_interval_start - macros.timedelta(days=425)).strftime("%Y-%m-%d") }}'::date
+        AND date <= '{{ (dag_run.data_interval_start - macros.timedelta(days=365)).strftime("%Y-%m-%d") }}'::date
+        AND EXTRACT(DOW FROM date) = EXTRACT(DOW FROM '{{ dag_run.data_interval_start.strftime("%Y-%m-%d") }}'::date)
+)
+SELECT
+    f.date AS current_year_date,
+    h.date AS last_year_date,
+    f.num_appointments_booked AS num_appointments_booked_current,
+    h.num_appointments_booked AS num_appointments_booked_last_year,
+    f.num_orders_paid AS num_orders_paid_current,
+    h.num_orders_paid AS num_orders_paid_last_year,
+    ROUND(f.total_value_ordered / 100, 2) AS total_value_ordered_gbp_current,
+    ROUND(h.total_value_ordered / 100, 2) AS total_value_ordered_gbp_last_year
+FROM
+    filtered_data f
+LEFT JOIN
+    historical_data h
+ON
+    f.date = h.date + INTERVAL '1 year'
+ORDER BY
+    f.date;

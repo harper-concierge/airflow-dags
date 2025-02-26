@@ -15,7 +15,7 @@ default_args = {
     "depends_on_past": False,
     "retry_delay": timedelta(minutes=5),
     "retries": 0,
-    "on_failure_callback": send_harper_failure_notification,  # Removed brackets for the callback
+    "on_failure_callback": [send_harper_failure_notification()],  # Removed brackets for the callback
 }
 
 dag = DAG(
@@ -50,11 +50,12 @@ slack_tasks = []
 for config in slack_configs:
     id = config["id"]  # Changed to "directory" based on updated function
     task = SqlToSlackWebhookOperator(
-        task_id=f"send_slack_message_{id}",
+        task_id=id,
         sql_conn_id="postgres_datalake_conn_id",
         sql=config["query_file"],  # Path to query file
         slack_conn_id="slack_api_default",
         slack_config=config["slack_file"],  # Slack JSON configuration file
+        generate_attachment_script=config["generate_attachment_script"],  # Slack JSON configuration file
         dag=dag,
     )
     slack_tasks.append(task)

@@ -3,28 +3,101 @@ DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__daily_total_metrics CASCADE;
 {% endif %}
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__daily_total_metrics AS
 WITH
-purchases AS (
+concierge_purchases AS (
 	SELECT
 		transaction_info__payment_at__dim_date AS metric_date,
-		COUNT(DISTINCT harper_order_name)::INTEGER AS num_orders_paid, -- Cast to integer
-		SUM(transaction_info__item_count) AS total_items_purchased,
-		SUM(transaction_info__payment_invoiced_amount) AS total_amount_purchased
+		COUNT(DISTINCT harper_order_name)::INTEGER AS total_concierge_orders_paid, -- Cast to integer
+		SUM(transaction_info__item_count)::INTEGER AS total_concierge_items_purchased,
+		SUM(transaction_info__payment_invoiced_amount) AS total_concierge_amount_purchased
 	FROM
 		{{ schema }}.rep__transactionlog__view
 	WHERE
 		harper_order__order_status = 'completed'
 		AND lineitem_type = 'purchase'
 		AND lineitem_category = 'product'
+        AND harper_product_type = 'harper_concierge'
 	GROUP BY
 		transaction_info__payment_at__dim_date
 ),
-orders AS (
+initiated_concierge_purchases AS (
+	SELECT
+		transaction_info__payment_at__dim_date AS metric_date,
+		COUNT(DISTINCT harper_order_name)::INTEGER AS total_initiated_concierge_orders_paid, -- Cast to integer
+		SUM(transaction_info__item_count)::INTEGER AS total_initiated_concierge_items_purchased,
+		SUM(transaction_info__payment_invoiced_amount) AS total_initiated_concierge_amount_purchased
+	FROM
+		{{ schema }}.rep__transactionlog__view
+	WHERE
+		harper_order__order_status = 'completed'
+		AND lineitem_type = 'purchase'
+		AND lineitem_category = 'product'
+        AND harper_product_type = 'harper_concierge'
+        AND item_info__is_initiated_sale = 1
+	GROUP BY
+		transaction_info__payment_at__dim_date
+),
+try_purchases AS (
+	SELECT
+		transaction_info__payment_at__dim_date AS metric_date,
+		COUNT(DISTINCT harper_order_name)::INTEGER AS total_try_orders_paid, -- Cast to integer
+		SUM(transaction_info__item_count)::INTEGER AS total_try_items_purchased,
+		SUM(transaction_info__payment_invoiced_amount) AS total_try_amount_purchased
+	FROM
+		{{ schema }}.rep__transactionlog__view
+	WHERE
+		harper_order__order_status = 'completed'
+		AND lineitem_type = 'purchase'
+		AND lineitem_category = 'product'
+        AND harper_product_type = 'harper_try'
+	GROUP BY
+		transaction_info__payment_at__dim_date
+),
+try_orders AS (
     SELECT
         createdat__dim_date AS metric_date,
-        COUNT(DISTINCT CASE WHEN order_type LIKE '%%appointment%%' THEN order_name END) AS num_appointments_booked,
-        COUNT(DISTINCT CASE WHEN order_type = 'harper_try' THEN order_name END) AS num_try_orders_created,
-	    SUM(itemsummary__num_items_ordered) AS total_items_ordered,
-        SUM(itemsummary__total_value_ordered) AS total_value_ordered
+        COUNT(DISTINCT  order_name )::INTEGER AS total_try_orders_created,
+	    SUM(itemsummary__num_items_ordered)::INTEGER AS total_try_items_ordered,
+        SUM(itemsummary__total_value_ordered) AS total_try_value_ordered
+    FROM
+        {{ schema }}.clean__order__summary
+    WHERE
+        link_order__is_child = 0
+        AND harper_product_type = 'harper_try'
+    GROUP BY
+        createdat__dim_date
+),
+concierge_orders AS (
+    SELECT
+        createdat__dim_date AS metric_date,
+        COUNT(DISTINCT  order_name )::INTEGER AS total_concierge_orders,
+	    SUM(itemsummary__num_items_ordered)::INTEGER AS total_concierge_items_ordered,
+        SUM(itemsummary__total_value_ordered) AS total_concierge_value_ordered
+    FROM
+        {{ schema }}.clean__order__summary
+    WHERE
+        link_order__is_child = 0
+        AND harper_product_type = 'harper_concierge'
+    GROUP BY
+        createdat__dim_date
+),
+initiated_concierge_orders AS (
+    SELECT
+        createdat__dim_date AS metric_date,
+        COUNT(DISTINCT  order_name )::INTEGER AS total_initiated_concierge_orders,
+	    SUM(itemsummary__num_items_ordered)::INTEGER AS total_initiated_concierge_items_ordered,
+        SUM(itemsummary__total_value_ordered) AS total_initiated_concierge_value_ordered
+    FROM
+        {{ schema }}.clean__order__summary
+    WHERE
+        link_order__is_child = 0
+        AND harper_product_type = 'harper_concierge'
+        AND is_initiated_sale = 1
+    GROUP BY
+        createdat__dim_date
+),
+all_orders AS (
+    SELECT
+        createdat__dim_date AS metric_date
     FROM
         {{ schema }}.clean__order__summary
     WHERE
@@ -35,16 +108,32 @@ orders AS (
 combined_data AS (
     SELECT
         COALESCE(o.metric_date, p.metric_date) AS date,
-        (o.num_appointments_booked)::INTEGER,
-        (o.num_try_orders_created)::INTEGER,
-	    (p.num_orders_paid)::INTEGER,
-	    (o.total_items_ordered)::INTEGER,
-	    o.total_value_ordered,
-	    (p.total_items_purchased)::INTEGER,
-	    p.total_amount_purchased
+	    cp.total_concierge_orders_paid,
+	    cp.total_concierge_items_purchased,
+	    cp.total_concierge_amount_purchased,
+	    icp.total_initaiated_concierge_orders_paid,
+	    icp.total_initaiated_concierge_items_purchased,
+	    icp.total_initaiated_concierge_amount_purchased,
+	    tp.total_try_orders_paid,
+	    tp.total_try_items_purchased,
+	    tp.total_try_amount_purchased,
+	    ico.total_initiated_concierge_orders,
+	    ico.total_initiated_concierge_items_ordered,
+	    ico.total_initiated_concierge_value_ordered,
+	    co.total_concierge_orders,
+	    co.total_concierge_items_ordered,
+	    co.total_concierge_value_ordered,
+	    tt.total_try_orders,
+	    tt.total_try_items_ordered,
+	    tt.total_try_value_ordered,
     FROM
-        orders o
-    FULL OUTER JOIN purchases p ON o.metric_date = p.metric_date
+        all_orders o
+    FULL OUTER JOIN concierge_purchases cp ON o.metric_date = cp.metric_date
+    FULL OUTER JOIN initiated_concierge_purchases icp ON o.metric_date = icp.metric_date
+    FULL OUTER JOIN try_purchases tp ON o.metric_date = tp.metric_date
+    FULL OUTER JOIN initiated_concierge_orders ico ON o.metric_date = ico.metric_date
+    FULL OUTER JOIN concierge_orders co ON o.metric_date = co.metric_date
+    FULL OUTER JOIN try_orders tt ON o.metric_date = tt.metric_date
 )
 SELECT *
 FROM combined_data
