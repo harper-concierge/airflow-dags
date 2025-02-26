@@ -23,7 +23,8 @@ SELECT
     t.harper_order__createdat__dim_yearmonth_sc,
     t.harper_order__customer__first_name,
     t.harper_order__customer__last_name,
-    t.transaction_info__total_amount,
+    t.transaction_info__total_purchased_amount,
+    t.transaction_info__total_try_on_amount,
     t.transaction_info__payment_invoiced_amount,
     t.transaction_info__item_count,
     t.harper_order__waive_reason,
@@ -41,7 +42,7 @@ SELECT
     t.initiated_sale_type,
     t.initiated_sale_user_email,
     t.initiated_sale_user_role,
-    t.item_info__commission__calculated_amount AS commission_calculated_amount_exc_vat,
+    t.item_info__commission__calculated_amount AS commission_calculated_amount,
     t.harper_order__style_concierge_name,
     t.try_commission_chargeable,
     t.try_commission_chargeable_at,
@@ -53,10 +54,16 @@ SELECT
     t.harper_order__halo_link,
     t.harper_order__id,
     t.item_info__item_id,
+    dt.dim_yearweek AS trial_period_ended_at__dim_yearweek,
+    dt.dim_yearmonth_sc AS trial_period_ended_at__dim_yearmonth_sc,
+    dt.dim_year AS trial_period_ended_at__dim_year,
+    dt.dim_date_id AS trial_period_ended_at
     t.id
 
 FROM
     rep__transactionlog t
+LEFT JOIN
+    {{ schema }}.dim__time dt ON t.harper_order__trial_period_actually_ended_at::date = dt.dim_date_id
 
 ORDER BY
     t.createdat DESC
