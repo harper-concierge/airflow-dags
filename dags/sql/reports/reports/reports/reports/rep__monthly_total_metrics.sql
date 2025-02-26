@@ -1,7 +1,7 @@
 {% if is_modified %}
-DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__daily_total_metrics CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__monthly_total_metrics CASCADE;
 {% endif %}
-CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__daily_total_metrics AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__monthly_total_metrics AS
 WITH
 concierge_purchases AS (
 	SELECT
@@ -144,6 +144,6 @@ FROM combined_data
 
 WITH NO DATA;
 {% if is_modified %}
-CREATE UNIQUE INDEX IF NOT EXISTS rep__daily_total_metrics_idx ON {{ schema }}.rep__daily_total_metrics (date);
+CREATE UNIQUE INDEX IF NOT EXISTS rep__monthly_total_metrics_idx ON {{ schema }}.rep__monthly_total_metrics (date);
 {% endif %}
-REFRESH MATERIALIZED VIEW {{ schema }}.rep__daily_total_metrics;
+REFRESH MATERIALIZED VIEW {{ schema }}.rep__monthly_total_metrics;
