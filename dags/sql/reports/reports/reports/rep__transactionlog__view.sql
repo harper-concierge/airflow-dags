@@ -57,7 +57,7 @@ SELECT
     dt.dim_yearweek AS trial_period_ended_at__dim_yearweek,
     dt.dim_yearmonth_sc AS trial_period_ended_at__dim_yearmonth_sc,
     dt.dim_year AS trial_period_ended_at__dim_year,
-    dt.dim_date_id AS trial_period_ended_at
+    dt.dim_date_id AS trial_period_ended_at,
     t.id
 
 FROM
