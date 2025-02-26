@@ -6,7 +6,7 @@ CREATE VIEW {{ schema }}.clean__order__items AS
 	oi.original_order_name AS partner_order_name,
 	oi.order_name AS harper_order_name,
 	oi.original_name AS product_name,
-  CASE WHEN  order_type = 'inspire_me' THEN 1 ELSE 0 END AS is_inspire_me,
+    CASE WHEN oi.order_type = 'inspire_me' THEN 1 ELSE 0 END AS is_inspire_me,
 	oi.price as item_price_pence,
 	oi.discount AS item_discount_price_pence,
 	oi.price - oi.discount AS item_value_pence,
@@ -41,10 +41,10 @@ CREATE VIEW {{ schema }}.clean__order__items AS
         NULL
     -- END
     END AS commission__calculated_amount,
-	CASE WHEN (purchased = 0 AND received = 1 AND received_by_warehouse = 1 AND returned = 0)  THEN 1 ELSE 0 END AS unpurchased_return,
+	CASE WHEN (oi.purchased = 0 AND oi.received = 1 AND oi.received_by_warehouse = 1 AND oi.returned = 0)  THEN 1 ELSE 0 END AS unpurchased_return,
 	CASE
-		WHEN (purchased = 1 AND received = 1 AND received_by_warehouse = 1) THEN 1
-		WHEN (purchased = 1 AND returned = 1) THEN 1
+		WHEN (oi.purchased = 1 AND oi.received = 1 AND oi.received_by_warehouse = 1) THEN 1
+		WHEN (oi.purchased = 1 AND oi.returned = 1) THEN 1
 		ELSE 0
 	END AS post_purchase_return,
 	 {{ dim__time_columns | prefix_columns('oc', 'createdat') }}
