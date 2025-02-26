@@ -37,6 +37,7 @@ SELECT
     t.item_info__size,
     t.item_info__billed_qty,
     t.item_info__discount,
+    t.item_info__is_initiated_sale,
     t.initiated_sale_type,
     t.initiated_sale_user_email,
     t.initiated_sale_user_role,
