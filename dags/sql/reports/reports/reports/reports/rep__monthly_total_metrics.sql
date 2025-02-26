@@ -38,7 +38,7 @@ initiated_concierge_purchases AS (
 ),
 try_revenue AS (
 	SELECT
-		trial_period_ended_at__dim_yearweek AS metric_date,
+		trial_period_ended_at__dim_yearcalendarweek_sc AS metric_date,
 		SUM(commission_calculated_amount) AS total_try_revenue
 	FROM
 		{{ schema }}.rep__transactionlog__view

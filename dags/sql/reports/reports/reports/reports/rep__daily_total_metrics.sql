@@ -98,7 +98,6 @@ initiated_concierge_orders AS (
 all_orders AS (
     SELECT
         createdat__dim_date AS metric_date
-        createdat__dim_date AS metric_date
     FROM
         {{ schema }}.clean__order__summary
     WHERE

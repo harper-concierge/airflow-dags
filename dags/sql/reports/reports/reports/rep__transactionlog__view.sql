@@ -54,7 +54,7 @@ SELECT
     t.harper_order__halo_link,
     t.harper_order__id,
     t.item_info__item_id,
-    dt.dim_yearweek AS trial_period_ended_at__dim_yearweek,
+    dt.dim_yearcalendarweek_sc AS trial_period_ended_at__dim_yearcalendarweek_sc,
     dt.dim_yearmonth_sc AS trial_period_ended_at__dim_yearmonth_sc,
     dt.dim_year AS trial_period_ended_at__dim_year,
     dt.dim_date_id AS trial_period_ended_at,
