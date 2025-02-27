@@ -1,73 +1,73 @@
 {
-    "title": "IPartnerHarperConciergeSettingsSchema",
-    "type": "object",
-    "bsonType": "object",
-    "properties": {
-        "max_basket_size": {
-            "bsonType": "int",
-            "type": "number"
-        },
-        "is_commission_vat_inclusive": {
-            "bsonType": [
-                "bool"
-            ],
-            "type": "boolean"
-        },
-        "item_block_list": {
-            "type": "array",
-            "bsonType": [
-                "array"
-            ],
-            "items": {
-                "type": "string",
-                "bsonType": [
-                    "string"
-                ]
-            }
-        },
-        "item_preorder_block_list": {
-            "type": "array",
-            "bsonType": [
-                "array"
-            ],
-            "items": {
-                "type": "string",
-                "bsonType": [
-                    "string"
-                ]
-            }
-        },
-        "item_partially_block_list": {
-            "type": "array",
-            "bsonType": [
-                "array"
-            ],
-            "items": {
-                "type": "string",
-                "bsonType": [
-                    "string"
-                ]
-            }
-        },
-        "__v": {
-            "bsonType": [
-                "int"
-            ],
-            "type": "integer"
-        },
-        "createdAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
-        "updatedAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        }
+  "title": "IPartnerHarperConciergeSettingsSchema",
+  "type": "object",
+  "bsonType": "object",
+  "properties": {
+    "max_basket_size": {
+      "bsonType": "int",
+      "type": "number"
     },
-    "additionalProperties": false,
-    "required": []
+    "is_commission_vat_inclusive": {
+      "bsonType": [
+        "bool"
+      ],
+      "type": "boolean"
+    },
+    "item_block_list": {
+      "type": "array",
+      "bsonType": [
+        "array"
+      ],
+      "items": {
+        "type": "string",
+        "bsonType": [
+          "string"
+        ]
+      }
+    },
+    "item_preorder_block_list": {
+      "type": "array",
+      "bsonType": [
+        "array"
+      ],
+      "items": {
+        "type": "string",
+        "bsonType": [
+          "string"
+        ]
+      }
+    },
+    "item_partially_block_list": {
+      "type": "array",
+      "bsonType": [
+        "array"
+      ],
+      "items": {
+        "type": "string",
+        "bsonType": [
+          "string"
+        ]
+      }
+    },
+    "__v": {
+      "bsonType": [
+        "int"
+      ],
+      "type": "integer"
+    },
+    "createdAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    },
+    "updatedAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": []
 }
