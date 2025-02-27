@@ -111,7 +111,7 @@ for config in migrations:
         postgres_conn_id="postgres_datalake_conn_id",
         schema="transient_data",
         table=config["destination_table"],
-        skip=not rebuild,
+        skip=False,
         dag=dag,
     )
     task_id = f"{config['task_name']}_drop_destination_table_if_exists"
