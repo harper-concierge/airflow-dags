@@ -10,7 +10,7 @@ concierge_purchases AS (
 		SUM(transaction_info__item_count)::INTEGER AS total_concierge_items_purchased,
 		SUM(transaction_info__payment_invoiced_amount) AS total_concierge_amount_purchased
 	FROM
-		{{ schema }}.rep__transactionlog__view
+		public.rep__transactionlog__view
 	WHERE
 		harper_order__order_status = 'completed'
 		AND lineitem_type = 'purchase'
@@ -26,7 +26,7 @@ initiated_concierge_purchases AS (
 		SUM(transaction_info__item_count)::INTEGER AS total_initiated_concierge_items_purchased,
 		SUM(transaction_info__payment_invoiced_amount) AS total_initiated_concierge_amount_purchased
 	FROM
-		{{ schema }}.rep__transactionlog__view
+		public.rep__transactionlog__view
 	WHERE
 		harper_order__order_status = 'completed'
 		AND lineitem_type = 'purchase'
@@ -43,7 +43,7 @@ try_purchases AS (
 		SUM(transaction_info__item_count)::INTEGER AS total_try_items_purchased,
 		SUM(transaction_info__payment_invoiced_amount) AS total_try_amount_purchased
 	FROM
-		{{ schema }}.rep__transactionlog__view
+		public.rep__transactionlog__view
 	WHERE
 		harper_order__order_status = 'completed'
 		AND lineitem_type = 'purchase'
@@ -59,7 +59,7 @@ try_orders AS (
 	    SUM(itemsummary__num_items_ordered)::INTEGER AS total_try_items_ordered,
         SUM(itemsummary__total_value_ordered) AS total_try_value_ordered
     FROM
-        {{ schema }}.clean__order__summary
+        public.clean__order__summary
     WHERE
         link_order__is_child = 0
         AND harper_product_type = 'harper_try'
@@ -73,7 +73,7 @@ concierge_orders AS (
 	    SUM(itemsummary__num_items_ordered)::INTEGER AS total_concierge_items_ordered,
         SUM(itemsummary__total_value_ordered) AS total_concierge_value_ordered
     FROM
-        {{ schema }}.clean__order__summary
+        public.clean__order__summary
     WHERE
         link_order__is_child = 0
         AND harper_product_type = 'harper_concierge'
@@ -87,7 +87,7 @@ initiated_concierge_orders AS (
 	    SUM(itemsummary__num_items_ordered)::INTEGER AS total_initiated_concierge_items_ordered,
         SUM(itemsummary__total_value_ordered) AS total_initiated_concierge_value_ordered
     FROM
-        {{ schema }}.clean__order__summary
+        public.clean__order__summary
     WHERE
         link_order__is_child = 0
         AND harper_product_type = 'harper_concierge'
@@ -99,7 +99,7 @@ all_orders AS (
     SELECT
         createdat__dim_date AS metric_date
     FROM
-        {{ schema }}.clean__order__summary
+        public.clean__order__summary
     WHERE
         link_order__is_child = 0
     GROUP BY
@@ -107,30 +107,25 @@ all_orders AS (
 ),
 combined_data AS (
     SELECT
-        COALESCE(o.metric_date, p.metric_date) AS date,
+      o.metric_date AS date,
 	    cp.total_concierge_orders_paid,
 	    tp.total_try_orders_paid,
 	    icp.total_initiated_concierge_orders_paid,
-
 	    cp.total_concierge_items_purchased,
 	    tp.total_try_items_purchased,
 	    icp.total_initiated_concierge_items_purchased,
-
 	    cp.total_concierge_amount_purchased,
 	    tp.total_try_amount_purchased,
 	    icp.total_initiated_concierge_amount_purchased,
-
 	    co.total_concierge_orders,
-	    tt.total_try_orders,
+	    tt.total_try_orders_created,
 	    ico.total_initiated_concierge_orders,
-
 	    co.total_concierge_items_ordered,
 	    tt.total_try_items_ordered,
 	    ico.total_initiated_concierge_items_ordered,
-
 	    co.total_concierge_value_ordered,
-	    tt.total_try_value_ordered
-	    ico.total_initiated_concierge_value_ordered,
+	    tt.total_try_value_ordered,
+	    ico.total_initiated_concierge_value_ordered
     FROM
         all_orders o
     FULL OUTER JOIN concierge_purchases cp ON o.metric_date = cp.metric_date
