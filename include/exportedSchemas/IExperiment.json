@@ -26,20 +26,19 @@
             "items": {
                 "type": "object",
                 "bsonType": [
-                    "objectId"
+                    "object"
                 ],
                 "properties": {
                     "value": {
-                        "type": "object",
+                        "type": "string",
                         "bsonType": [
-                            "object"
-                        ],
-                        "tsType": "MongooseObjectId"
+                            "string"
+                        ]
                     },
                     "key": {
-                        "type": "object",
+                        "type": "string",
                         "bsonType": [
-                            "object"
+                            "string"
                         ]
                     }
                 },
