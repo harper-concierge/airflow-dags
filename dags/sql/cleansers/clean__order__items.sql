@@ -27,16 +27,16 @@ CREATE VIEW {{ schema }}.clean__order__items AS
     --     WHEN oi.commission__percentage IS NOT NULL THEN
     --         CASE
     --             WHEN p.commission__concierge_is_vat_inclusive THEN
-    --                 oi.price * (oi.commission__percentage / 100)
+    --                 oi.price * (oi.commission__percentage / 100)::INTEGER
     --             ELSE
-    --                 (oi.price / 1.2) * (oi.commission__percentage / 100)
+    --                 (oi.price / 1.2) * (oi.commission__percentage / 100)::INTEGER
     --         END
     --     ELSE
     --         NULL
     -- END AS commission__calculated_amount
 
     CASE WHEN oi.commission__percentage IS NOT NULL THEN
-         oi.price * ( oi.commission__percentage / 100)
+         oi.price * ( oi.commission__percentage / 100)::INTEGER
     ELSE
         NULL
     -- END
