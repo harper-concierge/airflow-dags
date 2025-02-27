@@ -715,6 +715,12 @@
                             "bsonType": "int",
                             "type": "number"
                         },
+                        "is_commission_vat_inclusive": {
+                            "bsonType": [
+                                "bool"
+                            ],
+                            "type": "boolean"
+                        },
                         "item_block_list": {
                             "type": "array",
                             "bsonType": [
