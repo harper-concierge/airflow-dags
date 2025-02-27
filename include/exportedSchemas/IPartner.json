@@ -199,7 +199,7 @@
                 "price": {
                     "type": "integer",
                     "bsonType": [
-                        "double"
+                        "int"
                     ]
                 },
                 "currency": {
@@ -1702,7 +1702,7 @@
                 "price": {
                     "type": "integer",
                     "bsonType": [
-                        "double"
+                        "int"
                     ]
                 },
                 "currency": {
@@ -2004,7 +2004,7 @@
                     "price": {
                         "type": "integer",
                         "bsonType": [
-                            "double"
+                            "int"
                         ]
                     },
                     "currency": {
@@ -3163,6 +3163,12 @@
                                     "bsonType": "int",
                                     "type": "number"
                                 },
+                                "is_commission_vat_inclusive": {
+                                    "bsonType": [
+                                        "bool"
+                                    ],
+                                    "type": "boolean"
+                                },
                                 "item_block_list": {
                                     "type": "array",
                                     "bsonType": [
@@ -3350,6 +3356,10 @@
                             "bsonType": "string",
                             "type": "string"
                         },
+                        "platform_admin_base_url": {
+                            "bsonType": "string",
+                            "type": "string"
+                        },
                         "market_id": {
                             "type": "integer",
                             "bsonType": "int"
@@ -3433,6 +3443,7 @@
                     "additionalProperties": false,
                     "required": [
                         "configured_payment_method",
+                        "platform_admin_base_url",
                         "checkoutApiVersion"
                     ]
                 },
@@ -3541,6 +3552,45 @@
                     "required": [
                         "partner_api_type"
                     ]
+                },
+                "bigcommerce": {
+                    "title": "IPartnerBigcommerceSchema",
+                    "type": "object",
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "tracking_provider_lookup": {
+                            "type": "object",
+                            "bsonType": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        },
+                        "platform_admin_base_url": {
+                            "bsonType": "string",
+                            "type": "string"
+                        },
+                        "__v": {
+                            "bsonType": [
+                                "int"
+                            ],
+                            "type": "integer"
+                        },
+                        "createdAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        },
+                        "updatedAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
                 }
             }
         },

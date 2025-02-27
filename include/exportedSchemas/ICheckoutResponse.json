@@ -53,7 +53,8 @@
                 "catastrophic",
                 "fatal",
                 "system",
-                "active_order_exists"
+                "active_order_exists",
+                "processing_order_exists"
             ]
         },
         "risk": {
