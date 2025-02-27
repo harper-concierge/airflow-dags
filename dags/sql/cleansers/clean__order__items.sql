@@ -13,11 +13,6 @@ CREATE VIEW {{ schema }}.clean__order__items AS
     oi.calculated_discount AS calculated_item_discount_price_pence,
 	oi.price - oi.calculated_discount AS calculated_item_value_pence,
 	oi.qty AS item_quantity,
-    -- CASE WHEN oi.commission__amount THEN oi.commission__amount
-    --  oi.comission__amount
-    -- ELSE
-    -- Need to make this brand dependent
-
     -- VAT inclusive calc for newer brands oi.price * ( oi.commission__percentage / 100)
     -- VAT exclusive calc for newer brands (oi.price / 1.2) * ( oi.commission__percentage / 100)
     -- THIS IS IMPOORTANT!!!!! - MARTIN
@@ -26,7 +21,7 @@ CREATE VIEW {{ schema }}.clean__order__items AS
     -- CASE
     --     WHEN oi.commission__percentage IS NOT NULL THEN
     --         CASE
-    --             WHEN p.commission__concierge_is_vat_inclusive THEN
+    --             WHEN p.services__harper_concierge__service_settings__is_commission_vat_inclusive THEN
     --                 oi.price * (oi.commission__percentage / 100)::INTEGER
     --             ELSE
     --                 (oi.price / 1.2) * (oi.commission__percentage / 100)::INTEGER
