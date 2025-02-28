@@ -103,25 +103,44 @@ exported_schemas_path = "../include/exportedSchemas/"
 exported_schemas_abspath = os.path.join(os.path.dirname(os.path.abspath(__file__)), exported_schemas_path)
 
 migration_tasks = []
+seen_tables = set()
+
 for config in migrations:
+    transient_table = config["destination_table"]
+    datalake_table = config["destination_table"]
+    skip = not rebuild
+
+    # Even if we're importing into a different table, we'll keep the transient as the original
+    # e.g.
+    #   transaction.purchases -> transient_data.transaction__purchases -> public.transaction__purchases
+    #   transaction.discounts -> transient_data.transaction__discounts -> public.transaction__purchases
+    destination_table_confirm_override = config.get("destination_table_confirm_override", None)
+    if destination_table_confirm_override:
+        transient_table = destination_table_confirm_override
+
+    if datalake_table in seen_tables:
+        # in case of the above, we only drop the first time
+        skip = True
+
     schema_path = os.path.join(exported_schemas_abspath, config["jsonschema"])
     task_id = f"{config['task_name']}_drop_transient_table_if_exists"
     drop_transient_table = DropPostgresTableOperator(
         task_id=task_id,
         postgres_conn_id="postgres_datalake_conn_id",
         schema="transient_data",
-        table=config["destination_table"],
+        table=transient_table,
         skip=False,
         dag=dag,
     )
-    task_id = f"{config['task_name']}_drop_destination_table_if_exists"
+
+    task_id = f"{config['task_name']}_drop_datalake_table_if_exists"
     drop_destination_table = DropPostgresTableOperator(
         task_id=task_id,
         postgres_conn_id="postgres_datalake_conn_id",
         schema="public",
-        table=f"raw_{config['destination_table']}",
+        table=f"raw_{datalake_table}",
         depends_on_past=False,
-        skip=not rebuild,
+        skip=skip,
         dag=dag,
     )
 
@@ -137,7 +156,7 @@ for config in migrations:
         source_database="harper-production",
         jsonschema=schema_path,
         destination_schema="transient_data",
-        destination_table=config["destination_table"],
+        destination_table=transient_table,
         unwind=config.get("unwind"),
         preserve_fields=config.get("preserve_fields", {}),
         discard_fields=config.get("discard_fields", []),
@@ -158,7 +177,7 @@ for config in migrations:
         task_id=task_id,
         postgres_conn_id="postgres_datalake_conn_id",
         schema="transient_data",
-        table=config["destination_table"],
+        table=transient_table,
         dag=dag,
     )
 
@@ -167,9 +186,9 @@ for config in migrations:
         task_id=task_id,
         postgres_conn_id="postgres_datalake_conn_id",
         source_schema="transient_data",
-        source_table=config["destination_table"],
+        source_table=transient_table,
         destination_schema="public",
-        destination_table=f"raw__{config['destination_table']}",
+        destination_table=f"raw__{datalake_table}",
         dag=dag,
     )
 
@@ -178,7 +197,7 @@ for config in migrations:
         task_id=task_id,
         postgres_conn_id="postgres_datalake_conn_id",
         schema="public",
-        table=f"raw__{config['destination_table']}",
+        table=f"raw__{datalake_table}",
         dag=dag,
     )
 
@@ -186,8 +205,8 @@ for config in migrations:
     ensure_datalake_table_columns = EnsureMissingPostgresColumnsOperator(
         task_id=missing_columns_task_id,
         postgres_conn_id="postgres_datalake_conn_id",
-        source_table=config["destination_table"],
-        destination_table=f"raw__{config['destination_table']}",
+        source_table=transient_table,
+        destination_table=f"raw__{datalake_table}",
         dag=dag,
     )
     task_id = f"{config['task_name']}_append_to_datalake"
@@ -195,9 +214,9 @@ for config in migrations:
         task_id=task_id,
         postgres_conn_id="postgres_datalake_conn_id",
         source_schema="transient_data",
-        source_table=config["destination_table"],
+        source_table=transient_table,
         destination_schema="public",
-        destination_table=f"raw__{config['destination_table']}",
+        destination_table=f"raw__{datalake_table}",
         dag=dag,
     )
     task_id = f"{config['task_name']}_ensure_datalake_table_view"
@@ -205,9 +224,9 @@ for config in migrations:
         task_id=task_id,
         postgres_conn_id="postgres_datalake_conn_id",
         source_schema="public",
-        source_table=f"raw__{config['destination_table']}",
+        source_table=f"raw__{datalake_table}",
         destination_schema="public",
-        destination_table=config["destination_table"],
+        destination_table=datalake_table,
         prev_task_id=missing_columns_task_id,
         append_fields=config.get("append_fields", ["createdat", "updatedat", "airflow_sync_ds"]),
         prepend_fields=config.get("prepend_fields", ["id"]),

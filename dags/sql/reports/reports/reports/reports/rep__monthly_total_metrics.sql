@@ -6,13 +6,15 @@ WITH
 concierge_revenue AS (
 	SELECT
 		trial_period_ended_at__dim_yearcalendarweek_sc AS metric_date,
+        CASE
+            WHEN lineitem_type = 'purchase'
 		SUM(commission_calculated_amount) AS total_concierge_revenue
 	FROM
 		{{ schema }}.rep__transactionlog__view
 	WHERE
 		-- harper_order__order_status = 'completed'
-		AND lineitem_type = 'purchase'
-		AND lineitem_category = 'product'
+		lineitem_type <> 'try_on'
+		-- AND lineitem_category = 'product'
         AND harper_product_type = 'harper_concierge'
 	GROUP BY
 		trial_period_ended_at__dim_yearcalendarweek_sc

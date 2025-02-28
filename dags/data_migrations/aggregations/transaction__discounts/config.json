@@ -1,6 +1,7 @@
 {
   "source_collection": "transactions",
-  "destination_table": "transaction__discounts",
+  "destination_table": "transaction__purchases",
+  "destination_table_confirm_override": "transaction__discounts",
   "jsonschema": "ITransaction.json",
   "unwind": "discounts",
   "preserve_fields": {

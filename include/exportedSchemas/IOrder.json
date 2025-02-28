@@ -4638,7 +4638,7 @@
     "parking_fee": {
       "type": "number",
       "bsonType": [
-        "int"
+        "double"
       ]
     },
     "reason_for_order": {

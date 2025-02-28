@@ -33,6 +33,8 @@ SELECT
     t.calculated_discount_percent,
     t.lineitem_name,
     t.lineitem_billed_quantity,
+    t.lineitem_amount,
+    t.item_info__price,
     t.item_info__sku,
     t.item_info__colour,
     t.item_info__size,

@@ -33,7 +33,7 @@ CREATE VIEW {{ schema }}.clean__transaction__items AS
     SELECT
         td.transaction_id,
         td.transactionitem_id,
-        'discount' AS transaction_type,
+        'purchase' AS transaction_type,
         tdi.*
     FROM transaction__discounts td
     LEFT JOIN transactionitem tdi ON tdi.id = td.transactionitem_id;
