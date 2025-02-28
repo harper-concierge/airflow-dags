@@ -721,6 +721,12 @@
                             ],
                             "type": "boolean"
                         },
+                        "revenue_is_service_fee_inclusive": {
+                            "bsonType": [
+                                "bool"
+                            ],
+                            "type": "boolean"
+                        },
                         "item_block_list": {
                             "type": "array",
                             "bsonType": [
