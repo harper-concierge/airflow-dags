@@ -1,49 +1,49 @@
 {
-    "title": "IGeoIPSchema",
-    "type": "object",
-    "bsonType": [
-        "object"
-    ],
-    "properties": {
-        "base_api_url": {
-            "bsonType": "string",
-            "type": "string"
-        },
-        "user_name": {
-            "bsonType": "string",
-            "type": "string"
-        },
-        "license_key": {
-            "bsonType": "string",
-            "type": "string"
-        },
-        "enabled": {
-            "type": "boolean",
-            "bsonType": "boolean"
-        },
-        "__v": {
-            "bsonType": [
-                "int"
-            ],
-            "type": "integer"
-        },
-        "createdAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
-        "updatedAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        }
+  "title": "IGeoIPSchema",
+  "type": "object",
+  "bsonType": [
+    "object"
+  ],
+  "properties": {
+    "base_api_url": {
+      "bsonType": "string",
+      "type": "string"
     },
-    "additionalProperties": false,
-    "required": [
-        "base_api_url",
-        "user_name",
-        "license_key"
-    ]
+    "user_name": {
+      "bsonType": "string",
+      "type": "string"
+    },
+    "license_key": {
+      "bsonType": "string",
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "bsonType": "boolean"
+    },
+    "__v": {
+      "bsonType": [
+        "int"
+      ],
+      "type": "integer"
+    },
+    "createdAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    },
+    "updatedAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "base_api_url",
+    "user_name",
+    "license_key"
+  ]
 }

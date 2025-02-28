@@ -1,48 +1,48 @@
 {
-    "title": "IServiceAvailableForIPSchema",
-    "type": "object",
-    "bsonType": [
-        "object"
-    ],
-    "properties": {
-        "city": {
-            "type": "string",
-            "bsonType": "string"
-        },
-        "country": {
-            "type": "string",
-            "bsonType": "string"
-        },
-        "concierge_service_available": {
-            "type": "boolean",
-            "bsonType": "boolean"
-        },
-        "try_service_available": {
-            "type": "boolean",
-            "bsonType": "boolean"
-        },
-        "__v": {
-            "bsonType": [
-                "int"
-            ],
-            "type": "integer"
-        },
-        "createdAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
-        "updatedAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        }
+  "title": "IServiceAvailableForIPSchema",
+  "type": "object",
+  "bsonType": [
+    "object"
+  ],
+  "properties": {
+    "city": {
+      "type": "string",
+      "bsonType": "string"
     },
-    "additionalProperties": false,
-    "required": [
-        "concierge_service_available",
-        "try_service_available"
-    ]
+    "country": {
+      "type": "string",
+      "bsonType": "string"
+    },
+    "concierge_service_available": {
+      "type": "boolean",
+      "bsonType": "boolean"
+    },
+    "try_service_available": {
+      "type": "boolean",
+      "bsonType": "boolean"
+    },
+    "__v": {
+      "bsonType": [
+        "int"
+      ],
+      "type": "integer"
+    },
+    "createdAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    },
+    "updatedAt": {
+      "bsonType": [
+        "date"
+      ],
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "concierge_service_available",
+    "try_service_available"
+  ]
 }
