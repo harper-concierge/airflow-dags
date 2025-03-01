@@ -120,7 +120,10 @@ for config in migrations:
 
     if datalake_table in seen_tables:
         # in case of the above, we only drop the first time
+        print(f"Duplicate destination table detected: {datalake_table}")
         skip = True
+    else:
+        seen_tables.add(datalake_table)
 
     schema_path = os.path.join(exported_schemas_abspath, config["jsonschema"])
     task_id = f"{config['task_name']}_drop_transient_table_if_exists"

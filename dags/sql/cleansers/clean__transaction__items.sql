@@ -27,13 +27,3 @@ CREATE VIEW {{ schema }}.clean__transaction__items AS
         tti.*
     FROM transaction__try_ons tt
     LEFT JOIN transactionitem tti ON tti.id = tt.transactionitem_id
-
-    UNION ALL
-
-    SELECT
-        td.transaction_id,
-        td.transactionitem_id,
-        'purchase' AS transaction_type,
-        tdi.*
-    FROM transaction__discounts td
-    LEFT JOIN transactionitem tdi ON tdi.id = td.transactionitem_id;

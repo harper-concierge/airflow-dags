@@ -32,7 +32,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__transactionlog AS
 
         i.commission__commission_type as commission_type,
         i.commission__percentage as commission_percentage,
-        i.commission__calculated_amount as commission_amount_calculated,
+        i.commission_is_vat_inclusive as commission_is_vat_inclusive,
+        i.revenue_is_service_fee_inclusive as revenue_is_service_fee_inclusive,
         i.is_initiated_sale as is_initiated_sale,
         i.initiated_sale__initiated_sale_type as initiated_sale_type,
         i.initiated_sale__original_order_id as initiated_sale_original_order_id,

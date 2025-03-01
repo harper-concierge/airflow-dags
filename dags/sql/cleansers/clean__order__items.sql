@@ -16,6 +16,7 @@ CREATE VIEW {{ schema }}.clean__order__items AS
     -- VAT inclusive calc for newer brands oi.price * ( oi.commission__percentage / 100)
     -- VAT exclusive calc for newer brands (oi.price / 1.2) * ( oi.commission__percentage / 100)
     -- THIS IS IMPOORTANT!!!!! - MARTIN
+    -- BUT this calculation probably needs to go into transactionlog view
     -- WHEN p.commission__concierge_is_vat_inclusive THEN
     -- WHEN p.commission__try_is_vat_inclusive THEN
     -- CASE
@@ -29,6 +30,15 @@ CREATE VIEW {{ schema }}.clean__order__items AS
     --     ELSE
     --         NULL
     -- END AS commission__calculated_amount
+    CASE
+        WHEN o.is_harper_try = 1 THEN p.services__hc_ss__is_commission_vat_inclusive
+        ELSE 0
+    END AS commission_is_vat_inclusive,
+
+    CASE
+        WHEN o.is_harper_try = 0 THEN p.services__hc_ss__revenue_is_service_fee_inclusive
+        ELSE 0
+    END AS revenue_is_service_fee_inclusive,
 
     CASE WHEN oi.commission__percentage IS NOT NULL THEN
          oi.price * ( oi.commission__percentage / 100)::INTEGER
