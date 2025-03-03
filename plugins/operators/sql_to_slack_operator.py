@@ -1,8 +1,12 @@
 from __future__ import annotations
+import io
 import json
+import traceback
+import importlib.util
 from typing import TYPE_CHECKING, Any, Mapping, Iterable, Sequence
 from datetime import timedelta
 
+import pandas as pd
 from tabulate import tabulate
 from airflow.models import Variable
 from airflow.exceptions import AirflowException
@@ -26,6 +30,11 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
     .. note::
         This operator works specifically with Slack Incoming Webhook connections, not the Slack API connection.
 
+    Enhancements:
+    - Supports attaching a graph generated from an external `generate_plot.py` script.
+    - Dynamically imports and runs the `generate_plot(df)` function from the script.
+    - Sends a file attachment to Slack if a plot is generated.
+
     :param sql: SQL query to be executed (templated).
     :param sql_conn_id: Reference to a specific database connection.
     :param slack_conn_id: Slack Incoming Webhook connection ID.
@@ -37,9 +46,9 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
     :param slack_timeout: Timeout for the Slack API request, default is 30 seconds.
     :param slack_proxy: Proxy to use for Slack API requests, if any.
     :param slack_retry_handlers: List of retry handlers for Slack API requests.
+    :param generate_attachment_script: Path to an external Python script that defines `generate_plot(df)`.
     """
 
-    # Fields and extensions for templating
     template_fields: Sequence[str] = ("sql", "slack_config")
     template_ext: Sequence[str] = (".sql", ".jinja", ".j2", ".tpl")
     template_fields_renderers = {"sql": "sql", "slack_config": "jinja"}
@@ -59,6 +68,7 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
         slack_timeout: int = 30,
         slack_proxy: str | None = None,
         slack_retry_handlers: list | None = None,
+        generate_attachment_script: str | None = None,  # Path to external script for custom plot
         **kwargs,
     ) -> None:
         super().__init__(
@@ -72,7 +82,8 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
         self.slack_timeout = slack_timeout
         self.slack_proxy = slack_proxy
         self.slack_retry_handlers = slack_retry_handlers
-        self.kwargs = kwargs
+        self.generate_attachment_script = generate_attachment_script  # External script for graph generation
+        self.kwargs = kwargs  # Preserve any additional arguments
 
     def _render_and_send_slack_message(self, context, df) -> None:
         """
@@ -104,22 +115,28 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
             raise AirflowException("Slack config must include either 'blocks' or 'text'.")
 
         # Extract channel if present
-        try:
-            channel = Variable.get("SLACK_SUCCESS_CHANNEL")
-            channel = slack_json.get("channel")
-        except KeyError:
-            channel = "#alerts-dev-airflow"  # Default value
+        channel = "#alerts-dev-airflow"
+        print("channel", channel)
+        channel = slack_json.get("channel", channel)
+        print("slack config channel", channel)
+        channel = Variable.get("SLACK_OVERRIDE_CHANNEL", channel)
+        print("After slack override channel", channel)
 
-        # Send the Slack message
-        self._send_slack_message(channel, blocks=blocks, text=text)
+        # Generate graph if script is provided
+        img_bytes = None
+        if self.generate_attachment_script:
+            img_bytes = self._execute_generate_attachement(context, df)
 
-    def _send_slack_message(self, channel, blocks=None, text=None) -> None:
+        self._send_slack_message(channel, blocks=blocks, text=text, img_bytes=img_bytes)
+
+    def _send_slack_message(self, channel, blocks=None, text=None, img_bytes=None) -> None:
         """
-        Send a message to a Slack channel.
+        Send a message to a Slack channel with optional file attachment.
 
         :param channel: Slack channel to send the message to.
         :param blocks: JSON array of blocks to send.
         :param text: Plain-text message to send.
+        :param img_bytes: In-memory file object for image upload.
         """
 
         if blocks is None:
@@ -142,8 +159,31 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
         if blocks:
             api_call_params["blocks"] = blocks
 
-        # Make the API call
-        slack_hook.call("chat.postMessage", json=api_call_params)
+        # https://stackoverflow.com/q/79226005
+        # Send one or the other
+        print("img_bytes", img_bytes)
+        print("channel", channel)
+        if img_bytes:
+            # Ensure the pointer is reset to the start of the file
+            img_bytes.seek(0)  # Reset file pointer
+            print(f"img_bytes size: {img_bytes.getbuffer().nbytes if img_bytes else 'None'}")
+
+            # Ensure image is not empty
+            if img_bytes.getbuffer().nbytes == 0:
+                raise ValueError("Generated image is empty.")
+            img_response = slack_hook.call(
+                "files.upload",
+                data={
+                    "channels": channel,
+                    "filename": f"{self.task_id}.png",
+                    "title": f"{self.task_id}",
+                    "content": img_bytes.read(),
+                },
+            )
+            print("img_response", img_response["file"]["shares"])
+            slack_hook.call("chat.update", ts=img_response["ts"], json=api_call_params)
+        else:
+            slack_hook.call("chat.postMessage", json=api_call_params)
 
     def _get_slack_hook(self) -> SlackHook:
         """
@@ -201,9 +241,30 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
         # Get the query results as a Pandas DataFrame
         df = self._get_query_results()
 
-        # Render and send the Slack message
         print(df)
         self._render_and_send_slack_message(context, df)
 
         # Log the completion of the task
         self.log.debug("Finished sending SQL data to Slack")
+
+    def _execute_generate_attachement(self, context, df: pd.DataFrame) -> io.BytesIO | None:
+        """
+        Loads and executes the `generate_plot(df)` function from an external Python script.
+
+        :param df: DataFrame containing SQL query results.
+        :return: In-memory image file if successful, otherwise None.
+        """
+        try:
+            spec = importlib.util.spec_from_file_location("generate_attachment", self.generate_attachment_script)
+            generate_attachment_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(generate_attachment_module)
+
+            if not hasattr(generate_attachment_module, "generate_attachment"):
+                raise ImportError("The script must define a `generate_attachment(df)` function.")
+
+            return generate_attachment_module.generate_attachment(context, df)
+
+        except Exception as e:
+            print(f"Failed to execute generate_plot.py: {e}")
+            traceback.print_exc()
+            return None

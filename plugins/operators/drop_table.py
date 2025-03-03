@@ -46,8 +46,8 @@ class DropPostgresTableOperator(BaseOperator):
     def execute(self, context):
         try:
 
+            self.log.info(f"[DropPostgresTableOperator] Skip = {self.skip}")
             if self.skip:
-                self.log.info(f"[DropPostgresTableOperator] Skipping {self.skip}")
                 return f"skipped dropping {self.schema}.{self.table}"
 
             hook = BaseHook.get_hook(self.postgres_conn_id)

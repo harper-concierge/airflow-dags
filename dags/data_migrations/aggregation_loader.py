@@ -43,10 +43,15 @@ def load_aggregation_configs(relative_path):
 
                 # Validate that the 'table' value matches the subdirectory name
                 destination_table = config.get("destination_table", "")
+                destination_table_confirm_override = config.get("destination_table_confirm_override", "")
                 if f"{destination_table}" != dir_name:
-                    raise AirflowException(
-                        f"migration subdirectory name {dir_name} doesn't make sense for config supplied {destination_table}"  # noqa
-                    )
+                    if not (
+                        destination_table_confirm_override and f"{destination_table_confirm_override}" == dir_name
+                    ):
+
+                        raise AirflowException(
+                            f"migration subdirectory name {dir_name} doesn't make sense for config supplied {destination_table}. If it is correct, please provide a destination_table_confirm_override={dir_name} in your config"  # noqa
+                        )
 
                 # Dynamically generate the task Name
                 config["task_name"] = f"{dir_name}"

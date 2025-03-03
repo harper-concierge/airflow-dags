@@ -6,13 +6,13 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__unreconciled_transactio
         u.zettle_transaction_amount AS zettle_txn_amount,
         u.zettle_purchase_amount AS zettle_payment_purchase_amount,
         u.payment_invoiced_amount AS translog_zettle_invoiced_amount,
-        u.total_amount AS translog_calculated_total_amount,
+        u.total_purchased_amount AS translog_calculated_total_amount,
         u.payment_at AS translog_payment_at,
         u.zettle_created AS zettle_payment_at,
         u.*
 
     FROM {{ schema }}.rep__zettle_and_transactionlog u
-    WHERE (u.payment_reference_id IS NULL OR u.zettle_purchase_id IS NULL OR u.total_amount <> u.zettle_purchase_amount)
+    WHERE (u.payment_reference_id IS NULL OR u.zettle_purchase_id IS NULL OR u.total_purchased_amount <> u.zettle_purchase_amount)
 
 WITH NO DATA;
 {% if is_modified %}

@@ -1,11 +1,11 @@
 {% if is_modified %}
-DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__daily_total_metrics CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__weekly_total_metrics CASCADE;
 {% endif %}
-CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__daily_total_metrics AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__weekly_total_metrics AS
 WITH
 concierge_revenue AS (
     SELECT
-        createdat AS metric_date,
+        createdat__dim_yearcalendarweek_sc AS metric_date,
 
         -- Adjusted revenue calculation with per-row VAT correction
         SUM(
@@ -48,12 +48,12 @@ concierge_revenue AS (
         lineitem_type <> 'try_on'
         AND harper_product_type = 'harper_concierge'
     GROUP BY
-        createdat
+        createdat__dim_yearcalendarweek_sc
 ),
 
 try_revenue AS (
 	SELECT
-		trial_period_ended_at AS metric_date,
+		trial_period_ended_at__dim_yearcalendarweek_sc AS metric_date,
         SUM(
             CASE
                 WHEN lineitem_category IN ('item_discount', 'order_discount') THEN -lineitem_amount
@@ -69,11 +69,11 @@ try_revenue AS (
 		lineitem_type = 'try_on'
         AND harper_product_type = 'harper_try'
 	GROUP BY
-		trial_period_ended_at
+		trial_period_ended_at__dim_yearcalendarweek_sc
 ),
 try_orders AS (
     SELECT
-        createdat__dim_date AS metric_date,
+        createdat__dim_yearcalendarweek_sc AS metric_date,
         COUNT(DISTINCT order_name )::INTEGER AS total_try_orders_created
     FROM
         {{ schema }}.clean__order__summary
@@ -81,11 +81,11 @@ try_orders AS (
         link_order__is_child = 0
         AND harper_product_type = 'harper_try'
     GROUP BY
-        createdat__dim_date
+        createdat__dim_yearcalendarweek_sc
 ),
 concierge_orders AS (
     SELECT
-        createdat__dim_date AS metric_date,
+        createdat__dim_yearcalendarweek_sc AS metric_date,
         COUNT(DISTINCT  order_name )::INTEGER AS total_concierge_orders_created
     FROM
         {{ schema }}.clean__order__summary
@@ -93,22 +93,22 @@ concierge_orders AS (
         link_order__is_child = 0
         AND harper_product_type = 'harper_concierge'
     GROUP BY
-        createdat__dim_date
+        createdat__dim_yearcalendarweek_sc
 ),
 all_orders AS (
     SELECT
-        createdat__dim_date AS metric_date
+        createdat__dim_yearcalendarweek_sc AS metric_date
     FROM
         {{ schema }}.clean__order__summary
     WHERE
         link_order__is_child = 0
     GROUP BY
-        createdat__dim_date
-    ORDER BY createdat__dim_date
+        createdat__dim_yearcalendarweek_sc
+    ORDER BY createdat__dim_yearcalendarweek_sc
 ),
 combined_data AS (
     SELECT
-        o.metric_date AS dim_date,
+        o.metric_date AS dim_yearcalendarweek_sc,
 
 	    cp.total_concierge_revenue,
 	    tp.total_try_revenue,
@@ -129,6 +129,6 @@ FROM combined_data
 
 WITH NO DATA;
 {% if is_modified %}
-CREATE UNIQUE INDEX IF NOT EXISTS rep__daily_total_metrics_idx ON {{ schema }}.rep__daily_total_metrics (dim_date);
+CREATE UNIQUE INDEX IF NOT EXISTS rep__weekly_total_metrics_idx ON {{ schema }}.rep__weekly_total_metrics (dim_yearcalendarweek_sc);
 {% endif %}
-REFRESH MATERIALIZED VIEW {{ schema }}.rep__daily_total_metrics;
+REFRESH MATERIALIZED VIEW {{ schema }}.rep__weekly_total_metrics;

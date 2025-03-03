@@ -8,7 +8,13 @@ CREATE VIEW {{ schema }}.clean__transaction__item__summary AS
                 WHEN transaction_type = 'try_on' THEN 0
                 ELSE lineitem_amount
             END
-        ) AS total_purchased_amount
+        ) AS total_purchased_amount,
+        SUM(CASE
+                WHEN transaction_type = 'refund' AND lineitem_category IN ('item_discount', 'order_discount') THEN +lineitem_amount
+                WHEN transaction_type = 'try_on' THEN 0
+                ELSE -lineitem_amount
+            END
+        ) AS total_refunded_amount,
         SUM(CASE
                 WHEN transaction_type = 'try_on' AND lineitem_category IN ('item_discount', 'order_discount') THEN -lineitem_amount
                 WHEN transaction_type = 'try_on' AND lineitem_category NOT IN ('item_discount', 'order_discount') THEN lineitem_amount
