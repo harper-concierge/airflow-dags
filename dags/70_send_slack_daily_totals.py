@@ -53,6 +53,7 @@ for config in slack_configs:
         task_id=id,
         sql_conn_id="postgres_datalake_conn_id",
         sql=config["query_file"],  # Path to query file
+        schema="public",
         slack_conn_id="slack_api_default",
         slack_config=config["slack_file"],  # Slack JSON configuration file
         generate_attachment_script=config["generate_attachment_script"],  # Slack JSON configuration file
