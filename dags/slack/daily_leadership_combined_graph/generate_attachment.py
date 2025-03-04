@@ -75,7 +75,7 @@ def generate_attachment(context, df):
         concierge_revenue_to_date,
         width / 2,
         color=COLOR_PALETTE["concierge_to_date"],
-        alpha=0.6,
+        alpha=1,
         label="Concierge To Date",
     )
     ax1.bar(
@@ -83,7 +83,7 @@ def generate_attachment(context, df):
         try_revenue_to_date,
         width / 2,
         color=COLOR_PALETTE["try_to_date"],
-        alpha=0.6,
+        alpha=1,
         label="Try To Date",
     )
 
@@ -92,7 +92,7 @@ def generate_attachment(context, df):
         previous_concierge_revenue_to_date,
         width / 2,
         color=COLOR_PALETTE["concierge_to_date"],
-        alpha=0.3,
+        alpha=1,
         label="Previous Concierge To Date",
     )
     ax1.bar(
@@ -100,14 +100,17 @@ def generate_attachment(context, df):
         previous_try_revenue_to_date,
         width / 2,
         color=COLOR_PALETTE["try_to_date"],
-        alpha=0.3,
+        alpha=1,
         label="Previous Try To Date",
     )
 
     ax1.set_ylabel("Revenue ($)", color="royalblue")
     ax1.set_xlabel("Year-Month")
     ax1.set_xticks(x)
-    ax1.set_xticklabels(df["month_name"], rotation=45, ha="right")
+    pd.set_option("display.max_colwidth", 3)
+
+    ax1.set_xticklabels(df["month_name"], rotation=90, ha="center")
+
     ax1.legend(loc="upper left", fontsize="small")
 
     # Orders Plot
@@ -117,7 +120,7 @@ def generate_attachment(context, df):
         concierge_orders,
         width / 2,
         color=COLOR_PALETTE["concierge_orders"],
-        alpha=0.7,
+        alpha=1,
         label="Concierge Orders",
     )
     ax2.bar(
@@ -125,7 +128,7 @@ def generate_attachment(context, df):
         try_orders,
         width / 2,
         color=COLOR_PALETTE["try_orders"],
-        alpha=0.7,
+        alpha=1,
         label="Try Orders",
     )
 
@@ -134,7 +137,7 @@ def generate_attachment(context, df):
         concierge_orders_to_date,
         width / 2,
         color=COLOR_PALETTE["concierge_orders_to_date"],
-        alpha=0.6,
+        alpha=1,
         label="Concierge Orders To Date",
     )
     ax2.bar(
@@ -142,7 +145,7 @@ def generate_attachment(context, df):
         try_orders_to_date,
         width / 2,
         color=COLOR_PALETTE["try_orders_to_date"],
-        alpha=0.6,
+        alpha=1,
         label="Try Orders To Date",
     )
 
@@ -151,7 +154,7 @@ def generate_attachment(context, df):
         previous_concierge_orders_to_date,
         width / 2,
         color=COLOR_PALETTE["concierge_orders_to_date"],
-        alpha=0.3,
+        alpha=1,
         label="Previous Concierge Orders To Date",
     )
     ax2.bar(
@@ -159,7 +162,7 @@ def generate_attachment(context, df):
         previous_try_orders_to_date,
         width / 2,
         color=COLOR_PALETTE["try_orders_to_date"],
-        alpha=0.3,
+        alpha=1,
         label="Previous Try Orders To Date",
     )
 
