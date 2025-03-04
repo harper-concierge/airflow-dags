@@ -1,74 +1,84 @@
-import re
+# import re
 
 import pandas as pd
 from sqlalchemy import text, create_engine
 from airflow.models import BaseOperator
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
-from airflow.utils.decorators import apply_defaults
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import Metric, DateRange, Dimension, RunReportRequest
+
+# from airflow.utils.decorators import apply_defaults
 from airflow.providers.google.common.hooks.base_google import GoogleBaseHook
 
+from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
 
-class GA4ToPostgresOperator(BaseOperator):
+
+class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
     """
-    Operator that fetches data from Google Analytics 4 and loads it into a Postgres database.
-
-    :param property_id: GA4 property ID
-    :param postgres_conn_id: Airflow connection ID for Postgres
-    :param google_analytics_conn_id: Airflow connection ID for GA4
-    :param destination_schema: Target schema in Postgres
-    :param destination_table: Target table in Postgres
-    :param start_date: Start date for GA4 data pull (templated)
-    :param end_date: End date for GA4 data pull (templated)
+    Operator for fetching GA4 data using API
     """
 
-    ui_color = "#f9c915"  # Consistent with other operators
+    MAX_RETRIES = 3
 
-    @apply_defaults
     def __init__(
         self,
-        property_id: str,
-        postgres_conn_id: str,
-        google_analytics_conn_id: str,
+        *,
+        postgres_conn_id: str = "postgres_conn_id",
+        google_conn_id: str = "ga4_api_data",
+        GA4_PROPERTY_ID: str,
         destination_schema: str,
         destination_table: str,
-        start_date: str,
-        end_date: str,
-        *args,
+        rebuild: bool = False,
         **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.property_id = property_id
+    ) -> None:
+        super().__init__(**kwargs)
         self.postgres_conn_id = postgres_conn_id
-        self.google_analytics_conn_id = google_analytics_conn_id
+        self.google_conn_id = google_conn_id
+        self.GA4_PROPERTY_ID = GA4_PROPERTY_ID
         self.destination_schema = destination_schema
         self.destination_table = destination_table
-        self.start_date = start_date
-        self.end_date = end_date
+        self.rebuild = rebuild
+        self.separator = "__"
+        self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
 
-    def get_postgres_sqlalchemy_engine(self, hook, engine_kwargs=None):
-        """Creates SQLAlchemy engine from Airflow connection."""
-        if engine_kwargs is None:
-            engine_kwargs = {}
-        conn_uri = hook.get_uri().replace("postgres:/", "postgresql:/")
-        conn_uri = re.sub(r"\?.*$", "", conn_uri)
-        return create_engine(conn_uri, **engine_kwargs)
+        self.context = {
+            "destination_schema": destination_schema,
+            "destination_table": destination_table,
+            # "partner_ref": partner_ref,
+        }
+
+    def get_postgres_sqlalchemy_engine(self, hook):
+        """Create a SQLAlchemy engine for PostgreSQL."""
+        conn = hook.get_connection(self.postgres_conn_id)
+        conn_uri = conn.get_uri().replace("postgres://", "postgresql://")
+        return create_engine(conn_uri)
 
     def execute(self, context):
         try:
             # Set up GA4 client
-            ga4_hook = GoogleBaseHook(gcp_conn_id=self.google_analytics_conn_id)
-            ga4_credentials = ga4_hook._get_credentials()
-            client = BetaAnalyticsDataClient(credentials=ga4_credentials)
+            google_hook = GoogleBaseHook(gcp_conn_id=self.google_conn_id)
+
+            # Get credentials - add error handling and logging
+            try:
+                credentials = google_hook.get_credentials()
+                self.log.info("Successfully retrieved Google credentials")
+            except Exception as e:
+                self.log.error(f"Failed to get Google credentials: {str(e)}")
+                raise AirflowException(f"Authentication failed: {str(e)}")
+
+            # Initialize client with credentials
+            try:
+                client = BetaAnalyticsDataClient(credentials=credentials)
+                self.log.info("Successfully initialized GA4 client")
+            except Exception as e:
+                self.log.error(f"Failed to initialize GA4 client: {str(e)}")
+                raise AirflowException(f"GA4 client initialization failed: {str(e)}")
 
             # Set up Postgres connection
             hook = BaseHook.get_hook(self.postgres_conn_id)
             engine = self.get_postgres_sqlalchemy_engine(hook)
-
-            total_docs_processed = 0
-            offset = 0
+            run_id = context["run_id"]
 
             with engine.connect() as conn:
                 transaction = conn.begin()
@@ -76,96 +86,161 @@ class GA4ToPostgresOperator(BaseOperator):
                     # Create schema if it doesn't exist
                     conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {self.destination_schema}"))
 
-                    # Clean existing data for the current execution date
-                    self.log.info(f"Cleaning existing data for date: {self.end_date}")
+                    # If rebuilding or no last successful run, use the default start date from the DAG
+                    if self.rebuild:
+                        start_param = context["dag"].default_args["start_date"].strftime("%Y-%m-%d")
+                    else:
+                        # Get last successful dagrun timestamp using the mixin
+                        last_successful_dagrun_ts = self.get_last_successful_dagrun_ts(run_id=run_id)
+                        if last_successful_dagrun_ts is None:
+                            # If no previous successful run, use the default start date
+                            start_param = context["dag"].default_args["start_date"].strftime("%Y-%m-%d")
+                            self.log.info(f"No previous successful run found. Using default start date: {start_param}")
+                        else:
+                            self.log.info(f"Last successful run timestamp: {last_successful_dagrun_ts}")
+                            start_param = last_successful_dagrun_ts.format("YYYY-MM-DD")
+
+                    lte = context["data_interval_end"].format("YYYY-MM-DD")
+                    self.log.info(f"Fetching GA4 data from {start_param} to {lte}")
+
+                    # Create a list of date ranges for the API
+                    date_ranges = [DateRange(start_date=start_param, end_date=lte)]
+
+                    # Clean existing data that may overlap
+                    self.log.info(f"Cleaning existing data for date range: {date_ranges}")
+
+                    # add logging to count records before and after delete
+
                     delete_sql = text(
                         f"""
-                        DELETE FROM {self.destination_schema}.{self.destination_table}
-                        WHERE date = :date_to_clean
-                        """
+                        DO $$
+                        BEGIN
+                            IF EXISTS (
+                                SELECT FROM information_schema.tables
+                                WHERE table_schema = '{self.destination_schema}'
+                                AND table_name = '{self.destination_table}'
+                            ) THEN
+                                DELETE FROM {self.destination_schema}.{self.destination_table}
+                                WHERE date >= :start_date;
+                            END IF;
+                        END $$;
+                    """
                     )
-                    conn.execute(delete_sql, {"date_to_clean": self.end_date})
+                    conn.execute(delete_sql, {"start_date": start_param})
 
-                    # Fetch data from GA4 with pagination
-                    while True:
-                        response = self.run_ga4_report(client, self.start_date, self.end_date, offset)
+                    total_docs_processed = 0
 
-                        if not response.rows:
-                            break
+                    response = self.run_ga4_report(client, date_ranges)
 
-                        records = []
-                        for row in response.rows:
-                            records.append(
-                                {
-                                    "date": row.dimension_values[0].value,
-                                    "city": row.dimension_values[1].value,
-                                    "partner_reference": row.dimension_values[2].value,
-                                    "service_type": row.dimension_values[3].value,
-                                    "event_name": row.dimension_values[4].value,
-                                    "event_count": int(row.metric_values[0].value),
-                                    "active_users": int(row.metric_values[1].value),
-                                    "sessions": int(row.metric_values[2].value),
-                                    "total_users": int(row.metric_values[3].value),
-                                    "checkouts": int(row.metric_values[4].value),
-                                    "sync_timestamp": pd.Timestamp.now(),
-                                    "airflow_sync_ds": context["ds"],
-                                }
-                            )
-
-                        total_docs_processed += len(records)
-                        self.log.info(f"Fetched {len(records)} rows. Total rows: {total_docs_processed}")
-
-                        if records:
-                            df = pd.DataFrame(records)
-                            df.to_sql(
-                                self.destination_table,
-                                conn,
-                                schema=self.destination_schema,
-                                if_exists="append",
-                                index=False,
-                                chunksize=1000,
-                            )
-
-                        if len(response.rows) < 100000:  # GA4's max limit per request
-                            break
-
-                        offset += len(response.rows)
+                    if not response.rows:
+                        self.log.info("No records to process")
+                        total_docs_processed = 0
+                    else:
+                        records = [self.process_ga4_row(row, context) for row in response.rows]
+                        total_docs_processed = self.write_to_database(records, conn, context)
 
                     transaction.commit()
 
                 except Exception as e:
                     self.log.error(f"Error during database operation: {str(e)}")
                     transaction.rollback()
-                    raise AirflowException(f"Database operation failed Rolling Back: {str(e)}")
+                    raise AirflowException(f"Database operation failed. Rolling Back: {str(e)}")
 
-            # Push total documents processed to XCom
             context["ti"].xcom_push(key="documents_found", value=total_docs_processed)
             return f"Successfully processed {total_docs_processed} GA4 records"
+            # wipe memory
 
         except Exception as e:
             self.log.error(f"An error occurred: {str(e)}")
             raise AirflowException(str(e))
 
-    def run_ga4_report(self, client, start_date, end_date, offset=0):
+    def run_ga4_report(self, client, date_ranges):
         """Runs GA4 report with specified dimensions and metrics."""
-        request = RunReportRequest(
-            property=f"properties/{self.property_id}",
-            dimensions=[
-                Dimension(name="date"),
-                Dimension(name="city"),
-                Dimension(name="customEvent:partner_reference"),
-                Dimension(name="customEvent:service_type"),
-                Dimension(name="eventName"),
-            ],
-            metrics=[
-                Metric(name="eventCount"),
-                Metric(name="activeUsers"),
-                Metric(name="sessions"),
-                Metric(name="totalUsers"),
-                Metric(name="checkouts"),
-            ],
-            date_ranges=[DateRange(start_date=start_date, end_date=end_date)],
-            limit=100000,
-            offset=offset,
+        try:
+            request = RunReportRequest(
+                property=f"properties/{self.GA4_PROPERTY_ID}",
+                dimensions=[
+                    Dimension(name="date"),
+                    Dimension(name="city"),
+                    Dimension(name="customEvent:partner_reference"),
+                    Dimension(name="customEvent:service_type"),
+                    Dimension(name="eventName"),
+                ],
+                metrics=[
+                    Metric(name="eventCount"),
+                    Metric(name="activeUsers"),
+                    Metric(name="sessions"),
+                    Metric(name="totalUsers"),
+                    Metric(name="checkouts"),
+                ],
+                date_ranges=date_ranges,
+                limit=100000,
+            )
+            return client.run_report(request)
+        except Exception as e:
+            self.log.error(f"Error running GA4 report: {str(e)}")
+            raise AirflowException(f"GA4 report failed: {str(e)}")
+
+    def safe_convert_to_int(self, value, default=0):
+        """Safely converts string values to integers."""
+        try:
+            # First convert to float to handle scientific notation
+            return int(float(value))
+        except (ValueError, TypeError):
+            self.log.warning(f"Failed to convert value '{value}' to integer. Using default: {default}")
+            return default
+
+    def process_ga4_row(self, row, context):
+        """Process a single GA4 row with safe numeric conversion."""
+        try:
+            return {
+                "date": row.dimension_values[0].value,
+                "city": row.dimension_values[1].value,
+                "partner_reference": row.dimension_values[2].value,
+                "service_type": row.dimension_values[3].value,
+                "event_name": row.dimension_values[4].value,
+                "event_count": self.safe_convert_to_int(row.metric_values[0].value),
+                "active_users": self.safe_convert_to_int(row.metric_values[1].value),
+                "sessions": self.safe_convert_to_int(row.metric_values[2].value),
+                "total_users": self.safe_convert_to_int(row.metric_values[3].value),
+                "checkouts": self.safe_convert_to_int(row.metric_values[4].value),
+                "sync_timestamp": pd.Timestamp.now(),
+                "airflow_sync_ds": context["ds"],
+            }
+        except Exception as e:
+            self.log.error(f"Error processing row: {str(e)}")
+            self.log.error(f"Problematic row: {row}")
+            raise AirflowException(f"Row processing failed: {str(e)}")
+
+    def write_to_database(self, records, conn, context):
+        """Write records to the database."""
+        if not records:
+            self.log.info("No records to write to database")
+            return 0
+
+        df = pd.DataFrame(records)
+        # Ensure numeric columns are properly typed
+        numeric_columns = ["event_count", "active_users", "sessions", "total_users", "checkouts"]
+        for col in numeric_columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype("int64")
+
+        df.to_sql(
+            self.destination_table,
+            conn,
+            schema=self.destination_schema,
+            if_exists="append",
+            index=False,
+            chunksize=1000,
         )
-        return client.run_report(request)
+
+        # Create index if it doesn't exist
+        conn.execute(
+            text(
+                f"CREATE INDEX IF NOT EXISTS {self.destination_table}_idx "
+                f"ON {self.destination_schema}.{self.destination_table} (id);"
+            )
+        )
+
+        total_rows = len(records)
+        self.log.info(f"Processed {total_rows} rows")
+        return total_rows
