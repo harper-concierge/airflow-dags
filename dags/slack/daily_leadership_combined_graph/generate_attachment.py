@@ -1,82 +1,171 @@
 import io
 
+import pandas as pd
 import matplotlib.pyplot as plt
+
+# Define color lookup table
+COLOR_PALETTE = {
+    "total_revenue": "black",
+    "concierge_revenue": "tab:blue",
+    "try_revenue": "tab:purple",
+    "concierge_to_date": "tab:cyan",
+    "try_to_date": "tab:pink",
+    "total_orders": "black",
+    "concierge_orders": "darkorange",
+    "try_orders": "forestgreen",
+    "concierge_orders_to_date": "moccasin",
+    "try_orders_to_date": "lightgreen",
+}
 
 
 def generate_attachment(context, df):
-    """
-    Generates bar and line plots for revenue and total orders comparison over the last 18 months.
+    print("Available columns:", df.columns.tolist())  # Debugging
 
-    :param df: Pandas DataFrame containing SQL results.
-    :return: In-memory file containing the plot.
-    """
-    fig, (ax1, ax3) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
-    ax2 = ax1.twinx()
-    ax4 = ax3.twinx()
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
 
-    # Ensure data is sorted by date
-    df = df.sort_values(by="yearmonth")
+    df = df.sort_values(by="yearmonth").tail(18)  # Ensure last 18 months are used
+    df["month_name"] = pd.to_datetime(df["yearmonth"]).dt.strftime("%b %Y")
 
-    # Extract last 18 months of data
-    df = df.tail(18)
+    # Revenue & Orders Data
+    concierge_revenue = df["current_concierge_revenue"].fillna(0).tolist()
+    try_revenue = df["current_try_revenue"].fillna(0).tolist()
+    total_revenue = [c + t for c, t in zip(concierge_revenue, try_revenue)]
 
-    # Convert yearmonth to string for better x-axis labels
-    df["yearmonth"] = df["yearmonth"].astype(str)
+    concierge_orders = df["current_concierge_orders"].fillna(0).tolist()
+    try_orders = df["current_try_orders"].fillna(0).tolist()
+    total_orders = [c + t for c, t in zip(concierge_orders, try_orders)]
 
-    # Ensure revenue and orders values are not None
-    revenue = df["current_revenue"].fillna(0).tolist()
-    revenue_to_date = df["current_revenue_to_date"].fillna(0).tolist()
-    last_month_revenue_to_date = df["last_month_revenue_to_date"].fillna(0).tolist()
-    orders = df["current_orders"].fillna(0).tolist()
-    orders_to_date = df["current_orders_to_date"].fillna(0).tolist()
-    last_month_orders_to_date = df["last_month_orders_to_date"].fillna(0).tolist()
+    # Current month and previous months' progress
+    concierge_revenue_to_date = df["current_concierge_revenue_to_date"].fillna(0).tolist()
+    try_revenue_to_date = df["current_try_revenue_to_date"].fillna(0).tolist()
+    previous_concierge_revenue_to_date = df["previous_concierge_revenue_to_date"].fillna(0).tolist()
+    previous_try_revenue_to_date = df["previous_try_revenue_to_date"].fillna(0).tolist()
 
-    # Ensure growth values are handled properly
-    mom_growth = df["mom_growth"].fillna(0).tolist()
-    yoy_growth = df["yoy_growth"].fillna(0).tolist()
-    mom_orders_growth = df["mom_orders_growth"].fillna(0).tolist()
-    yoy_orders_growth = df["yoy_orders_growth"].fillna(0).tolist()
+    concierge_orders_to_date = df["current_concierge_orders_to_date"].fillna(0).tolist()
+    try_orders_to_date = df["current_try_orders_to_date"].fillna(0).tolist()
+    previous_concierge_orders_to_date = df["previous_concierge_orders_to_date"].fillna(0).tolist()
+    previous_try_orders_to_date = df["previous_try_orders_to_date"].fillna(0).tolist()
 
     x = range(len(df))
+    width = 0.4
+    offset = width / 3
 
-    # Plot revenue as bars
-    ax1.bar(x, revenue, color="royalblue", alpha=0.7, label="Total Revenue")
-    ax1.bar(x, revenue_to_date, color="deepskyblue", alpha=0.7, label="Revenue To Date")
-    ax1.bar(x, last_month_revenue_to_date, color="lightblue", alpha=0.7, label="Last Month To Date")
+    # Revenue Plot
+    ax1.bar(x, total_revenue, width, color=COLOR_PALETTE["total_revenue"], alpha=0.3, label="Total Revenue")
+    ax1.bar(
+        [i - offset for i in x],
+        concierge_revenue,
+        width / 2,
+        color=COLOR_PALETTE["concierge_revenue"],
+        alpha=1,
+        label="Concierge Revenue",
+    )
+    ax1.bar(
+        [i + offset for i in x],
+        try_revenue,
+        width / 2,
+        color=COLOR_PALETTE["try_revenue"],
+        alpha=1,
+        label="Try Revenue",
+    )
 
-    # Secondary axis for growth percentage on revenue
-    ax2.plot(x, mom_growth, color="green", marker="o", linestyle="-", label="MoM Revenue Growth")
-    ax2.plot(x, yoy_growth, color="red", marker="o", linestyle="-", label="YoY Revenue Growth")
+    # Current & Previous Month Progress
+    ax1.bar(
+        [i - offset for i in x],
+        concierge_revenue_to_date,
+        width / 2,
+        color=COLOR_PALETTE["concierge_to_date"],
+        alpha=0.6,
+        label="Concierge To Date",
+    )
+    ax1.bar(
+        [i + offset for i in x],
+        try_revenue_to_date,
+        width / 2,
+        color=COLOR_PALETTE["try_to_date"],
+        alpha=0.6,
+        label="Try To Date",
+    )
 
-    # Plot orders as bars
-    ax3.bar(x, orders, color="darkorange", alpha=0.7, label="Total Orders")
-    ax3.bar(x, orders_to_date, color="gold", alpha=0.7, label="Orders To Date")
-    ax3.bar(x, last_month_orders_to_date, color="khaki", alpha=0.7, label="Last Month To Date")
-
-    # Secondary axis for growth percentage on orders
-    ax4.plot(x, mom_orders_growth, color="green", marker="o", linestyle="-", label="MoM Orders Growth")
-    ax4.plot(x, yoy_orders_growth, color="red", marker="o", linestyle="-", label="YoY Orders Growth")
+    ax1.bar(
+        [i - offset for i in x],
+        previous_concierge_revenue_to_date,
+        width / 2,
+        color=COLOR_PALETTE["concierge_to_date"],
+        alpha=0.3,
+        label="Previous Concierge To Date",
+    )
+    ax1.bar(
+        [i + offset for i in x],
+        previous_try_revenue_to_date,
+        width / 2,
+        color=COLOR_PALETTE["try_to_date"],
+        alpha=0.3,
+        label="Previous Try To Date",
+    )
 
     ax1.set_ylabel("Revenue ($)", color="royalblue")
-    ax2.set_ylabel("Growth (%)", color="crimson")
-    ax3.set_ylabel("Total Orders", color="darkorange")
-    ax4.set_ylabel("Growth (%)", color="crimson")
-
-    ax3.set_xlabel("Year-Month")
+    ax1.set_xlabel("Year-Month")
     ax1.set_xticks(x)
-    ax3.set_xticks(x)
-    ax3.set_xticklabels(df["yearmonth"], rotation=45, ha="right")
+    ax1.set_xticklabels(df["month_name"], rotation=45, ha="right")
+    ax1.legend(loc="upper left", fontsize="small")
 
-    ax1.set_title("Revenue and Growth Trend (Last 18 Months)")
-    ax3.set_title("Total Orders and Growth Trend (Last 18 Months)")
+    # Orders Plot
+    ax2.bar(x, total_orders, width, color=COLOR_PALETTE["total_orders"], alpha=0.3, label="Total Orders")
+    ax2.bar(
+        [i - offset for i in x],
+        concierge_orders,
+        width / 2,
+        color=COLOR_PALETTE["concierge_orders"],
+        alpha=0.7,
+        label="Concierge Orders",
+    )
+    ax2.bar(
+        [i + offset for i in x],
+        try_orders,
+        width / 2,
+        color=COLOR_PALETTE["try_orders"],
+        alpha=0.7,
+        label="Try Orders",
+    )
 
-    ax1.grid(axis="y", linestyle="--", alpha=0.6)
-    ax3.grid(axis="y", linestyle="--", alpha=0.6)
+    ax2.bar(
+        [i - offset for i in x],
+        concierge_orders_to_date,
+        width / 2,
+        color=COLOR_PALETTE["concierge_orders_to_date"],
+        alpha=0.6,
+        label="Concierge Orders To Date",
+    )
+    ax2.bar(
+        [i + offset for i in x],
+        try_orders_to_date,
+        width / 2,
+        color=COLOR_PALETTE["try_orders_to_date"],
+        alpha=0.6,
+        label="Try Orders To Date",
+    )
 
-    ax1.legend(loc="upper left")
-    ax2.legend(loc="upper right")
-    ax3.legend(loc="upper left")
-    ax4.legend(loc="upper right")
+    ax2.bar(
+        [i - offset for i in x],
+        previous_concierge_orders_to_date,
+        width / 2,
+        color=COLOR_PALETTE["concierge_orders_to_date"],
+        alpha=0.3,
+        label="Previous Concierge Orders To Date",
+    )
+    ax2.bar(
+        [i + offset for i in x],
+        previous_try_orders_to_date,
+        width / 2,
+        color=COLOR_PALETTE["try_orders_to_date"],
+        alpha=0.3,
+        label="Previous Try Orders To Date",
+    )
+
+    ax2.set_ylabel("Orders", color="darkorange")
+    ax2.set_xlabel("Year-Month")
+    ax2.legend(loc="upper left", fontsize="small")
 
     fig.tight_layout()
 
