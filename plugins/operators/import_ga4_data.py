@@ -55,6 +55,24 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
         return create_engine(conn_uri)
 
     def execute(self, context):
+        google_hook = GoogleBaseHook(gcp_conn_id=self.google_conn_id)
+        self.log.info(f"Successfully initialized Google hook with connection ID: {self.google_conn_id}")
+
+        # Get the connection and log its properties
+        conn = google_hook.get_connection(self.google_conn_id)
+        self.log.info(f"Connection ID: {self.google_conn_id}")
+        self.log.info(f"Connection Type: {conn.conn_type}")
+
+        # Extract and log keyfile information
+        keyfile_path = conn.extra_dejson.get("keyfile_path")
+        keyfile_dict = conn.extra_dejson.get("keyfile_dict")
+
+        self.log.info(f"Keyfile path from connection: {keyfile_path}")
+        self.log.info(f"Keyfile dict exists: {keyfile_dict is not None}")
+
+        # Log available connection extras for debugging
+        self.log.info(f"Connection extras keys: {list(conn.extra_dejson.keys())}")
+
         try:
             # Set up GA4 client
             google_hook = GoogleBaseHook(gcp_conn_id=self.google_conn_id)

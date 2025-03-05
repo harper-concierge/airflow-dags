@@ -23,6 +23,8 @@ from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDa
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
 
 GA4_PROPERTY_ID = Variable.get("GA4_PROPERTY_ID", "")
+
+
 rebuild = Variable.get("REBUILD_GA4_DATA", "False").lower() in ["true", "1", "yes"]
 default_start_date = Variable.get("GA4_START_DATE", "2024-08-01")
 # Convert string to datetime and make it timezone-aware
@@ -65,7 +67,7 @@ wait_for_things_to_exist = ExternalTaskSensor(
 ga4_task = GA4ToPostgresOperator(
     task_id="import_ga4_data_to_datalake",
     google_conn_id="ga4_api_data",
-    GA4_PROPERTY_ID="{{ var.value.GA4_PROPERTY_ID }}",
+    GA4_PROPERTY_ID=GA4_PROPERTY_ID,
     postgres_conn_id="postgres_datalake_conn_id",
     destination_schema="transient_data",
     destination_table="ga4__daily_metrics",
