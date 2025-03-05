@@ -70,7 +70,7 @@ def generate_attachment(context, df):
     offset = width / 3
 
     # Revenue Plot
-    ax1.bar(x, total_revenue, width, color=COLOR_PALETTE["total_revenue"], label="Total Revenue (£k)")
+    ax1.bar(x, total_revenue, width, color=COLOR_PALETTE["total_revenue"], alpha=0.3, label="Total Revenue (£k)")
     ax1.bar(
         [i - offset for i in x],
         concierge_revenue,
@@ -117,7 +117,7 @@ def generate_attachment(context, df):
     ax1.legend(loc="upper left", fontsize="small")
 
     # Orders Plot
-    ax2.bar(x, total_orders, width, color=COLOR_PALETTE["total_orders"], label="Total Orders")
+    ax2.bar(x, total_orders, width, color=COLOR_PALETTE["total_orders"], alpha=0.3, label="Total Orders")
     ax2.bar(
         [i - offset for i in x],
         concierge_orders,
@@ -161,14 +161,14 @@ def generate_attachment(context, df):
     ax2.set_xlabel("Year-Month")
     ax2.legend(loc="upper left", fontsize="small")
 
-    # Revenue Per Order Line Plot (Plotted on Orders graph)
+    # Revenue Per Order Line Plot (Legend moved under Orders graph legend)
     ax5 = ax2.twinx()
     ax5.plot(
         x, revenue_per_order_concierge, color="blue", marker="s", linestyle="-", label="Revenue Per Concierge Order"
     )
     ax5.plot(x, revenue_per_order_try, color="purple", marker="o", linestyle="-", label="Revenue Per Try Order")
     ax5.set_ylabel("Revenue Per Order (£)", color="black")
-    ax5.legend(loc="lower right", fontsize="small")
+    ax5.legend(loc="upper left", bbox_to_anchor=(0, 0.75), fontsize="small")
 
     # Growth Percentage Line Plot
     ax3 = ax1.twinx()
