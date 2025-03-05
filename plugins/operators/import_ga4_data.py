@@ -157,6 +157,15 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
                         records = [self.process_ga4_row(row, context) for row in response.rows]
                         total_docs_processed = self.write_to_database(records, conn, context)
 
+                    # Create composite index for better query performance
+                    conn.execute(
+                        text(
+                            f"""CREATE INDEX IF NOT EXISTS {self.destination_table}_composite_idx
+                                ON {self.destination_schema}.{self.destination_table}
+                                (date, city, partner_reference, service_type, event_name);"""
+                        )
+                    )
+
                     transaction.commit()
 
                 except Exception as e:
@@ -185,11 +194,9 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
                     Dimension(name="eventName"),
                 ],
                 metrics=[
-                    Metric(name="eventCount"),
                     Metric(name="activeUsers"),
                     Metric(name="sessions"),
                     Metric(name="totalUsers"),
-                    Metric(name="checkouts"),
                 ],
                 date_ranges=date_ranges,
                 limit=100000,
@@ -217,11 +224,9 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
                 "partner_reference": row.dimension_values[2].value,
                 "service_type": row.dimension_values[3].value,
                 "event_name": row.dimension_values[4].value,
-                "event_count": self.safe_convert_to_int(row.metric_values[0].value),
-                "active_users": self.safe_convert_to_int(row.metric_values[1].value),
-                "sessions": self.safe_convert_to_int(row.metric_values[2].value),
-                "total_users": self.safe_convert_to_int(row.metric_values[3].value),
-                "checkouts": self.safe_convert_to_int(row.metric_values[4].value),
+                "active_users": self.safe_convert_to_int(row.metric_values[0].value),
+                "sessions": self.safe_convert_to_int(row.metric_values[1].value),
+                "total_users": self.safe_convert_to_int(row.metric_values[2].value),
                 "sync_timestamp": pd.Timestamp.now(),
                 "airflow_sync_ds": context["ds"],
             }
@@ -236,11 +241,38 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
             self.log.info("No records to write to database")
             return 0
 
+        # Create table with ID if it doesn't exist
+        create_table_sql = text(
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.destination_schema}.{self.destination_table} (
+                id SERIAL PRIMARY KEY,
+                date DATE,
+                city VARCHAR,
+                partner_reference VARCHAR,
+                service_type VARCHAR,
+                event_name VARCHAR,
+                active_users INTEGER,
+                sessions INTEGER,
+                total_users INTEGER,
+                sync_timestamp TIMESTAMP,
+                airflow_sync_ds DATE
+            )
+        """
+        )
+        conn.execute(create_table_sql)
+
         df = pd.DataFrame(records)
+        # Sort DataFrame by date before inserting
+        df = df.sort_values("date")
+
         # Ensure numeric columns are properly typed
-        numeric_columns = ["event_count", "active_users", "sessions", "total_users", "checkouts"]
+        numeric_columns = ["active_users", "sessions", "total_users"]
         for col in numeric_columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype("int64")
+
+        # If rebuilding, reset the sequence
+        if self.rebuild:
+            conn.execute(text(f"TRUNCATE TABLE {self.destination_schema}.{self.destination_table} RESTART IDENTITY"))
 
         df.to_sql(
             self.destination_table,
@@ -251,11 +283,11 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
             chunksize=1000,
         )
 
-        # Create index if it doesn't exist
+        # Keep both indexes
         conn.execute(
             text(
-                f"CREATE INDEX IF NOT EXISTS {self.destination_table}_idx "
-                f"ON {self.destination_schema}.{self.destination_table} (id);"
+                f"CREATE INDEX IF NOT EXISTS {self.destination_table}_date_idx "
+                f"ON {self.destination_schema}.{self.destination_table} (date);"
             )
         )
 
