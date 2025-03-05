@@ -34,12 +34,16 @@ def load_slack_configs(slack_dir):
             )
 
         # Add the directory name and file paths (subdir/query.sql and subdir/slack.json.tpl) to the configs list
-        configs.append(
-            {
-                "id": sub_dir,
-                "query_file": f"{sub_dir}/query.sql",
-                "slack_file": f"{sub_dir}/slack.json.tpl",
-            }
-        )
+        config = {
+            "id": sub_dir,
+            "query_file": f"{sub_dir}/query.sql",
+            "slack_file": f"{sub_dir}/slack.json.tpl",
+        }
+        if "generate_attachment.py" in actual_files:
+            config["generate_attachment_script"] = f"{slack_dir}/{sub_dir}/generate_attachment.py"
+        else:
+            config["generate_attachment_script"] = None
+
+        configs.append(config)
 
     return configs

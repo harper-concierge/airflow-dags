@@ -453,6 +453,22 @@ END $$;
                 if insert_df[column].dtype == "bool":
                     self.log.info(f"Filling NA for bool for column {column} {insert_df['id']}, {insert_df[column]}")
                     insert_df[column] = insert_df[column].fillna(0)
+
+                elif dtype.startswith("int"):  # Handle integer columns
+                    self.log.info(f"Handling integer column {column}")
+                    insert_df[column] = pd.to_numeric(
+                        insert_df[column], errors="coerce"
+                    )  # Convert non-numeric values to NaN
+                    insert_df[column] = (
+                        insert_df[column].fillna(0).astype(int)
+                    )  # Replace NaNs with 0 before converting to int
+
+                elif dtype.startswith("float"):  # Handle float columns
+                    insert_df[column] = pd.to_numeric(insert_df[column], errors="coerce").astype(dtype)
+
+                elif dtype == "string" or dtype.startswith("str"):
+                    insert_df[column] = insert_df[column].astype(str).fillna("")
+
                 print(f"aligning column {column} as type {dtype}")
                 insert_df[column] = insert_df[column].astype(dtype)
 

@@ -169,6 +169,13 @@
             ],
             "type": "number"
           },
+          "discounted_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
           "size": {
             "bsonType": [
               "string"
@@ -210,6 +217,13 @@
               "bool"
             ],
             "type": "boolean"
+          },
+          "purchased_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
           },
           "not_available": {
             "type": "boolean",
@@ -349,9 +363,8 @@
           "mongo_id": {
             "type": "string",
             "bsonType": [
-              "objectId"
-            ],
-            "tsType": "MongooseObjectId"
+              "string"
+            ]
           },
           "order_name": {
             "type": "string",
@@ -577,6 +590,13 @@
             ],
             "type": "boolean"
           },
+          "returned_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
           "received_at": {
             "type": "string",
             "tsType": "Date",
@@ -641,6 +661,19 @@
             ]
           },
           "return_sent_by_customer_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
+          "return_delivered_to_retailer": {
+            "type": "boolean",
+            "bsonType": [
+              "bool"
+            ]
+          },
+          "return_delivered_to_retailer_at": {
             "type": "string",
             "tsType": "Date",
             "bsonType": [
@@ -955,6 +988,13 @@
             ],
             "type": "number"
           },
+          "discounted_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
           "size": {
             "bsonType": [
               "string"
@@ -996,6 +1036,13 @@
               "bool"
             ],
             "type": "boolean"
+          },
+          "purchased_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
           },
           "not_available": {
             "type": "boolean",
@@ -1135,9 +1182,8 @@
           "mongo_id": {
             "type": "string",
             "bsonType": [
-              "objectId"
-            ],
-            "tsType": "MongooseObjectId"
+              "string"
+            ]
           },
           "order_name": {
             "type": "string",
@@ -1363,6 +1409,13 @@
             ],
             "type": "boolean"
           },
+          "returned_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
           "received_at": {
             "type": "string",
             "tsType": "Date",
@@ -1427,6 +1480,19 @@
             ]
           },
           "return_sent_by_customer_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
+          "return_delivered_to_retailer": {
+            "type": "boolean",
+            "bsonType": [
+              "bool"
+            ]
+          },
+          "return_delivered_to_retailer_at": {
             "type": "string",
             "tsType": "Date",
             "bsonType": [
@@ -1735,6 +1801,13 @@
             ],
             "type": "number"
           },
+          "discounted_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
           "size": {
             "bsonType": [
               "string"
@@ -1776,6 +1849,13 @@
               "bool"
             ],
             "type": "boolean"
+          },
+          "purchased_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
           },
           "not_available": {
             "type": "boolean",
@@ -1915,9 +1995,8 @@
           "mongo_id": {
             "type": "string",
             "bsonType": [
-              "objectId"
-            ],
-            "tsType": "MongooseObjectId"
+              "string"
+            ]
           },
           "order_name": {
             "type": "string",
@@ -2143,6 +2222,13 @@
             ],
             "type": "boolean"
           },
+          "returned_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
           "received_at": {
             "type": "string",
             "tsType": "Date",
@@ -2207,6 +2293,19 @@
             ]
           },
           "return_sent_by_customer_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
+          "return_delivered_to_retailer": {
+            "type": "boolean",
+            "bsonType": [
+              "bool"
+            ]
+          },
+          "return_delivered_to_retailer_at": {
             "type": "string",
             "tsType": "Date",
             "bsonType": [
@@ -2528,6 +2627,13 @@
             ],
             "type": "number"
           },
+          "discounted_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
           "size": {
             "bsonType": [
               "string"
@@ -2569,6 +2675,13 @@
               "bool"
             ],
             "type": "boolean"
+          },
+          "purchased_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
           },
           "not_available": {
             "type": "boolean",
@@ -2708,9 +2821,8 @@
           "mongo_id": {
             "type": "string",
             "bsonType": [
-              "objectId"
-            ],
-            "tsType": "MongooseObjectId"
+              "string"
+            ]
           },
           "order_name": {
             "type": "string",
@@ -2936,6 +3048,13 @@
             ],
             "type": "boolean"
           },
+          "returned_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
           "received_at": {
             "type": "string",
             "tsType": "Date",
@@ -3000,6 +3119,19 @@
             ]
           },
           "return_sent_by_customer_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+              "date"
+            ]
+          },
+          "return_delivered_to_retailer": {
+            "type": "boolean",
+            "bsonType": [
+              "bool"
+            ]
+          },
+          "return_delivered_to_retailer_at": {
             "type": "string",
             "tsType": "Date",
             "bsonType": [
@@ -3301,6 +3433,12 @@
       "additionalProperties": false
     },
     "partner_cart_id": {
+      "type": "string",
+      "bsonType": [
+        "string"
+      ]
+    },
+    "platform_order_link": {
       "type": "string",
       "bsonType": [
         "string"
@@ -5444,6 +5582,12 @@
         "bool"
       ],
       "type": "boolean"
+    },
+    "magento_order_id": {
+      "type": "string",
+      "bsonType": [
+        "string"
+      ]
     },
     "createdAt": {
       "bsonType": [

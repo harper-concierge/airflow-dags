@@ -7,10 +7,18 @@
             }
         }
     },
-    { "$set": {
-        "id": "$_id",
-        "order_id": "$order"
-      }
+    {
+        "$set": {
+            "id": "$_id",
+            "order_id": "$order",
+            "lineitem_type": {
+                "$cond": {
+                    "if": { "$eq": ["$lineitem_type", "discount"] },
+                    "then": "purchase",
+                    "else": "$lineitem_type"
+                }
+            }
+        }
     },
     {
         "$project": {
@@ -20,5 +28,5 @@
         }
     },
     { "$skip": 0 },
-    { "$limit": 5000}
+    { "$limit": 5000 }
 ]

@@ -182,6 +182,7 @@
         "orderFinalised",
         "triggerPlatformOrderFunction",
         "orderStatusLogEvent",
+        "triggerPostPurchaseDiscount",
         ""
       ]
     },
