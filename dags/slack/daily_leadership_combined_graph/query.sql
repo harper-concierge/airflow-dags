@@ -7,7 +7,7 @@ WITH monthly_data AS (
         SUM(total_concierge_orders_created) AS current_concierge_orders,
         SUM(total_try_orders_created) AS current_try_orders
     FROM rep__daily_total_metrics
-    WHERE dim_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '18 months'
+    WHERE dim_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '24 months'
     GROUP BY 1
 ),
 
@@ -34,7 +34,7 @@ previous_months_to_date AS (
         SUM(total_concierge_orders_created) AS previous_concierge_orders_to_date,
         SUM(total_try_orders_created) AS previous_try_orders_to_date
     FROM rep__daily_total_metrics
-    WHERE dim_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '17 months')
+    WHERE dim_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '23 months')
           AND dim_date <= (DATE_TRUNC('month', dim_date) + (CURRENT_DATE - DATE_TRUNC('month', CURRENT_DATE)))
     GROUP BY 1
 )
