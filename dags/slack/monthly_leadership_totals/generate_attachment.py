@@ -57,11 +57,12 @@ def generate_attachment(context, df):
     growth_percentage = [0] * 12  # First 12 months have no YoY comparison
     for i in range(12, len(df) - 1):  # Start at Month 13, EXCLUDE the last month (current month)
         prev_idx = i - 12  # Compare to the same month last year
-        if total_revenue[prev_idx] > 2:  # Only compare months with revenue over £200
+        if total_revenue[prev_idx] > 0.3:  # Only compare months with revenue over £200
             growth = (total_revenue[i] - total_revenue[prev_idx]) / total_revenue[prev_idx] * 100
         else:
             growth = 0
         growth_percentage.append(growth)
+        print(f"{i} {growth} {total_revenue[i]} {total_revenue[prev_idx]}")
 
     # Revenue Per Order Calculation
     revenue_per_order_concierge = [
@@ -72,7 +73,7 @@ def generate_attachment(context, df):
     ]
 
     # Revenue Plot
-    ax1.bar(x, total_revenue, width, color=COLOR_PALETTE["total_revenue"], alpha=0.3, label="Total Revenue (£k)")
+    ax1.bar(x, total_revenue, width, color=COLOR_PALETTE["total_revenue"], alpha=0.3, label="Total Revenue")
     ax1.bar(
         [i - offset for i in x],
         concierge_revenue,
@@ -174,7 +175,7 @@ def generate_attachment(context, df):
     )
     ax5.plot(x, revenue_per_order_try, color="purple", marker="o", linestyle="-", label="Revenue Per Try Order")
     ax5.set_ylabel("Revenue Per Order (£)", color="black")
-    ax5.legend(loc="center left", bbox_to_anchor=(0, 0.75), fontsize="small")
+    ax5.legend(loc="upper center", fontsize="small")
 
     # YoY Growth Line Plot
     ax3 = ax1.twinx()
