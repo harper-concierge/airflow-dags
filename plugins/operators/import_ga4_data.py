@@ -12,14 +12,35 @@ from google.analytics.data_v1beta.types import Metric, DateRange, Dimension, Run
 from airflow.providers.google.common.hooks.base_google import GoogleBaseHook
 
 from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
+from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
 
 
-class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
+class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, BaseOperator):
     """
     Operator for fetching GA4 data using API
     """
 
     MAX_RETRIES = 3
+
+    def get_create_table_sql(self):
+        return text(
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.destination_schema}.{self.destination_table} (
+                id SERIAL PRIMARY KEY,
+                date DATE,
+                city VARCHAR,
+                partner_reference VARCHAR,
+                partner VARCHAR,
+                service_type VARCHAR,
+                event_name VARCHAR,
+                active_users INTEGER,
+                sessions INTEGER,
+                total_users INTEGER,
+                sync_timestamp TIMESTAMP,
+                airflow_sync_ds DATE
+            )
+        """
+        )
 
     def __init__(
         self,
@@ -41,6 +62,7 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
         self.rebuild = rebuild
         self.separator = "__"
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
+        self.offset_var_key = "offset"  # Key for storing offset in task comms
 
         self.context = {
             "destination_schema": destination_schema,
@@ -55,6 +77,7 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
         return create_engine(conn_uri)
 
     def execute(self, context):
+        # Set up GA4 client once
         google_hook = GoogleBaseHook(gcp_conn_id=self.google_conn_id)
         self.log.info(f"Successfully initialized Google hook with connection ID: {self.google_conn_id}")
 
@@ -74,9 +97,6 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
         self.log.info(f"Connection extras keys: {list(conn.extra_dejson.keys())}")
 
         try:
-            # Set up GA4 client
-            google_hook = GoogleBaseHook(gcp_conn_id=self.google_conn_id)
-
             # Get credentials - add error handling and logging
             try:
                 credentials = google_hook.get_credentials()
@@ -104,8 +124,14 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
                     # Create schema if it doesn't exist
                     conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {self.destination_schema}"))
 
-                    # If rebuilding or no last successful run, use the default start date from the DAG
+                    # If rebuilding, create and truncate the table and reset identity
                     if self.rebuild:
+                        self.log.info("Rebuild flag is set, truncating table and resetting identity")
+                        conn.execute(self.get_create_table_sql())
+                        conn.execute(
+                            text(f"TRUNCATE TABLE {self.destination_schema}.{self.destination_table} RESTART IDENTITY")
+                        )
+                        # Create table with ID if it doesn't exist
                         start_param = context["dag"].default_args["start_date"].strftime("%Y-%m-%d")
                     else:
                         # Get last successful dagrun timestamp using the mixin
@@ -147,17 +173,42 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
                     conn.execute(delete_sql, {"start_date": start_param})
 
                     total_docs_processed = 0
+                    # Get stored offset using task comms
+                    offset = self.get_last_successful_offset(conn, context) or 0
+                    page_size = 100000
 
-                    response = self.run_ga4_report(client, date_ranges)
+                    while True:
+                        self.log.info(f"Fetching page with offset: {offset}")
 
-                    if not response.rows:
-                        self.log.info("No records to process")
-                        total_docs_processed = 0
-                    else:
-                        records = [self.process_ga4_row(row, context) for row in response.rows]
-                        total_docs_processed = self.write_to_database(records, conn, context)
+                        response = self.run_ga4_report(client, date_ranges, offset, page_size)
 
-                    # Create composite index for better query performance
+                        # Check if there are rows to process
+                        if response.rows:
+                            self.log.info(f"Fetched {len(response.rows)} rows from GA4 API.")
+                            records = [self.process_ga4_row(row, context) for row in response.rows]
+                            self.log.info(f"Processed {len(records)} records.")
+
+                            batch_processed = self.write_to_database(records, conn, context)
+                            self.log.info(f"Wrote {batch_processed} records to the database.")
+
+                            # Add this line to increment total_docs_processed
+                            total_docs_processed += batch_processed
+
+                            # Store the current offset after writing to the database
+                            self.set_last_successful_offset(conn, context, offset + batch_processed)
+
+                        # Break if the number of rows fetched is less than the page size
+                        if len(response.rows) < page_size:
+                            self.log.info("Less than page size fetched, breaking the loop.")
+                            break
+
+                        offset += page_size
+
+                    # Clear the offset after successful completion
+                    self.clear_task_vars(conn, context)
+                    self.log.info("Cleared task variables after successful completion.")
+
+                    # Create composite index after all data is written
                     conn.execute(
                         text(
                             f"""CREATE INDEX IF NOT EXISTS {self.destination_table}_composite_idx
@@ -181,7 +232,7 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
             self.log.error(f"An error occurred: {str(e)}")
             raise AirflowException(str(e))
 
-    def run_ga4_report(self, client, date_ranges):
+    def run_ga4_report(self, client, date_ranges, offset, page_size):
         """Runs GA4 report with specified dimensions and metrics."""
         try:
             request = RunReportRequest(
@@ -192,6 +243,7 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
                     Dimension(name="customEvent:partner_reference"),
                     Dimension(name="customEvent:service_type"),
                     Dimension(name="eventName"),
+                    Dimension(name="customEvent:partner"),
                 ],
                 metrics=[
                     Metric(name="activeUsers"),
@@ -199,9 +251,12 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
                     Metric(name="totalUsers"),
                 ],
                 date_ranges=date_ranges,
-                limit=100000,
+                limit=page_size,
+                offset=offset,
             )
+
             return client.run_report(request)
+
         except Exception as e:
             self.log.error(f"Error running GA4 report: {str(e)}")
             raise AirflowException(f"GA4 report failed: {str(e)}")
@@ -222,6 +277,7 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
                 "date": row.dimension_values[0].value,
                 "city": row.dimension_values[1].value,
                 "partner_reference": row.dimension_values[2].value,
+                "partner": row.dimension_values[5].value,
                 "service_type": row.dimension_values[3].value,
                 "event_name": row.dimension_values[4].value,
                 "active_users": self.safe_convert_to_int(row.metric_values[0].value),
@@ -241,26 +297,6 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
             self.log.info("No records to write to database")
             return 0
 
-        # Create table with ID if it doesn't exist
-        create_table_sql = text(
-            f"""
-            CREATE TABLE IF NOT EXISTS {self.destination_schema}.{self.destination_table} (
-                id SERIAL PRIMARY KEY,
-                date DATE,
-                city VARCHAR,
-                partner_reference VARCHAR,
-                service_type VARCHAR,
-                event_name VARCHAR,
-                active_users INTEGER,
-                sessions INTEGER,
-                total_users INTEGER,
-                sync_timestamp TIMESTAMP,
-                airflow_sync_ds DATE
-            )
-        """
-        )
-        conn.execute(create_table_sql)
-
         df = pd.DataFrame(records)
         # Sort DataFrame by date before inserting
         df = df.sort_values("date")
@@ -269,10 +305,6 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
         numeric_columns = ["active_users", "sessions", "total_users"]
         for col in numeric_columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype("int64")
-
-        # If rebuilding, reset the sequence
-        if self.rebuild:
-            conn.execute(text(f"TRUNCATE TABLE {self.destination_schema}.{self.destination_table} RESTART IDENTITY"))
 
         df.to_sql(
             self.destination_table,
@@ -283,14 +315,23 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, BaseOperator):
             chunksize=1000,
         )
 
-        # Keep both indexes
+        # Create composite index for better query performance
         conn.execute(
             text(
-                f"CREATE INDEX IF NOT EXISTS {self.destination_table}_date_idx "
-                f"ON {self.destination_schema}.{self.destination_table} (date);"
+                f"""CREATE INDEX IF NOT EXISTS {self.destination_table}_composite_idx
+                    ON {self.destination_schema}.{self.destination_table}
+                    (date, city, partner_reference, service_type, event_name);"""
             )
         )
 
         total_rows = len(records)
         self.log.info(f"Processed {total_rows} rows")
         return total_rows
+
+    def set_last_successful_offset(self, conn, context, offset):
+        """Store the last successful offset."""
+        return self.set_task_var(conn, context, self.offset_var_key, offset)
+
+    def get_last_successful_offset(self, conn, context):
+        """Get the last successful offset."""
+        return self.get_task_var(conn, context, self.offset_var_key)

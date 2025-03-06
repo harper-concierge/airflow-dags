@@ -6,7 +6,7 @@ from airflow.utils.timezone import make_aware  # Import make_aware instead
 
 # from airflow.utils.timezone import datetime as airflow_datetime  # Add this import
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import ShortCircuitOperator
+from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.sensors.external_task import ExternalTaskSensor
 
@@ -30,6 +30,11 @@ default_start_date = Variable.get("GA4_START_DATE", "2024-08-01")
 # Convert string to datetime and make it timezone-aware
 start_date = make_aware(datetime.strptime(default_start_date, "%Y-%m-%d"))
 end_date = make_aware(datetime.now())  # Make current time timezone-aware
+
+
+def reset_rebuild_var():
+    Variable.set("REBUILD_GA4_DATA", "False")
+
 
 default_args = {
     "owner": "airflow",
@@ -154,6 +159,12 @@ drop_ga4_public_table = DropPostgresTableOperator(
     dag=dag,
 )
 
+reset_rebuild_var_task = PythonOperator(
+    task_id="reset_rebuild_var_task",
+    depends_on_past=False,
+    python_callable=reset_rebuild_var,
+    dag=dag,
+)
 base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, trigger_rule=TriggerRule.NONE_FAILED)
 
 (
@@ -168,4 +179,5 @@ base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, 
     >> ga4_append_transient_table_data
     >> ga4_ensure_table_view_exists
     >> base_tables_completed
+    >> reset_rebuild_var_task
 )
