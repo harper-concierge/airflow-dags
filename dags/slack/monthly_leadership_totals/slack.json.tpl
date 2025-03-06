@@ -1,5 +1,5 @@
 {
-  "channel": "#alerts-dev-test",
+  "channel": "#harperhq",
   "blocks": [
     {
       "type": "header",
