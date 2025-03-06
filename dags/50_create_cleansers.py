@@ -30,7 +30,7 @@ dag = DAG(
 )
 
 wait_for_task = ExternalTaskSensor(
-    task_id="wait_for_indexes_to_complete",
+    task_id="wait_for_analyze_tables_to_complete",
     external_dag_id="49_analyze_tables_dag",  # The ID of the DAG you're waiting for
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
     allowed_states=["success"],  # You might need to customize this part

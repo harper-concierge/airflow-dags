@@ -43,19 +43,24 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
         SELECT
             order_id,
             SUM(CASE
-                    -- Normal purchases and refunds for non-discount categories
+                    -- Normal purchases for non-discount categories
                     WHEN transaction_type IN ('purchase', 'adjusted_purchase')
                          AND lineitem_category NOT IN ('item_discount', 'order_discount', 'harper_item_discount', 'harper_order_discount')
                     THEN COALESCE(lineitem_amount, 0)
+                    -- Inverse logic for purchase related discount categories
+                    WHEN transaction_type IN ('purchase')
+                         AND lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount', 'harper_order_discount')
+                    THEN -COALESCE(lineitem_amount, 0)
 
+                    -- Normal refunds for non-discount categories
                     WHEN transaction_type IN ('refund', 'adjusted_refund')
                          AND lineitem_category NOT IN ('item_discount', 'order_discount', 'harper_item_discount', 'harper_order_discount')
                     THEN -COALESCE(lineitem_amount, 0)
 
-                    -- Inverse logic for discount-related categories
-                    WHEN transaction_type IN ('discount')
-                         AND lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount', 'harper_order_discount')
-                    THEN -COALESCE(lineitem_amount, 0)
+                    -- Inverse logic for refund related discount categories
+                    WHEN transaction_type IN ('refund', 'adjusted_refund')
+                         AND lineitem_category  IN ('item_discount', 'order_discount', 'harper_item_discount', 'harper_order_discount')
+                    THEN COALESCE(lineitem_amount, 0)
 
                     -- Try-on transactions have no impact
                     ELSE 0

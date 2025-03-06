@@ -63,6 +63,7 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
         sql_hook_params: dict | None = None,
         slack_base_url: str | None = None,
         slack_config: str,
+        schema: str,
         results_df_name: str = "results_df",
         parameters: list | tuple | Mapping[str, Any] | None = None,
         slack_timeout: int = 30,
@@ -80,6 +81,7 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
         self.slack_config = slack_config
         self.results_df_name = results_df_name
         self.slack_timeout = slack_timeout
+        self.schema = schema
         self.slack_proxy = slack_proxy
         self.slack_retry_handlers = slack_retry_handlers
         self.generate_attachment_script = generate_attachment_script  # External script for graph generation
@@ -181,7 +183,7 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
                 },
             )
             print("img_response", img_response["file"]["shares"])
-            slack_hook.call("chat.update", ts=img_response["ts"], json=api_call_params)
+            # slack_hook.call("chat.update", ts=img_response["ts"], json=api_call_params)
         else:
             slack_hook.call("chat.postMessage", json=api_call_params)
 
@@ -208,6 +210,9 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
         """
 
         print("context", context)
+        print("schema", self.schema)
+        context["schema"] = self.schema
+        print("context.schema", context["schema"])
         if self.times_rendered == 0:
             # On the first render, exclude slack_message since query results are not yet retrieved
             fields_to_render: Iterable[str] = (x for x in self.template_fields if x != "slack_config")
@@ -240,6 +245,7 @@ class SqlToSlackWebhookOperator(BaseSqlToSlackOperator):
 
         # Get the query results as a Pandas DataFrame
         df = self._get_query_results()
+        context["schema"] = self.schema
 
         print(df)
         self._render_and_send_slack_message(context, df)
