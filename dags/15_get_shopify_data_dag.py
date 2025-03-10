@@ -235,10 +235,10 @@ clear_vars_pre_import = ClearTaskVarsOperator(
     wait_for_things_to_exist
     >> is_latest_dagrun_task
     >> drop_shopify_partner_orders_transient_table
-    >> drop_shopify_partner_orders_public_table
     >> clear_vars_pre_import
     >> first_task
     >> migration_tasks
+    >> drop_shopify_partner_orders_public_table  # moved to drop when new table ready to rebuild
     >> refresh_transient_table
     >> ensure_datalake_table
     >> refresh_datalake_table
