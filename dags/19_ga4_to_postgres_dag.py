@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from airflow import DAG
 from airflow.models import Variable
-from airflow.utils.timezone import make_aware  # Import make_aware instead
 
 # from airflow.utils.timezone import datetime as airflow_datetime  # Add this import
 from airflow.operators.dummy import DummyOperator
@@ -22,14 +21,11 @@ from plugins.operators.ensure_datalake_table_exists import EnsurePostgresDatalak
 from plugins.operators.ensure_datalake_table_view_exists import EnsurePostgresDatalakeTableViewExistsOperator
 from plugins.operators.append_transient_table_data_operator import AppendTransientTableDataOperator
 
-GA4_PROPERTY_ID = Variable.get("GA4_PROPERTY_ID", "")
+ga4_property_id = Variable.get("GA4_PROPERTY_ID", "")  # caps because its a variable name
 
 
 rebuild = Variable.get("REBUILD_GA4_DATA", "False").lower() in ["true", "1", "yes"]
-default_start_date = Variable.get("GA4_START_DATE", "2024-08-01")
-# Convert string to datetime and make it timezone-aware
-start_date = make_aware(datetime.strptime(default_start_date, "%Y-%m-%d"))
-end_date = make_aware(datetime.now())  # Make current time timezone-aware
+start_date = Variable.get("GA4_START_DATE", "2024-08-01")
 
 
 def reset_rebuild_var():
@@ -43,7 +39,7 @@ default_args = {
     "depends_on_past": True,
     "retry_delay": timedelta(minutes=5),
     "retries": 0,
-    "on_failure_callback": send_harper_failure_notification,
+    "on_failure_callback": [send_harper_failure_notification()],
 }
 
 dag = DAG(
@@ -72,7 +68,7 @@ wait_for_things_to_exist = ExternalTaskSensor(
 ga4_task = GA4ToPostgresOperator(
     task_id="import_ga4_data_to_datalake",
     google_conn_id="ga4_api_data",
-    GA4_PROPERTY_ID=GA4_PROPERTY_ID,
+    ga4_property_id=ga4_property_id,
     postgres_conn_id="postgres_datalake_conn_id",
     destination_schema="transient_data",
     destination_table="ga4__daily_metrics",
@@ -99,8 +95,18 @@ ga4_ensure_datalake_table = EnsurePostgresDatalakeTableExistsOperator(
     source_table="ga4__daily_metrics",
     destination_schema="public",
     destination_table="raw__ga4__daily_metrics",
-    # append_fields=["airflow_sync_ds"],
-    # prepend_fields=["id"],
+    primary_key_template="""
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = '{{ destination_table }}_idx'
+        ) THEN
+            ALTER TABLE {{ destination_schema }}.{{ destination_table }}
+            ADD CONSTRAINT {{ destination_table }}_idx PRIMARY KEY (id);
+        END IF;
+    END $$;
+    """,
     dag=dag,
 )
 
@@ -171,9 +177,9 @@ base_tables_completed = DummyOperator(task_id="base_tables_completed", dag=dag, 
     wait_for_things_to_exist
     >> is_latest_dagrun_task
     >> drop_ga4_transient_table
-    >> drop_ga4_public_table
     >> ga4_task
     >> ga4_has_records_to_process
+    >> drop_ga4_public_table  # moved to drop when new table ready to rebuild
     >> ga4_ensure_datalake_table
     >> ga4_ensure_datalake_table_columns
     >> ga4_append_transient_table_data
