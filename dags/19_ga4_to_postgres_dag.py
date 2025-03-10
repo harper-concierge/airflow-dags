@@ -150,7 +150,6 @@ drop_ga4_transient_table = DropPostgresTableOperator(
     schema="transient_data",
     table="ga4__daily_metrics",
     depends_on_past=False,
-    skip=not rebuild,
     dag=dag,
 )
 

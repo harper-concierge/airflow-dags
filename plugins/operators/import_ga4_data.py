@@ -265,6 +265,31 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
             return 0
 
         df = pd.DataFrame(records)
+
+        # Log initial count
+        initial_count = len(df)
+
+        # Filter out records where partner, partner_reference, or city is null/empty
+        df = df[
+            df["partner"].notna()
+            & df["partner_reference"].notna()
+            & df["city"].notna()
+            & (df["partner"] != "")
+            & (df["partner_reference"] != "")
+            & (df["city"] != "")
+        ]
+
+        # Log how many records were filtered
+        filtered_count = len(df)
+        if filtered_count < initial_count:
+            self.log.info(
+                f"Filtered out {initial_count - filtered_count} records with empty partner/partner_reference/city"
+            )
+
+        if df.empty:
+            self.log.info("No valid records to write after filtering")
+            return 0
+
         # Sort DataFrame by date before inserting
         df = df.sort_values("date")
 
@@ -282,11 +307,11 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
             schema=self.destination_schema,
             if_exists="append",
             index=False,
-            dtype={"id": types.String},  # Explicitly set id column type
+            dtype={"id": types.String},
             chunksize=1000,
         )
 
-        total_rows = len(records)
+        total_rows = len(df)
         self.log.info(f"Processed {total_rows} rows")
         return total_rows
 
