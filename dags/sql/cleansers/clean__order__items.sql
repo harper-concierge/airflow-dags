@@ -52,7 +52,11 @@ CREATE VIEW {{ schema }}.clean__order__items AS
 		WHEN (oi.purchased = 1 AND oi.returned = 1) THEN 1
 		ELSE 0
 	END AS post_purchase_return,
-	 {{ dim__time_columns | prefix_columns('oc', 'createdat') }}
+	dt.dim_date_id as createdat__dim_date,
+	dt.dim_month as createdat__dim_month,
+	dt.dim_year as createdat__dim_year,
+	dt.dim_yearmonth_sc as createdat__dim_yearmonth,
+	dt.dim_yearcalendarweek_sc as createdat__dim_yearcalendarweek
 FROM {{ schema }}.order__items oi
 LEFT JOIN
     {{ schema }}.orders o ON oi.order_id = o.id

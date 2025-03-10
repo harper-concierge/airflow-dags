@@ -22,6 +22,7 @@ CREATE VIEW {{ schema }}.clean__stripe__charge__summary AS
           NULL AS refund_id,
           'CHARGE' AS transaction_type,
           to_timestamp(c.created) AS transaction_created_at,
+          to_timestamp(c.created)::date AS payment_at__dim_date,
           c.airflow_sync_ds AS stripe_charge_airflow_sync_ds,
           c.status AS transaction_status,
           c.invoice AS invoice_id,
@@ -33,8 +34,7 @@ CREATE VIEW {{ schema }}.clean__stripe__charge__summary AS
           c.balance_transaction__id AS balance_transaction_id,
           c.balance_transaction__amount,
           c.disputed,
-          c.customer as stripe_customer_id,
-          dt.*
+          c.customer as stripe_customer_id
     FROM stripe__charges c
     LEFT JOIN stripe__invoices i ON c.invoice = i.id
-    LEFT JOIN dim__time dt ON to_timestamp(c.created)::date = dt.dim_date_id;
+;

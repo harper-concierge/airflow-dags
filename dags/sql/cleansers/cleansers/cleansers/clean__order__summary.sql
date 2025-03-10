@@ -25,22 +25,26 @@ CREATE VIEW {{ schema }}.clean__order__summary AS
         get_locate2u_url(o.appointment__locate2u_stop_id) AS locate2u_link,
         {{ clean__order__item__summary_columns | prefix_columns('clean__ois', 'itemsummary', exclude_columns=['order_id']) }},
         {{ clean__order__status_events_columns | prefix_columns('clean__ose', 'orderstatusevent', exclude_columns=['order_id']) }},
-        {{ dim__time_columns | prefix_columns('adt', 'appointment__date') }},
-        {{ dim__time_columns | prefix_columns('tas', 'tp_actually_started') }},
-        {{ dim__time_columns | prefix_columns('tae', 'tp_actually_ended') }},
-        {{ dim__time_columns | prefix_columns('tar', 'tp_actually_reconciled') }},
-        {{ dim__time_columns | prefix_columns('tcc', 'try_chargeable_at') }},
-        {{ dim__time_columns | prefix_columns('oc', 'createdat') }}
+        -- Appointment date
+        adt.dim_month as appointment__date__dim_month,
+        adt.dim_year as appointment__date__dim_year,
+        -- Trial period ended
+        tae.dim_date_id as tp_actually_ended__dim_date,
+        -- Try chargeable
+        tcc.dim_date_id as try_chargeable_at__dim_date,
+        tcc.dim_yearcalendarweek_sc as try_chargeable_at__dim_yearcalendarweek_sc,
+        tcc.dim_yearmonth_sc as try_chargeable_at__dim_yearmonth_sc,
+        -- Created at
+        oc.dim_date_id as createdat__dim_date,
+        oc.dim_month as createdat__dim_month,
+        oc.dim_year as createdat__dim_year,
+        oc.dim_yearmonth_sc as createdat__dim_yearmonth_sc
     FROM
         {{ schema }}.orders o
     LEFT JOIN
         dim__time adt ON o.appointment__date::date = adt.dim_date_id
     LEFT JOIN
-        dim__time tas ON o.trial_period_actually_started_at::date = tas.dim_date_id
-    LEFT JOIN
         dim__time tae ON o.trial_period_actually_ended_at::date = tae.dim_date_id
-    LEFT JOIN
-        dim__time tar ON o.trial_period_actually_reconciled_at::date = tar.dim_date_id
     LEFT JOIN
         dim__time tcc ON o.try_commission_chargeable_at::date = tcc.dim_date_id
     LEFT JOIN
