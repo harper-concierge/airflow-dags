@@ -33,6 +33,7 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
         destination_schema: str,
         destination_table: str,
         rebuild: bool = False,
+        debug_auth: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -42,6 +43,7 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
         self.destination_schema = destination_schema
         self.destination_table = destination_table
         self.rebuild = rebuild
+        self.debug_auth = debug_auth
         self.separator = "__"
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.offset_var_key = "offset"
@@ -86,8 +88,29 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
             try:
                 credentials = google_hook.get_credentials()
                 self.log.info("Successfully retrieved Google credentials")
+
+                # Add detailed auth logging
+                if self.debug_auth:
+                    if hasattr(credentials, "_service_account_email"):
+                        self.log.info(f"Service account email: {credentials._service_account_email}")
+
+                    if hasattr(credentials, "token"):
+                        # Only log first few characters of token for security
+                        token_preview = str(credentials.token)[:20] + "..." if credentials.token else "None"
+                        self.log.info(f"Token preview: {token_preview}")
+
+                    if hasattr(credentials, "expiry"):
+                        self.log.info(f"Token expiration: {credentials.expiry}")
+
+                    # If keyfile_dict exists, log a preview
+                    if keyfile_dict:
+                        dict_preview = str(keyfile_dict)[:50] + "..."
+                        self.log.info(f"Keyfile dict preview: {dict_preview}")
+
             except Exception as e:
                 self.log.error(f"Failed to get Google credentials: {str(e)}")
+                if self.debug_auth:
+                    self.log.error(f"Connection extras: {conn.extra_dejson}")
                 raise AirflowException(f"Authentication failed: {str(e)}")
 
             # Initialize client with credentials
