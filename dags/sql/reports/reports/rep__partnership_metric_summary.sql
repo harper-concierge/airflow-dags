@@ -17,17 +17,18 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_metric_summ
     orders AS (
         SELECT
             o.*,
-
             o.order_type AS order__type,
-
             o.order_name AS order__name,
-
-            o.createdat AS order__createdat,
-            o.createdat__dim_date AS order__createdat__dim_date,
-            o.createdat__dim_yearmonth AS order__createdat__dim_yearmonth,
-            o.createdat__dim_month AS order__createdat__dim_month,
-            o.createdat__dim_year AS order__createdat__dim_year,
-
+            -- Create date fields from dim_time joins
+            dt_created.dim_month as order__createdat__dim_month,
+            dt_created.dim_year as order__createdat__dim_year,
+            dt_created.dim_date_id as order__createdat__dim_date,
+            dt_created.dim_yearmonth_sc as order__createdat__dim_yearmonth,
+            -- Add appointment date fields
+            dt_appt.dim_month as appointment__date__dim_month,
+            dt_appt.dim_year as appointment__date__dim_year,
+            dt_appt.dim_date_id as appointment__date__dim_date,
+            dt_appt.dim_yearmonth_sc as appointment__date__dim_yearmonth,
             CASE
                 WHEN o.ship_direct = 1 AND (sd.previous_original_order_name IS NOT NULL AND sd.previous_original_order_name != '') THEN sd.previous_original_order_name
                 ELSE o.original_order_name
@@ -37,6 +38,10 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_metric_summ
             {{ schema }}.clean__order__summary o
         LEFT JOIN
             ship_directs sd ON o.id = sd.id
+        LEFT JOIN
+            {{ schema }}.dim__time dt_created ON o.createdat::date = dt_created.dim_date_id
+        LEFT JOIN
+            {{ schema }}.dim__time dt_appt ON o.appointment__date::date = dt_appt.dim_date_id
         WHERE
         o.link_order__is_child = 0
     )
@@ -46,7 +51,6 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_metric_summ
         order__createdat__dim_month,
         order__createdat__dim_year,
         brand_name,
-        -- order__type,
         happened,
         harper_product_type,
         COUNT(DISTINCT original_order_name_merge) AS num_merged_order_name,
@@ -62,7 +66,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_metric_summ
         SUM(itemsummary__num_purchased) AS num_purchased,
         SUM(itemsummary__num_returned) AS num_returned,
         SUM(itemsummary__num_purchased_net) AS num_purchased_net,
-        SUM(itemsummary__num_actually_purchased) AS num_actually_purchased, -- duplicate of num_purchased
+        SUM(itemsummary__num_actually_purchased) AS num_actually_purchased,
         SUM(itemsummary__num_preorder) AS num_preorder,
         SUM(itemsummary__num_received_by_harper_warehouse) AS num_received_by_harper_warehouse,
         SUM(itemsummary__num_received_by_partner_warehouse) AS num_received_by_partner_warehouse,
@@ -95,7 +99,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_metric_summ
         SUM(itemsummary__initiated_sale__total_value_returned) AS initiated_sale__total_value_returned,
         SUM(itemsummary__initiated_sale__total_value_received) AS initiated_sale__total_value_received,
         SUM(itemsummary__initiated__total_value_received_wh) AS initiated__total_value_received_wh,
-                -- Inspire Me Summary
+
+        -- Inspire Me Summary
         SUM(itemsummary__inspire_me__num_ordered) AS inspire_me__num_ordered,
         SUM(itemsummary__inspire_me__num_items_fulfilled) AS inspire_me__num_items_fulfilled,
         SUM(itemsummary__inspire_me__num_purchased) AS inspire_me__num_purchased,
@@ -114,7 +119,6 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_metric_summ
         SUM(itemsummary__inspire_me__total_value_received) AS inspire_me__total_value_received,
         SUM(itemsummary__inspire_me__total_value_received_wh) AS inspire_me__total_value_received_wh
 
-
     FROM
         orders o
     GROUP BY
@@ -123,21 +127,17 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__partnership_metric_summ
         order__createdat__dim_month,
         order__createdat__dim_year,
         brand_name,
-        -- order__type,
         happened,
         harper_product_type
-
 
 WITH NO DATA;
 
 {% if is_modified %}
 CREATE INDEX IF NOT EXISTS rep__partnership_metric_summary_brand_name ON {{ schema }}.rep__partnership_metric_summary (brand_name);
--- CREATE INDEX IF NOT EXISTS rep__partnership_metric_summary_order__type ON {{ schema }}.rep__partnership_metric_summary (order__type);
 CREATE INDEX IF NOT EXISTS rep__partnership_metric_summary_appointment__date__dim_year ON {{ schema }}.rep__partnership_metric_summary (appointment__date__dim_year);
 CREATE INDEX IF NOT EXISTS rep__partnership_metric_summary_appointment__date__dim_month ON {{ schema }}.rep__partnership_metric_summary (appointment__date__dim_month);
 CREATE INDEX IF NOT EXISTS rep__partnership_metric_summary_order__createdat__dim_year ON {{ schema }}.rep__partnership_metric_summary (order__createdat__dim_year);
 CREATE INDEX IF NOT EXISTS rep__partnership_metric_summary_order__createdat__dim_month ON {{ schema }}.rep__partnership_metric_summary (order__createdat__dim_month);
-
 {% endif %}
 
 REFRESH MATERIALIZED VIEW {{ schema }}.rep__partnership_metric_summary;

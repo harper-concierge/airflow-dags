@@ -76,10 +76,11 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
         cos.order_type,
         cos.order_status,
         cos.trial_period_ended,
-        cos.trial_period_start_at,
-        cos.trial_period_actually_ended_at,
-        cos.updatedat,
-        cos.tp_actually_reconciled__dim_calendarweek,
+        -- Create date fields from dim_time joins
+        dt_tp_start.dim_date_id as trial_period_start_at,
+        dt_tp_end.dim_date_id as trial_period_actually_ended_at,
+        dt_update.dim_date_id as updatedat,
+        dt_tp_recon.dim_calendarweek as tp_actually_reconciled__dim_calendarweek,
         CASE
             WHEN sfr.shipping_fee_refunded = 1 THEN o.total_value_purchased_net
             ELSE (o.total_value_purchased_net + o.shipping_method__price)
@@ -96,10 +97,17 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__order__reconciliation__
     LEFT JOIN stripe_totals s ON s.order_id = o.order_id
     LEFT JOIN shipping_fee_refunds sfr ON sfr.order_id = o.order_id
     LEFT JOIN partial_refunds pr ON pr.order_id = o.order_id
-    LEFT JOIN clean__order__summary cos ON cos.id = o.order_id
+    LEFT JOIN {{ schema }}.clean__order__summary cos ON cos.id = o.order_id
     LEFT JOIN transactionlog_totals tt ON tt.order_id = o.order_id
+    -- Add dim_time joins
+    LEFT JOIN {{ schema }}.dim__time dt_tp_start ON cos.trial_period_start_at::date = dt_tp_start.dim_date_id
+    LEFT JOIN {{ schema }}.dim__time dt_tp_end ON cos.trial_period_actually_ended_at::date = dt_tp_end.dim_date_id
+    LEFT JOIN {{ schema }}.dim__time dt_update ON cos.updatedat::date = dt_update.dim_date_id
+    LEFT JOIN {{ schema }}.dim__time dt_tp_recon ON cos.trial_period_actually_reconciled_at::date = dt_tp_recon.dim_date_id
 WITH NO DATA;
+
 {% if is_modified %}
 CREATE UNIQUE INDEX IF NOT EXISTS rep__order__reconciliation__totals_idx ON {{ schema }}.rep__order__reconciliation__totals (order_id);
 {% endif %}
+
 REFRESH MATERIALIZED VIEW {{ schema }}.rep__order__reconciliation__totals;

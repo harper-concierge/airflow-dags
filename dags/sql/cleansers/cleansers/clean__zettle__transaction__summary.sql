@@ -14,8 +14,7 @@ CREATE VIEW {{ schema }}.clean__zettle__transaction__summary AS
         zpp.amount as zettle_purchase_amount,
         zpp.type as zettle_purchase_type,
         zpp.gratuityamount as zettle_purchase_gratuityamount,
-        {{ dim__time_columns | prefix_columns('dt', 'zettle_purchase_created') }}
+        zpp.created::date as payment_at__dim_date
     FROM {{ schema }}.zettle__transactions zt
     LEFT JOIN {{ schema }}.clean__zettle__purchase_payments zpp ON zt.originatingtransactionuuid=zpp.uuid
-    LEFT JOIN dim__time dt ON zpp.created::date = dt.dim_date_id
 ;

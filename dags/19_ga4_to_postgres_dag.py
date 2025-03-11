@@ -73,6 +73,7 @@ ga4_task = GA4ToPostgresOperator(
     destination_schema="transient_data",
     destination_table="ga4__daily_metrics",
     rebuild=rebuild,
+    debug_auth=True,
     dag=dag,
 )
 

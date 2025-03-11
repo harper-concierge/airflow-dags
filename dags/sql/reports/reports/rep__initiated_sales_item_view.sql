@@ -20,15 +20,11 @@ order_items AS (
         o.order_name AS order__name,
         i.order_name AS item__order_name,
         i.createdat AS item__createdat,
-        o.createdat__dim_date AS order__date,
-        o.createdat__dim_year AS order__year,
-        o.createdat__dim_month AS order__month,
-        o.createdat__dim_calendarweek AS order__cal_week,
-        o.createdat__dim_yearmonth AS order__dim_yearmonth,
-        o.createdat__dim_yearcalendarweek AS order__year_week,
+        dt_order.dim_date_id AS order__date,
+        dt_order.dim_year AS order__year,
+        dt_order.dim_month AS order__month,
+        dt_order.dim_yearmonth_sc AS order__dim_yearmonth,
         o.createdat AS order__createdat,
-        o.createdat__dim_date AS order__createdat__dim_date,
-        o.createdat__dim_yearmonth AS order__createdat__dim_yearmonth,
         i.initiated_sale__user_role AS item__initiated_sale__user_role,
         i.commission__percentage AS item__commission__percentage,
         i.initiated_sale__createdat AS item__initiated_sale__createdat,
@@ -39,6 +35,8 @@ order_items AS (
         i.updatedat AS item__updatedat,
         i.is_inspire_me AS item__is_inspire_me,
         o.initiated_sale__inspire_me_option_selected AS order__initiated_sale__inspire_me_option_selected,
+        -- Add trial period dates
+        dt_tp_start.dim_date_id AS tp_actually_started__dim_date,
         CASE
             WHEN o.ship_direct = 1 AND (sd.previous_original_order_name IS NOT NULL AND sd.previous_original_order_name != '') THEN sd.previous_original_order_name
             ELSE o.original_order_name
@@ -50,6 +48,12 @@ order_items AS (
         {{ schema }}.clean__order__summary o ON o.id = i.order_id
     LEFT JOIN
         ship_directs sd ON o.id = sd.id
+    LEFT JOIN
+        {{ schema }}.dim__time dt_order ON o.createdat::date = dt_order.dim_date_id
+    LEFT JOIN
+        {{ schema }}.dim__time dt_tp_start ON o.trial_period_actually_started_at::date = dt_tp_start.dim_date_id
+    LEFT JOIN
+        {{ schema }}.dim__time dt_tp_end ON o.trial_period_actually_ended_at::date = dt_tp_end.dim_date_id
     WHERE
         i.is_link_order_child_item = 0
         AND o.link_order__is_child = 0
@@ -105,16 +109,12 @@ SELECT
     link_order__is_child,
     missing,
     not_available,
-    order__cal_week,
     order__createdat,
-    order__createdat__dim_date,
-    order__createdat__dim_yearmonth,
     order__date,
     order__dim_yearmonth,
     order__name,
     order__type,
     order__year,
-    order__year_week,
     order_id,
     order_cancelled_status,
 	order_status,

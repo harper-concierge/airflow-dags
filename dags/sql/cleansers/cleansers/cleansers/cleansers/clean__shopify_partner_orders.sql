@@ -19,10 +19,8 @@ CREATE VIEW {{ schema }}.clean__shopify_partner_orders AS
             END
         ELSE NULL
     END AS customer_type,
-	{{ dim__time_columns | prefix_columns('pc', 'createdat') }}
+    created_at::date as createdat__dim_date
 FROM {{ schema }}.shopify_partner_orders p
 LEFT JOIN {{ schema }}.clean__order__summary co
    ON SPLIT_PART(p.id, '/', 5) = co.integration_order_id
-LEFT JOIN
-    {{ schema }}.dim__time pc ON p.created_at::date = pc.dim_date_id
 ;

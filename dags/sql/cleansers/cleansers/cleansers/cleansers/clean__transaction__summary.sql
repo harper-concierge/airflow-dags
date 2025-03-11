@@ -3,9 +3,10 @@ CREATE VIEW {{ schema }}.clean__transaction__summary AS
     SELECT
         t.*,
         tis.*,
-        {{ dim__time_columns | prefix_columns('dt', 'payment_at') }}
+        t.payment_at::date as payment_at__dim_date,
+        to_char(t.payment_at::date, 'YYYYIW')::int as payment_at__dim_yearcalendarweek_sc,
+        to_char(t.payment_at::date, 'YYYYMM')::int as payment_at__dim_yearmonth_sc
     FROM
         {{ schema }}.transaction t
     LEFT JOIN {{ schema }}.clean__transaction__item__summary tis ON tis.transaction_id=t.id
-    LEFT JOIN {{ schema }}.dim__time dt ON t.payment_at::date = dt.dim_date_id
 ;
