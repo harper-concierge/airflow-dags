@@ -7,7 +7,7 @@ WITH orders AS (
     SELECT
         brand_name,
         -- id,
-        createdat__dim_date,
+        createdat,
         order_name,
         original_order_name
     FROM clean__order__summary
@@ -26,7 +26,7 @@ combined AS (
     SELECT
         o.brand_name,
         -- o.id,
-        o.createdat__dim_date,
+        o.createdat,
         o.original_order_name,
         o.order_name,
         l.partner_order_name
@@ -40,7 +40,7 @@ combined AS (
 SELECT
     brand_name,
     -- id,
-    MIN(createdat__dim_date) AS min_created_at,
+    MIN(createdat) AS min_created_at,
     original_order_name,
     STRING_AGG(order_name, ', ' ORDER BY order_name ASC) AS harper_order_name,
     STRING_AGG(partner_order_name, ', ' ORDER BY partner_order_name ASC) AS partner_order_name

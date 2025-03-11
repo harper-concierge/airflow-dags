@@ -12,6 +12,11 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__unfulfilled_harper_try_
             (CURRENT_DATE - o.createdat::date) as days_old,
             CURRENT_DATE as current_date,
             o.createdAt,
+            dt.dim_date_id as createdat__dim_date,
+            dt.dim_month as createdat__dim_month,
+            dt.dim_year as createdat__dim_year,
+            dt.dim_yearmonth_sc as createdat__dim_yearmonth_sc,
+            dt.dim_yearcalendarweek_sc as createdat__dim_yearcalendarweek_sc,
             o.updatedAt,
             o.shipping_method__name,
             o.shipping_method__description,
@@ -32,6 +37,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__unfulfilled_harper_try_
             o.airflow_sync_ds
     FROM clean__order__summary o
     LEFT JOIN customer c ON c.id = o.customer_id
+    LEFT JOIN dim__time dt ON o.createdat::date = dt.dim_date_id
     WHERE o.order_status='new' AND o.is_harper_try=1 and link_order_child=0
     AND (o.fulfillment_status IS NULL OR o.fulfillment_status = 'unfulfilled')
     AND (CURRENT_DATE - o.createdat::date) > 1

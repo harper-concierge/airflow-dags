@@ -16,7 +16,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__stripe__order__transact
     FROM clean__transaction__item__summary i
     LEFT JOIN public.transaction t on t.id=i.transaction_id
     LEFT JOIN transaction__orders o on o.transaction_id=i.transaction_id
-    LEFT JOIN public.dim__time dt ON t.payment_at::date = dt.dim_date_id
+    --LEFT JOIN public.dim__time dt ON t.payment_at::date = dt.dim_date_id
     WHERE t.payment_provider = 'stripe'
 
     ORDER BY t.createdat desc

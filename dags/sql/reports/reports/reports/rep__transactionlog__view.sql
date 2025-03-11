@@ -19,8 +19,8 @@ SELECT
     t.partner_order_name,
     t.harper_order__createdat,
     t.harper_order__createdat__dim_date,
-    t.harper_order__createdat__dim_yearcalendarweek_sc,
-    t.harper_order__createdat__dim_yearmonth_sc,
+    dt_created.dim_yearcalendarweek_sc as harper_order__createdat__dim_yearcalendarweek_sc,
+    dt_created.dim_yearmonth_sc as harper_order__createdat__dim_yearmonth_sc,
     t.harper_order__customer__first_name,
     t.harper_order__customer__last_name,
     t.transaction_info__total_purchased_amount,
@@ -72,11 +72,13 @@ SELECT
     t.id
 
 FROM
-    rep__transactionlog t
+    {{ schema }}.rep__transactionlog t
 LEFT JOIN
     {{ schema }}.dim__time dt ON t.harper_order__trial_period_actually_ended_at::date = dt.dim_date_id
 LEFT JOIN
     {{ schema }}.dim__time cdt ON t.createdat::date = cdt.dim_date_id
+LEFT JOIN
+    {{ schema }}.dim__time dt_created ON t.harper_order__createdat::date = dt_created.dim_date_id
 
 ORDER BY
     t.createdat DESC

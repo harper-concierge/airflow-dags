@@ -3,7 +3,6 @@ DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__stripe__order__transactions C
 {% endif %}
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__stripe__order__transactions AS
-
     SELECT
         t.id,
         t.amount,
@@ -25,12 +24,16 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__stripe__order__transact
         c.card_funding_type,
         c.transaction_status as charge_transaction_status,
         t.status as balance_status,
-        dt.*
+        -- Standard dim_time fields
+        dt.dim_date_id as createdat__dim_date,
+        dt.dim_month as createdat__dim_month,
+        dt.dim_year as createdat__dim_year,
+        dt.dim_yearmonth_sc as createdat__dim_yearmonth_sc,
+        dt.dim_yearcalendarweek_sc as createdat__dim_yearcalendarweek_sc
     FROM public.clean__stripe__transaction t
     LEFT JOIN public.clean__stripe__charge__summary c ON t.charge_id = c.charge_id
     LEFT JOIN public.dim__time dt ON t.created_at::date = dt.dim_date_id
     ORDER BY t.created_at desc
-
 WITH NO DATA;
 
 {% if is_modified %}

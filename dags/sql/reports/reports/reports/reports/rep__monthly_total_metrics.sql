@@ -5,7 +5,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__monthly_total_metrics A
 WITH
 concierge_revenue AS (
     SELECT
-        createdat__dim_yearmonth_sc AS metric_date,
+        dt.dim_yearmonth_sc AS metric_date,
 
         -- Adjusted revenue calculation with per-row VAT correction
         SUM(
@@ -43,17 +43,19 @@ concierge_revenue AS (
          AS total_concierge_revenue
 
     FROM
-        public.rep__transactionlog__view
+        {{ schema }}.rep__transactionlog__view t
+    LEFT JOIN {{ schema }}.dim__time dt
+        ON t.createdat::date = dt.dim_date_id -- should this be payment date?
     WHERE
         lineitem_type <> 'try_on'
         AND harper_product_type = 'harper_concierge'
     GROUP BY
-        createdat__dim_yearmonth_sc
+        dt.dim_yearmonth_sc
 ),
 
 try_revenue AS (
 	SELECT
-		trial_period_ended_at__dim_yearmonth_sc AS metric_date,
+		dt.dim_yearmonth_sc AS metric_date,
         SUM(
             CASE
                 WHEN lineitem_category IN ('item_discount', 'order_discount') THEN -lineitem_amount
@@ -63,48 +65,56 @@ try_revenue AS (
         )::integer AS total_try_revenue
 
 	FROM
-		{{ schema }}.rep__transactionlog__view
+		{{ schema }}.rep__transactionlog__view t
+    LEFT JOIN {{ schema }}.dim__time dt
+        ON t.trial_period_ended_at::date = dt.dim_date_id
 	WHERE
 		-- harper_order__order_status = 'completed'
 		lineitem_type = 'try_on'
         AND harper_product_type = 'harper_try'
 	GROUP BY
-		trial_period_ended_at__dim_yearmonth_sc
+		dt.dim_yearmonth_sc
 ),
 try_orders AS (
     SELECT
-        createdat__dim_yearmonth_sc AS metric_date,
+        dt.dim_yearmonth_sc AS metric_date,
         COUNT(DISTINCT order_name )::INTEGER AS total_try_orders_created
     FROM
-        {{ schema }}.clean__order__summary
+        {{ schema }}.clean__order__summary o
+    LEFT JOIN {{ schema }}.dim__time dt
+        ON o.createdat::date = dt.dim_date_id
     WHERE
         link_order__is_child = 0
         AND harper_product_type = 'harper_try'
     GROUP BY
-        createdat__dim_yearmonth_sc
+        dt.dim_yearmonth_sc
 ),
 concierge_orders AS (
     SELECT
-        createdat__dim_yearmonth_sc AS metric_date,
+        dt.dim_yearmonth_sc AS metric_date,
         COUNT(DISTINCT  order_name )::INTEGER AS total_concierge_orders_created
     FROM
-        {{ schema }}.clean__order__summary
+        {{ schema }}.clean__order__summary o
+    LEFT JOIN {{ schema }}.dim__time dt
+        ON o.createdat::date = dt.dim_date_id
     WHERE
         link_order__is_child = 0
         AND harper_product_type = 'harper_concierge'
     GROUP BY
-        createdat__dim_yearmonth_sc
+        dt.dim_yearmonth_sc
 ),
 all_orders AS (
     SELECT
-        createdat__dim_yearmonth_sc AS metric_date
+        dt.dim_yearmonth_sc AS metric_date
     FROM
-        {{ schema }}.clean__order__summary
+        {{ schema }}.clean__order__summary o
+    LEFT JOIN {{ schema }}.dim__time dt
+        ON o.createdat::date = dt.dim_date_id
     WHERE
         link_order__is_child = 0
     GROUP BY
-        createdat__dim_yearmonth_sc
-    ORDER BY createdat__dim_yearmonth_sc
+        dt.dim_yearmonth_sc
+    ORDER BY dt.dim_yearmonth_sc
 ),
 combined_data AS (
     SELECT

@@ -25,30 +25,15 @@ CREATE VIEW {{ schema }}.clean__order__summary AS
         get_locate2u_url(o.appointment__locate2u_stop_id) AS locate2u_link,
         {{ clean__order__item__summary_columns | prefix_columns('clean__ois', 'itemsummary', exclude_columns=['order_id']) }},
         {{ clean__order__status_events_columns | prefix_columns('clean__ose', 'orderstatusevent', exclude_columns=['order_id']) }},
-        -- Appointment date
-        adt.dim_month as appointment__date__dim_month,
-        adt.dim_year as appointment__date__dim_year,
-        -- Trial period ended
-        tae.dim_date_id as tp_actually_ended__dim_date,
-        -- Try chargeable
-        tcc.dim_date_id as try_chargeable_at__dim_date,
-        tcc.dim_yearcalendarweek_sc as try_chargeable_at__dim_yearcalendarweek_sc,
-        tcc.dim_yearmonth_sc as try_chargeable_at__dim_yearmonth_sc,
-        -- Created at
-        oc.dim_date_id as createdat__dim_date,
-        oc.dim_month as createdat__dim_month,
-        oc.dim_year as createdat__dim_year,
-        oc.dim_yearmonth_sc as createdat__dim_yearmonth_sc
+        -- Date fields
+        o.createdat::date as createdat__dim_date,
+        o.appointment__date::date as appointment__date__dim_date,
+        o.trial_period_actually_ended_at::date as tp_actually_ended__dim_date,
+        o.try_commission_chargeable_at::date as try_chargeable_at__dim_date,
+        to_char(o.try_commission_chargeable_at::date, 'YYYYIW')::int as try_chargeable_at__dim_yearcalendarweek_sc,
+        to_char(o.try_commission_chargeable_at::date, 'YYYYMM')::int as try_chargeable_at__dim_yearmonth_sc
     FROM
         {{ schema }}.orders o
-    LEFT JOIN
-        dim__time adt ON o.appointment__date::date = adt.dim_date_id
-    LEFT JOIN
-        dim__time tae ON o.trial_period_actually_ended_at::date = tae.dim_date_id
-    LEFT JOIN
-        dim__time tcc ON o.try_commission_chargeable_at::date = tcc.dim_date_id
-    LEFT JOIN
-        dim__time oc ON o.createdat::date = oc.dim_date_id
     LEFT JOIN
         clean__order__item__summary clean__ois ON clean__ois.order_id = o.id
     LEFT JOIN

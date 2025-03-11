@@ -1,5 +1,30 @@
 DROP VIEW IF EXISTS {{ schema }}.clean__order__items CASCADE;
 CREATE VIEW {{ schema }}.clean__order__items AS
+SELECT
+    oi.*,
+    o.brand_name,
+    o.partner_id,
+    p.name as partner_name,
+    CASE
+        WHEN (oi.purchased = 1 AND oi.received = 1 AND oi.received_by_warehouse = 1) THEN 1
+        WHEN (oi.purchased = 1 AND oi.returned = 1) THEN 1
+        ELSE 0
+    END AS post_purchase_return,
+    oi.createdat::date as createdat__dim_date
+FROM {{ schema }}.order__items oi
+LEFT JOIN
+    {{ schema }}.orders o ON oi.order_id = o.id
+LEFT JOIN
+    {{ schema }}.partner p ON o.partner_id = p.id
+WHERE
+    LOWER(oi.name) NOT LIKE '%%undefined%%'
+    AND oi.name IS NOT NULL AND oi.name != ''
+    AND oi.order_name IS NOT NULL AND oi.order_name != '' AND oi.order_name != ' ' AND oi.order_name != ' -L1'
+    AND oi.original_order_name IS NOT NULL AND oi.original_order_name != '' AND oi.original_order_name != ' ' AND oi.original_order_name != ' -L1'
+;
+
+DROP VIEW IF EXISTS {{ schema }}.clean__order__items CASCADE;
+CREATE VIEW {{ schema }}.clean__order__items AS
   SELECT
 	oi.*,
 	oi.order_type AS item__order_type,
@@ -51,19 +76,12 @@ CREATE VIEW {{ schema }}.clean__order__items AS
 		WHEN (oi.purchased = 1 AND oi.received = 1 AND oi.received_by_warehouse = 1) THEN 1
 		WHEN (oi.purchased = 1 AND oi.returned = 1) THEN 1
 		ELSE 0
-	END AS post_purchase_return,
-	dt.dim_date_id as createdat__dim_date,
-	dt.dim_month as createdat__dim_month,
-	dt.dim_year as createdat__dim_year,
-	dt.dim_yearmonth_sc as createdat__dim_yearmonth,
-	dt.dim_yearcalendarweek_sc as createdat__dim_yearcalendarweek
+	END AS post_purchase_return
 FROM {{ schema }}.order__items oi
 LEFT JOIN
     {{ schema }}.orders o ON oi.order_id = o.id
 LEFT JOIN
     {{ schema }}.partner p ON o.partner_id = p.id
-LEFT JOIN
-    {{ schema }}.dim__time oc ON oi.createdat::date = oc.dim_date_id
 WHERE
 	LOWER(oi.name) NOT LIKE '%%undefined%%'
 	AND oi.name IS NOT NULL AND oi.name != ''

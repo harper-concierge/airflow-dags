@@ -51,10 +51,15 @@ base_orders AS (
        o.order_status AS order__status,
        i.createdat AS item__createdat,
        o.createdat AS order__createdat,
-       o.createdat__dim_year AS order__createdat__dim_year,
-       o.createdat__dim_month AS order__createdat__dim_month,
-       o.createdat__dim_date AS order__createdat__dim_date,
-       o.createdat__dim_yearmonth AS order__createdat__dim_yearmonth,
+       dt.dim_year AS order__createdat__dim_year,
+       dt.dim_month AS order__createdat__dim_month,
+       dt.dim_date_id AS order__createdat__dim_date,
+       dt.dim_yearmonth_sc AS order__createdat__dim_yearmonth,
+       dt_appt.dim_month as appointment__date__dim_month_,
+       dt_appt.dim_year as appointment__date__dim_year_,
+       dt_appt.dim_date_id as appointment__date__dim_date_,
+       dt_appt.dim_yearmonth_sc as appointment__date__dim_yearmonth_,
+       dt_tp_start.dim_date_id AS tp_actually_started__dim_date,
        CASE
            WHEN o.ship_direct = 1 AND sd.previous_original_order_name != ''
            THEN sd.previous_original_order_name
@@ -68,9 +73,9 @@ base_orders AS (
        CASE
            WHEN o.order_type = 'ship_direct' THEN o.createdat
            WHEN o.order_type = 'harper_try' THEN
-               COALESCE(o.tp_actually_ended__dim_date, o.trial_period_end_at)
+               COALESCE(dt_tp_end.dim_date_id, o.trial_period_end_at)
            ELSE
-               COALESCE(o.appointment_completed_at::date, o.appointment__date__dim_date)
+               COALESCE(o.appointment_completed_at::date, dt_appt.dim_date_id)
        END AS completion_date,
        i.item_value_pence AS item__item_value_pence,
        i.is_inspire_me AS item_is_inspire_me,
@@ -79,6 +84,10 @@ base_orders AS (
    FROM {{ schema }}.rep__deduped_order_items i
    LEFT JOIN {{ schema }}.clean__order__summary o ON o.id = i.order_id
    LEFT JOIN ship_directs sd ON o.id = sd.id
+   LEFT JOIN {{ schema }}.dim__time dt ON o.createdat::date = dt.dim_date_id
+   LEFT JOIN {{ schema }}.dim__time dt_appt ON o.appointment__date::date = dt_appt.dim_date_id
+   LEFT JOIN {{ schema }}.dim__time dt_tp_start ON o.trial_period_actually_started_at::date = dt_tp_start.dim_date_id
+   LEFT JOIN {{ schema }}.dim__time dt_tp_end ON o.trial_period_actually_ended_at::date = dt_tp_end.dim_date_id
    WHERE i.is_link_order_child_item = 0 AND o.link_order__is_child = 0
 )
 
@@ -93,7 +102,7 @@ SELECT
    happened,
    order__createdat__dim_date AS order_created_date,
    is_cancelled,
-   REPLACE(bo.order__createdat__dim_yearmonth, '/', '-') AS order__createdat__dim_yearmonth,
+   REPLACE(order__createdat__dim_yearmonth, '/', '-') AS order__createdat__dim_yearmonth,
    order__createdat__dim_year,
    order__createdat__dim_month,
    tp_actually_ended__dim_date,
@@ -112,10 +121,10 @@ SELECT
        ELSE 'Returning Harper Customer'
    END AS customer_type_,
    TO_CHAR(completion_date, 'YYYY-MM-DD')::date as completion_date,
-   MAX(appointment__date__dim_date) AS appointment__date__dim_date,
-   MAX(appointment__date__dim_month) AS appointment__date__dim_month,
-   MAX(appointment__date__dim_year) AS appointment__date__dim_year,
-   MAX(appointment__date__dim_yearmonth) AS appointment__date__dim_yearmonth,
+   MAX(appointment__date__dim_date_) AS appointment__date__dim_date_,
+   MAX(appointment__date__dim_month_) AS appointment__date__dim_month_,
+   MAX(appointment__date__dim_year_) AS appointment__date__dim_year_,
+   MAX(appointment__date__dim_yearmonth_) AS appointment__date__dim_yearmonth_,
    MAX(time_in_appointment) AS time_in_appointment,
    MAX(time_to_appointment) AS time_to_appointment,
    CAST(NULLIF(discount_total, ' ') AS NUMERIC) AS discount_total,
@@ -207,6 +216,10 @@ GROUP BY
    order__createdat__dim_yearmonth,
    order__createdat__dim_year,
    order__createdat__dim_month,
+   appointment__date__dim_date_,
+   appointment__date__dim_month_,
+   appointment__date__dim_year_,
+   appointment__date__dim_yearmonth_,
    completion_date,
    tp_actually_ended__dim_date,
    tp_actually_started__dim_date,
@@ -240,8 +253,8 @@ CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_is_cancelled_idx
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__status_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order__status);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_order__order_created_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (order_created_date);
 CREATE INDEX IF NOT EXISTS rep__partnership_dashboard_base_view_completion_date_idx ON {{ schema }}.rep__partnership_dashboard_base_view (completion_date);
--- Composite indexes for common query patterns
 
+-- Composite indexes for common query patterns
 CREATE INDEX idx_brand_kpi_daily ON {{ schema }}.rep__partnership_dashboard_base_view
 (brand_name, order_created_date) INCLUDE (daily_brand_orders, daily_brand_value);
 
