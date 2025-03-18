@@ -102,7 +102,7 @@ SELECT
    happened,
    order__createdat__dim_date AS order_created_date,
    is_cancelled,
-   REPLACE(order__createdat__dim_yearmonth, '/', '-') AS order__createdat__dim_yearmonth,
+   REPLACE(order__createdat__dim_yearmonth, '/', '') AS order__createdat__dim_yearmonth,
    order__createdat__dim_year,
    order__createdat__dim_month,
    tp_actually_ended__dim_date,
@@ -196,10 +196,10 @@ LEFT JOIN daily_summary ds
    END
 LEFT JOIN monthly_kpi_data m
    ON m.partner_name = bo.brand_name
-   AND TO_CHAR(DATE(m.year_month_created), 'YYYY/MM') = bo.order__createdat__dim_yearmonth
-   AND CASE
-       WHEN harper_product_type = 'harper_concierge' THEN m.analysis_region = 'London'
-       ELSE m.analysis_region = 'Regional'
+   AND TO_CHAR(DATE(m.year_month_created), 'YYYYMM') = bo.order__createdat__dim_yearmonth
+   AND m.analysis_region = CASE
+       WHEN harper_product_type = 'harper_concierge' THEN 'London'
+       ELSE 'Regional'
    END
 GROUP BY
    original_order_name_merge,
