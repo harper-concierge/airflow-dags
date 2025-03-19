@@ -3962,6 +3962,12 @@
                 "string"
             ]
         },
+        "discount_amount": {
+            "type": "integer",
+            "bsonType": [
+                "int"
+            ]
+        },
         "discount_total": {
             "type": "string",
             "bsonType": [

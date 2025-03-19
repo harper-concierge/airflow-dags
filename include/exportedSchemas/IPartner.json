@@ -3362,6 +3362,10 @@
                             "bsonType": "string",
                             "type": "string"
                         },
+                        "capture_external_payment": {
+                            "bsonType": "bool",
+                            "type": "boolean"
+                        },
                         "platform_admin_base_url": {
                             "bsonType": "string",
                             "type": "string"
