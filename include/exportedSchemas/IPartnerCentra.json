@@ -107,6 +107,76 @@
             "type": "integer",
             "bsonType": "int"
         },
+        "service_settings": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "harper_try": {
+                    "bsonType": "object",
+                    "type": "object",
+                    "properties": {
+                        "market_id": {
+                            "type": "integer",
+                            "bsonType": "int"
+                        },
+                        "external_payments_api": {
+                            "bsonType": "object",
+                            "type": "object",
+                            "properties": {
+                                "external_payments_api_endpoint": {
+                                    "bsonType": "string",
+                                    "type": "string"
+                                },
+                                "external_payments_api_access_key": {
+                                    "bsonType": "string",
+                                    "type": "string"
+                                },
+                                "external_payments_plugin_secret": {
+                                    "bsonType": "string",
+                                    "type": "string"
+                                },
+                                "external_payments_reference": {
+                                    "bsonType": "string",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "harper_concierge": {
+                    "bsonType": "object",
+                    "type": "object",
+                    "properties": {
+                        "market_id": {
+                            "type": "integer",
+                            "bsonType": "int"
+                        },
+                        "external_payments_api": {
+                            "bsonType": "object",
+                            "type": "object",
+                            "properties": {
+                                "external_payments_api_endpoint": {
+                                    "bsonType": "string",
+                                    "type": "string"
+                                },
+                                "external_payments_api_access_key": {
+                                    "bsonType": "string",
+                                    "type": "string"
+                                },
+                                "external_payments_plugin_secret": {
+                                    "bsonType": "string",
+                                    "type": "string"
+                                },
+                                "external_payments_reference": {
+                                    "bsonType": "string",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "ingrid": {
             "bsonType": "object",
             "type": "object",
