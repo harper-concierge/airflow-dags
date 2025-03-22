@@ -26,7 +26,8 @@
         "subtotal_price",
         "delivery_fee",
         "total_purchase_price",
-        "discount_after_purchase"
+        "discount_after_purchase",
+        "discount_amount"
       ],
       "function_args": [],
       "aggregation_stage": 1
