@@ -4102,6 +4102,10 @@
                 }
             }
         },
+        "show_full_availability": {
+            "type": "boolean",
+            "bsonType": "boolean"
+        },
         "__v": {
             "bsonType": [
                 "int"
