@@ -164,20 +164,24 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
 
                         # Check if there are rows to process
                         if response.rows:
-                            self.log.info(f"Fetched {len(response.rows)} rows from GA4 API.")
+                            # Get the total number of rows fetched from GA4
+                            fetched_rows = len(response.rows)
+                            self.log.info(f"Fetched {fetched_rows} rows from GA4 API.")
+
                             records = [self.process_ga4_row(row, context) for row in response.rows]
                             self.log.info(f"Processed {len(records)} records.")
 
                             batch_processed = self.write_to_database(records, conn, context)
                             self.log.info(f"Wrote {batch_processed} records to the database.")
 
-                            # First update the offset
-                            offset += batch_processed
+                            # Update offset based on total fetched rows, not processed rows
+                            offset += fetched_rows
 
-                            # Then store the updated offset
+                            # Store the updated offset
                             self.set_last_successful_offset(conn, context, offset)
                             self.log.info(f"Stored offset: {offset}")
-                            # Finally increment total_docs_processed
+
+                            # Track actual processed records for final count
                             total_docs_processed += batch_processed
 
                         # Break if the number of rows fetched is less than the page size
