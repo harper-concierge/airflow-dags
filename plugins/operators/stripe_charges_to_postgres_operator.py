@@ -51,6 +51,7 @@ class StripeChargesToPostgresOperator(
             ("outcome__rule", "string"),
             ("failure_reason", "string"),
             ("payment_method_details__card__wallet__dynamic_last4", "string"),
+            ("metadata__checkout_id", "string"),
         ]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_charge_id"
