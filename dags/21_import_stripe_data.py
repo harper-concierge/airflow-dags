@@ -137,7 +137,7 @@ drop_invoices_transient_table = DropPostgresTableOperator(
     schema="transient_data",
     table="stripe__invoices",
     depends_on_past=False,
-    skip=not rebuild,
+    skip=False,
     dag=dag,
 )
 drop_invoices_public_table = DropPostgresTableOperator(
@@ -231,7 +231,7 @@ drop_charges_transient_table = DropPostgresTableOperator(
     schema="transient_data",
     table="stripe__charges",
     depends_on_past=False,
-    skip=not rebuild,
+    skip=False,
     dag=dag,
 )
 drop_charges_public_table = DropPostgresTableOperator(
@@ -325,6 +325,7 @@ drop_refunds_transient_table = DropPostgresTableOperator(
     postgres_conn_id="postgres_datalake_conn_id",
     schema="transient_data",
     table="stripe__refunds",
+    skip=False,
     depends_on_past=False,
     dag=dag,
 )
@@ -334,6 +335,7 @@ drop_refunds_public_table = DropPostgresTableOperator(
     schema="public",
     table="raw__stripe__refunds",
     cascade=True,
+    skip=not rebuild,
     depends_on_past=False,
     dag=dag,
 )
