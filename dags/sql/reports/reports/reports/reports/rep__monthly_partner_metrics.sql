@@ -19,7 +19,7 @@ concierge_revenue AS (
               END
 
             -- Handle discounts:
-            WHEN lineitem_category IN ('item_discount', 'order_discount') THEN
+            WHEN lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount') THEN
               CASE
                 WHEN lineitem_type = 'purchase' THEN -lineitem_amount
                 WHEN lineitem_type = 'refund'   THEN lineitem_amount
@@ -61,7 +61,7 @@ try_revenue AS (
         t.partner_name,
         SUM(
             CASE
-                WHEN lineitem_category IN ('item_discount', 'order_discount') THEN -lineitem_amount
+                WHEN lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount') THEN -lineitem_amount
                 ELSE lineitem_amount
             END
             * (commission_percentage / 100)
