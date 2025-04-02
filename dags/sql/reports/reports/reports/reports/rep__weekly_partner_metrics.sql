@@ -82,7 +82,7 @@ try_revenue AS (
 try_orders AS (
     SELECT
         dt.dim_yearcalendarweek_sc AS metric_date,
-        o.partner_name,
+        o.brand_name AS partner_name,
         COUNT(DISTINCT order_name)::INTEGER AS total_try_orders_created
     FROM
         {{ schema }}.clean__order__summary o
@@ -93,12 +93,12 @@ try_orders AS (
         AND harper_product_type = 'harper_try'
     GROUP BY
         dt.dim_yearcalendarweek_sc,
-        o.partner_name
+        o.brand_name
 ),
 concierge_orders AS (
     SELECT
         dt.dim_yearcalendarweek_sc AS metric_date,
-        o.partner_name,
+        o.brand_name AS partner_name,
         COUNT(DISTINCT order_name)::INTEGER AS total_concierge_orders_created
     FROM
         {{ schema }}.clean__order__summary o
@@ -109,12 +109,12 @@ concierge_orders AS (
         AND harper_product_type = 'harper_concierge'
     GROUP BY
         dt.dim_yearcalendarweek_sc,
-        o.partner_name
+        o.brand_name
 ),
 all_orders AS (
     SELECT
         dt.dim_yearcalendarweek_sc AS metric_date,
-        o.partner_name
+        o.brand_name AS partner_name
     FROM
         {{ schema }}.clean__order__summary o
     LEFT JOIN {{ schema }}.dim__time dt
@@ -123,7 +123,7 @@ all_orders AS (
         link_order__is_child = 0
     GROUP BY
         dt.dim_yearcalendarweek_sc,
-        o.partner_name
+        o.brand_name
     ORDER BY dt.dim_yearcalendarweek_sc
 ),
 combined_data AS (

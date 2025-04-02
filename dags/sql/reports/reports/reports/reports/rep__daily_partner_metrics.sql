@@ -78,7 +78,7 @@ try_revenue AS (
 try_orders AS (
     SELECT
         createdat__dim_date AS metric_date,
-        partner_name,
+        brand_name AS partner_name,
         COUNT(DISTINCT order_name )::INTEGER AS total_try_orders_created
     FROM
         {{ schema }}.clean__order__summary
@@ -87,12 +87,12 @@ try_orders AS (
         AND harper_product_type = 'harper_try'
     GROUP BY
         createdat__dim_date,
-        partner_name
+        brand_name
 ),
 concierge_orders AS (
     SELECT
         createdat__dim_date AS metric_date,
-        partner_name,
+        brand_name AS partner_name,
         COUNT(DISTINCT  order_name )::INTEGER AS total_concierge_orders_created
     FROM
         {{ schema }}.clean__order__summary
@@ -101,19 +101,19 @@ concierge_orders AS (
         AND harper_product_type = 'harper_concierge'
     GROUP BY
         createdat__dim_date,
-        partner_name
+        brand_name
 ),
 all_orders AS (
     SELECT
         createdat__dim_date AS metric_date,
-        partner_name
+        brand_name AS partner_name
     FROM
         {{ schema }}.clean__order__summary
     WHERE
         link_order__is_child = 0
     GROUP BY
         createdat__dim_date,
-        partner_name
+        brand_name
     ORDER BY createdat__dim_date
 ),
 combined_data AS (
