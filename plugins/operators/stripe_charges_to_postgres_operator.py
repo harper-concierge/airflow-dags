@@ -52,6 +52,14 @@ class StripeChargesToPostgresOperator(
             ("payment_method_details__card__wallet__dynamic_last4", "string"),
             ("metadata__checkout_id", "string"),
             ("metadata__customer_id", "string"),
+            ("metadata__harper_invoice_subtype", "string"),
+            ("metadata__harper_invoice_type", "string"),
+            ("metadata__idempotency_key", "string"),
+            ("metadata__internal_order_id", "string"),
+            ("metadata__order", "string"),
+            ("metadata__payment_country", "string"),
+            ("metadata__request_id", "string"),
+            ("metadata__stripe_device_name", "string"),
         ]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_charge_id"

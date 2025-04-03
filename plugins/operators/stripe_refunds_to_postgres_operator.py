@@ -43,6 +43,16 @@ class StripeRefundsToPostgresOperator(
             ("failure_balance_transaction", "string"),
             ("failure_reason", "string"),
             ("invoice", "string"),
+            ("metadata__checkout_id", "string"),
+            ("metadata__customer_id", "string"),
+            ("metadata__harper_invoice_subtype", "string"),
+            ("metadata__harper_invoice_type", "string"),
+            ("metadata__idempotency_key", "string"),
+            ("metadata__internal_order_id", "string"),
+            ("metadata__order", "string"),
+            ("metadata__payment_country", "string"),
+            ("metadata__request_id", "string"),
+            ("metadata__stripe_device_name", "string"),
         ]
 
         self.context = {

@@ -48,6 +48,16 @@ class StripeInvoicesToPostgresOperator(
             ("due_date", "Int64"),
             ("status_transitions__paid_at", "Int64"),
             ("next_payment_attempt", "Int64"),
+            ("metadata__checkout_id", "string"),
+            ("metadata__customer_id", "string"),
+            ("metadata__harper_invoice_subtype", "string"),
+            ("metadata__harper_invoice_type", "string"),
+            ("metadata__idempotency_key", "string"),
+            ("metadata__internal_order_id", "string"),
+            ("metadata__order", "string"),
+            ("metadata__payment_country", "string"),
+            ("metadata__request_id", "string"),
+            ("metadata__stripe_device_name", "string"),
         ]
 
         self.context = {
