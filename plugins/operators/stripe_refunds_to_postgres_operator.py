@@ -42,7 +42,6 @@ class StripeRefundsToPostgresOperator(
         self.discard_flattened_fields = [
             "payment_method_details__card__wallet__apple_pay__type",
             "payment_method_details__link__country",
-            "fraud_details__stripe_report",
         ]  # fields to discard after flattening
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_refund_id"
@@ -149,10 +148,15 @@ class StripeRefundsToPostgresOperator(
 
                 if self.discard_fields:
                     # Drop any unwanted fields before flattening
-                    existing_discard_fields = [col for col in self.discard_fields if col in df.columns]
-                    self.log.info(f"Discarding core fields {existing_discard_fields} for {self.discard_fields}")
+                    columns_to_drop = []
+                    for discard_field in self.discard_fields:
+                        # Find all columns that start with the discard field path
+                        matching_columns = [col for col in df.columns if col.startswith(discard_field)]
+                        columns_to_drop.extend(matching_columns)
 
-                    df.drop(existing_discard_fields, axis=1, inplace=True)
+                    if columns_to_drop:
+                        self.log.info(f"Discarding core fields {columns_to_drop} for paths {self.discard_fields}")
+                        df.drop(columns_to_drop, axis=1, inplace=True)
 
                 # Flatten JSON structure using the mixin method
                 df = self.flatten_dataframe_columns_precisely(df)
