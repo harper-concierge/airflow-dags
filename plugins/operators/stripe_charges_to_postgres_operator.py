@@ -48,6 +48,7 @@ class StripeChargesToPostgresOperator(
             ("fraud_details__stripe_report", "string"),
             ("outcome__rule", "string"),
             ("failure_reason", "string"),
+            ("invoice", "string"),
             ("payment_method_details__card__wallet__dynamic_last4", "string"),
             ("metadata__checkout_id", "string"),
             ("metadata__customer_id", "string"),
