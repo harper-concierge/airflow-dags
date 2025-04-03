@@ -8,8 +8,6 @@ from airflow.hooks.base import BaseHook
 from airflow.utils.decorators import apply_defaults
 from airflow.models.connection import Connection
 
-from plugins.utils.render_template import render_template
-
 from plugins.operators.mixins.flatten_json import FlattenJsonDictMixin
 from plugins.operators.mixins.last_successful_dagrun import LastSuccessfulDagrunMixin
 from plugins.operators.mixins.dag_run_task_comms_mixin import DagRunTaskCommsMixin
@@ -62,15 +60,6 @@ class StripeChargesToPostgresOperator(
             "destination_schema": destination_schema,
             "destination_table": destination_table,
         }
-        self.delete_template = """DO $$
-BEGIN
-   IF EXISTS (
-    SELECT FROM pg_tables WHERE schemaname = '{{destination_schema}}'
-    AND tablename = '{{destination_table}}') THEN
-      DROP TABLE {{ destination_schema }}.{{destination_table}};
-   END IF;
-END $$;
-"""
 
     def execute(self, context):
         # Initialize Stripe and database connections
@@ -94,12 +83,8 @@ END $$;
 
         with engine.connect() as conn:
             self.ensure_task_comms_table_exists(conn)
-            starting_after = self.get_last_successful_item_id(conn, context)
-            extra_context = {
-                **context,
-                **self.context,
-                f"{self.last_successful_dagrun_xcom_key}": last_successful_dagrun_ts,
-            }
+            if not self.rebuild:
+                starting_after = self.get_last_successful_item_id(conn, context)
 
             if starting_after:
                 self.log.info(
@@ -107,11 +92,6 @@ END $$;
                 )
             else:
                 self.log.info(f"Starting Task Fresh for this dagrun from {last_successful_dagrun_ts}")
-                if not self.rebuild:
-                    self.log.info("Deleting previous Data for this Dagrun")
-                    self.delete_sql = render_template(self.delete_template, context=extra_context)
-                    self.log.info(f"Ensuring Transient Data is clean - {self.delete_sql}")
-                    conn.execute(self.delete_sql)
 
             created = {
                 "gt": last_successful_dagrun_ts.int_timestamp,
