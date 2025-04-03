@@ -40,6 +40,12 @@ class StripeRefundsToPostgresOperator(
             "payment_method_details.card.three_d_secure",
         ]  # discard unnecessary fields like source
         self.discard_flattened_fields = [
+            "source",
+            "payment_method_details__card__three_d_secure",
+            "payment_method_details__card__three_d_secure__authentication_fl",
+            "payment_method_details__card__three_d_secure__result",
+            "payment_method_details__card__three_d_secure__result_reason",
+            "payment_method_details__card__three_d_secure__version",
             "payment_method_details__card__wallet__apple_pay__type",
             "payment_method_details__link__country",
         ]  # fields to discard after flattening
@@ -148,22 +154,16 @@ class StripeRefundsToPostgresOperator(
 
                 if self.discard_fields:
                     # Drop any unwanted fields before flattening
-                    columns_to_drop = []
-                    for discard_field in self.discard_fields:
-                        # Find all columns that start with the discard field path
-                        matching_columns = [col for col in df.columns if col.startswith(discard_field)]
-                        columns_to_drop.extend(matching_columns)
-
-                    if columns_to_drop:
-                        self.log.info(f"Discarding core fields {columns_to_drop} for paths {self.discard_fields}")
-                        df.drop(columns_to_drop, axis=1, inplace=True)
+                    existing_discard_fields = [col for col in self.discard_fields if col in df.columns]
+                    self.log.info(f"Discarding core fields {existing_discard_fields} for {self.discard_fields}")
+                    df.drop(existing_discard_fields, axis=1, inplace=True)
 
                 # Flatten JSON structure using the mixin method
                 df = self.flatten_dataframe_columns_precisely(df)
                 df.columns = df.columns.str.lower()
 
                 if self.discard_flattened_fields:
-                    # Drop any unwanted fields before flattening
+                    # Drop any unwanted fields after flattening
                     existing_flattened_discard_fields = [
                         col for col in self.discard_flattened_fields if col in df.columns
                     ]
