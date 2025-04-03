@@ -43,6 +43,13 @@ class StripeRefundsToPostgresOperator(
             "source",
             "payment_method_details__card__wallet__apple_pay__type",
             "payment_method_details__link__country",
+            "payment_method_details__card__three_d_secure__authentication_flow",
+            "payment_method_details__card__three_d_secure__electronic_commerce_indicator",
+            "payment_method_details__card__three_d_secure__exemption_indicator",
+            "payment_method_details__card__three_d_secure__result",
+            "payment_method_details__card__three_d_secure__result_reason",
+            "payment_method_details__card__three_d_secure__transaction_id",
+            "payment_method_details__card__three_d_secure__version",
         ]  # fields to discard after flattening
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_refund_id"
