@@ -11,7 +11,9 @@ class FlattenJsonDictMixin:
         items = {}
         for k, v in d.items():
             new_key = f"{parent_key}{separator}{k}" if parent_key else k
+            print(f"new_key {new_key}")
             if new_key in self.discard_fields:
+                print(f"Discarding Field {new_key}")
                 continue
             if isinstance(v, list):
                 # Convert lists directly to JSON strings
