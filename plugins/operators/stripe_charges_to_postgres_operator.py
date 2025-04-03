@@ -153,7 +153,7 @@ class StripeChargesToPostgresOperator(
                 if self.discard_fields:
                     # Drop any unwanted fields before flattening
                     existing_discard_fields = [col for col in self.discard_fields if col in df.columns]
-                    self.log.info(f"Discarding core fields {existing_discard_fields}")
+                    self.log.info(f"Discarding core fields {existing_discard_fields} for {self.discard_fields}")
                     df.drop(existing_discard_fields, axis=1, inplace=True)
 
                 # Flatten JSON structure using the mixin method
@@ -165,7 +165,9 @@ class StripeChargesToPostgresOperator(
                     existing_flattened_discard_fields = [
                         col for col in self.discard_flattened_fields if col in df.columns
                     ]
-                    self.log.info(f"Discarding flattenned fields {existing_flattened_discard_fields}")
+                    self.log.info(
+                        f"Discarding flattenned fields {existing_flattened_discard_fields} for {self.discard_flattened_fields}"  # noqa
+                    )
                     df.drop(existing_flattened_discard_fields, axis=1, inplace=True)
 
                 df = self.align_to_schema_df(df)
