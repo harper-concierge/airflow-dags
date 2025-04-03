@@ -32,13 +32,15 @@ class StripeRefundsToPostgresOperator(
         self.destination_schema = destination_schema
         self.destination_table = destination_table
         self.postgres_conn_id = postgres_conn_id
-        self.stripe_conn_id = stripe_conn_id
         self.rebuild = rebuild
         self.start_days_ago = start_days_ago
+        self.stripe_conn_id = stripe_conn_id
         self.discard_fields = [
             "source",
-            "payment_method_details__card__three_d_secure",
-        ]  # discard unnecessary fields like source
+            # you only can specify the parent key, not the full parent tree
+            # e.g. payment_method_details__card__three_d_secure
+            "card__three_d_secure",
+        ]  # discard entire nested objects before flattening
         self.discard_flattened_fields = [
             "source",
             "payment_method_details__card__wallet__apple_pay__type",
@@ -50,25 +52,71 @@ class StripeRefundsToPostgresOperator(
             "payment_method_details__card__three_d_secure__result_reason",
             "payment_method_details__card__three_d_secure__transaction_id",
             "payment_method_details__card__three_d_secure__version",
+            "payment_method_details__card__checks__address_postal_code_check",  # 62 chars
         ]  # fields to discard after flattening
-        self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
-        self.last_successful_item_key = "last_successful_refund_id"
-        self.separator = "__"
         self.preserve_fields = [
+            # Amount fields
+            ("amount", "Int64"),
+            ("amount_captured", "Int64"),
+            ("amount_refunded", "Int64"),
+            # Billing details
+            ("billing_details__address__city", "string"),
+            ("billing_details__address__country", "string"),
+            ("billing_details__address__line1", "string"),
+            ("billing_details__address__line2", "string"),
+            ("billing_details__address__postal_code", "string"),
+            ("billing_details__address__state", "string"),
+            ("billing_details__email", "string"),
+            ("billing_details__name", "string"),
+            ("billing_details__phone", "string"),
+            # Payment method details
+            ("payment_method_details__card__brand", "string"),
+            ("payment_method_details__card__checks__address_line1_check", "string"),
+            ("payment_method_details__card__checks__address_postal_code_check", "string"),
+            ("payment_method_details__card__checks__cvc_check", "string"),
+            ("payment_method_details__card__country", "string"),
+            ("payment_method_details__card__exp_month", "Int64"),
+            ("payment_method_details__card__exp_year", "Int64"),
+            ("payment_method_details__card__fingerprint", "string"),
+            ("payment_method_details__card__funding", "string"),
+            ("payment_method_details__card__installments", "Int64"),
+            ("payment_method_details__card__last4", "string"),
+            ("payment_method_details__card__mandate", "string"),
+            ("payment_method_details__card__network", "string"),
+            ("payment_method_details__card__wallet__dynamic_last4", "string"),
+            ("payment_method_details__card__wallet__google_pay__type", "string"),
+            # Top level fields
+            ("currency", "string"),
+            ("customer", "string"),
+            ("description", "string"),
+            ("disputed", "bool"),
+            ("livemode", "bool"),
+            ("paid", "bool"),
+            ("payment_intent", "string"),
+            ("payment_method", "string"),
+            ("refunded", "bool"),
+            ("status", "string"),
+            ("transfer_data", "string"),
+            ("transfer_group", "string"),
+            # Existing fields
             ("fraud_details__stripe_report", "string"),
             ("fraud_details__user_report", "string"),
+            ("fraud_details__user_report_type", "string"),
             ("outcome__network_status", "string"),
             ("outcome__reason", "string"),
             ("outcome__risk_level", "string"),
             ("outcome__risk_score", "string"),
             ("outcome__seller_message", "string"),
             ("outcome__type", "string"),
+            ("outcome__rule", "string"),
+            ("outcome__rule__action", "string"),
+            ("outcome__rule__predicate", "string"),
             ("failure_code", "string"),
             ("failure_message", "string"),
             ("failure_balance_transaction", "string"),
             ("failure_reason", "string"),
             ("invoice", "string"),
-            ("payment_method_details__card__wallet__dynamic_last4", "string"),
+            ("balance_transaction", "string"),
             ("metadata__checkout_id", "string"),
             ("metadata__customer_id", "string"),
             ("metadata__harper_invoice_subtype", "string"),
@@ -86,6 +134,9 @@ class StripeRefundsToPostgresOperator(
             ("statement_descriptor", "string"),
             ("statement_descriptor_suffix", "string"),
         ]
+        self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
+        self.last_successful_item_key = "last_successful_refund_id"
+        self.separator = "__"
 
         self.context = {
             "destination_schema": destination_schema,
@@ -114,6 +165,7 @@ class StripeRefundsToPostgresOperator(
 
         with engine.connect() as conn:
             self.ensure_task_comms_table_exists(conn)
+
             starting_after = None
             if not self.rebuild:
                 starting_after = self.get_last_successful_item_id(conn, context)
@@ -137,7 +189,10 @@ class StripeRefundsToPostgresOperator(
             while has_more:
                 print(created, starting_after, limit)
                 result = stripe.Refund.list(
-                    limit=limit, starting_after=starting_after, created=created, expand=["data.balance_transaction"]
+                    limit=limit,
+                    starting_after=starting_after,
+                    created=created,
+                    expand=["data.payment_method_details", "data.balance_transaction"],
                 )
 
                 records = result.data
@@ -229,6 +284,15 @@ END $$;
         return self.get_task_var(conn, context, self.last_successful_item_key)
 
     def align_to_schema_df(self, df):
+        # Check if the column exists
+        if "metadata__harper_invoice_subtype" not in df.columns:
+            # Create the column with default value "checkout" for all rows
+            df["metadata__harper_invoice_subtype"] = "checkout"
+        else:
+            # Fill NaN values in the existing column with "checkout"
+            df["metadata__harper_invoice_subtype"].fillna("checkout", inplace=True)
+
+        # Check if the column exists
         for field, dtype in self.preserve_fields:
             if field not in df.columns:
                 df[field] = None  # because stripe is rubbish

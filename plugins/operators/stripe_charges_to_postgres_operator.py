@@ -37,7 +37,9 @@ class StripeChargesToPostgresOperator(
         self.stripe_conn_id = stripe_conn_id
         self.discard_fields = [
             "source",
-            "payment_method_details__card__three_d_secure",
+            # you only can specify the parent key, not the full parent tree
+            # e.g. payment_method_details__card__three_d_secure
+            "card__three_d_secure",
         ]  # discard entire nested objects before flattening
         self.discard_flattened_fields = [
             "source",
@@ -50,20 +52,71 @@ class StripeChargesToPostgresOperator(
             "payment_method_details__card__three_d_secure__result_reason",
             "payment_method_details__card__three_d_secure__transaction_id",
             "payment_method_details__card__three_d_secure__version",
+            "payment_method_details__card__checks__address_postal_code_check",  # 62 chars
         ]  # fields to discard after flattening
         self.preserve_fields = [
+            # Amount fields
+            ("amount", "Int64"),
+            ("amount_captured", "Int64"),
+            ("amount_refunded", "Int64"),
+            # Billing details
+            ("billing_details__address__city", "string"),
+            ("billing_details__address__country", "string"),
+            ("billing_details__address__line1", "string"),
+            ("billing_details__address__line2", "string"),
+            ("billing_details__address__postal_code", "string"),
+            ("billing_details__address__state", "string"),
+            ("billing_details__email", "string"),
+            ("billing_details__name", "string"),
+            ("billing_details__phone", "string"),
+            # Payment method details
+            ("payment_method_details__card__brand", "string"),
+            ("payment_method_details__card__checks__address_line1_check", "string"),
+            ("payment_method_details__card__checks__address_postal_code_check", "string"),
+            ("payment_method_details__card__checks__cvc_check", "string"),
+            ("payment_method_details__card__country", "string"),
+            ("payment_method_details__card__exp_month", "Int64"),
+            ("payment_method_details__card__exp_year", "Int64"),
+            ("payment_method_details__card__fingerprint", "string"),
+            ("payment_method_details__card__funding", "string"),
+            ("payment_method_details__card__installments", "Int64"),
+            ("payment_method_details__card__last4", "string"),
+            ("payment_method_details__card__mandate", "string"),
+            ("payment_method_details__card__network", "string"),
+            ("payment_method_details__card__wallet__dynamic_last4", "string"),
+            ("payment_method_details__card__wallet__google_pay__type", "string"),
+            # Top level fields
+            ("currency", "string"),
+            ("customer", "string"),
+            ("description", "string"),
+            ("disputed", "bool"),
+            ("livemode", "bool"),
+            ("paid", "bool"),
+            ("payment_intent", "string"),
+            ("payment_method", "string"),
+            ("refunded", "bool"),
+            ("status", "string"),
+            ("transfer_data", "string"),
+            ("transfer_group", "string"),
+            # Existing fields
             ("fraud_details__stripe_report", "string"),
             ("fraud_details__user_report", "string"),
+            ("fraud_details__user_report_type", "string"),
             ("outcome__network_status", "string"),
             ("outcome__reason", "string"),
             ("outcome__risk_level", "string"),
             ("outcome__risk_score", "string"),
             ("outcome__seller_message", "string"),
             ("outcome__type", "string"),
+            ("outcome__rule", "string"),
+            ("outcome__rule__action", "string"),
+            ("outcome__rule__predicate", "string"),
             ("failure_code", "string"),
             ("failure_message", "string"),
+            ("failure_balance_transaction", "string"),
+            ("failure_reason", "string"),
             ("invoice", "string"),
-            ("payment_method_details__card__wallet__dynamic_last4", "string"),
+            ("balance_transaction", "string"),
             ("metadata__checkout_id", "string"),
             ("metadata__customer_id", "string"),
             ("metadata__harper_invoice_subtype", "string"),
