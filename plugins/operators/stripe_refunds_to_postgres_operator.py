@@ -37,7 +37,7 @@ class StripeRefundsToPostgresOperator(
         self.start_days_ago = start_days_ago
         self.discard_fields = [
             "source",
-            "payment_method_details.card.three_d_secure.authentication",
+            "payment_method_details.card.three_d_secure",
         ]  # discard unnecessary fields like source
         self.discard_flattened_fields = [
             "payment_method_details__card__wallet__apple_pay__type",
