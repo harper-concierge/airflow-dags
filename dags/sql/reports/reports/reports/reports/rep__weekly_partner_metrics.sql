@@ -64,7 +64,7 @@ try_revenue AS (
                 WHEN lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount') THEN -lineitem_amount
                 ELSE lineitem_amount
             END
-            * (commission_percentage / 100)
+            * (COALESCE(NULLIF(commission_percentage, 0), 2.4) / 100)
         )::integer AS total_try_revenue
 
 	FROM
