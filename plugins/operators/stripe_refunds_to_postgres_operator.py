@@ -150,13 +150,23 @@ class StripeRefundsToPostgresOperator(
                 if self.discard_fields:
                     # Drop any unwanted fields before flattening
                     existing_discard_fields = [col for col in self.discard_fields if col in df.columns]
+                    self.log.info(f"Discarding core fields {existing_discard_fields}")
+
                     df.drop(existing_discard_fields, axis=1, inplace=True)
 
                 # Flatten JSON structure using the mixin method
                 df = self.flatten_dataframe_columns_precisely(df)
-                df = self.align_to_schema_df(df)
-
                 df.columns = df.columns.str.lower()
+
+                if self.discard_flattened_fields:
+                    # Drop any unwanted fields before flattening
+                    existing_flattened_discard_fields = [
+                        col for col in self.discard_flattened_fields if col in df.columns
+                    ]
+                    self.log.info(f"Discarding flattenned fields {existing_flattened_discard_fields}")
+                    df.drop(existing_flattened_discard_fields, axis=1, inplace=True)
+
+                df = self.align_to_schema_df(df)
 
                 # Write processed data to PostgreSQL
                 df.to_sql(
