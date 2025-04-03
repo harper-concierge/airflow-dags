@@ -78,6 +78,8 @@ class StripeInvoicesToPostgresOperator(
 
         with engine.connect() as conn:
             self.ensure_task_comms_table_exists(conn)
+
+            starting_after = None
             if not self.rebuild:
                 starting_after = self.get_last_successful_item_id(conn, context)
 
