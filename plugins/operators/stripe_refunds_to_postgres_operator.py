@@ -35,14 +35,33 @@ class StripeRefundsToPostgresOperator(
         self.stripe_conn_id = stripe_conn_id
         self.rebuild = rebuild
         self.start_days_ago = start_days_ago
-        self.discard_fields = ["source"]
+        self.discard_fields = [
+            "source",
+            "payment_method_details.card.three_d_secure.authentication",
+        ]  # discard unnecessary fields like source
+        self.discard_flattened_fields = [
+            "payment_method_details__card__wallet__apple_pay__type",
+            "payment_method_details__link__country",
+            "fraud_details__stripe_report",
+        ]  # fields to discard after flattening
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_refund_id"
         self.separator = "__"
         self.preserve_fields = [
+            ("fraud_details__stripe_report", "string"),
+            ("fraud_details__user_report", "string"),
+            ("outcome__network_status", "string"),
+            ("outcome__reason", "string"),
+            ("outcome__risk_level", "string"),
+            ("outcome__risk_score", "string"),
+            ("outcome__seller_message", "string"),
+            ("outcome__type", "string"),
+            ("failure_code", "string"),
+            ("failure_message", "string"),
             ("failure_balance_transaction", "string"),
             ("failure_reason", "string"),
             ("invoice", "string"),
+            ("payment_method_details__card__wallet__dynamic_last4", "string"),
             ("metadata__checkout_id", "string"),
             ("metadata__customer_id", "string"),
             ("metadata__harper_invoice_subtype", "string"),
@@ -53,6 +72,12 @@ class StripeRefundsToPostgresOperator(
             ("metadata__payment_country", "string"),
             ("metadata__request_id", "string"),
             ("metadata__stripe_device_name", "string"),
+            ("receipt_email", "string"),
+            ("receipt_number", "string"),
+            ("receipt_url", "string"),
+            ("review", "string"),
+            ("statement_descriptor", "string"),
+            ("statement_descriptor_suffix", "string"),
         ]
 
         self.context = {

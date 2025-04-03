@@ -37,6 +37,7 @@ class StripeChargesToPostgresOperator(
         self.stripe_conn_id = stripe_conn_id
         self.discard_fields = [
             "source",
+            "payment_method_details.card.three_d_secure.authentication",
         ]  # discard unnecessary fields like source
         self.discard_flattened_fields = [
             "payment_method_details__card__wallet__apple_pay__type",
@@ -46,8 +47,15 @@ class StripeChargesToPostgresOperator(
         # self.discard_flattened_fields = ["outcome__network_advice_code"]  # discard unnecessary fields like source
         self.preserve_fields = [
             ("fraud_details__stripe_report", "string"),
-            ("outcome__rule", "string"),
-            ("failure_reason", "string"),
+            ("fraud_details__user_report", "string"),
+            ("outcome__network_status", "string"),
+            ("outcome__reason", "string"),
+            ("outcome__risk_level", "string"),
+            ("outcome__risk_score", "string"),
+            ("outcome__seller_message", "string"),
+            ("outcome__type", "string"),
+            ("failure_code", "string"),
+            ("failure_message", "string"),
             ("invoice", "string"),
             ("payment_method_details__card__wallet__dynamic_last4", "string"),
             ("metadata__checkout_id", "string"),
@@ -60,6 +68,12 @@ class StripeChargesToPostgresOperator(
             ("metadata__payment_country", "string"),
             ("metadata__request_id", "string"),
             ("metadata__stripe_device_name", "string"),
+            ("receipt_email", "string"),
+            ("receipt_number", "string"),
+            ("receipt_url", "string"),
+            ("review", "string"),
+            ("statement_descriptor", "string"),
+            ("statement_descriptor_suffix", "string"),
         ]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_charge_id"
@@ -214,17 +228,11 @@ END $$;
         else:
             # Fill NaN values in the existing column with "checkout"
             df["metadata__harper_invoice_subtype"].fillna("checkout", inplace=True)
-        if "metadata__harper_invoice_type" not in df.columns:
-            # Create the column with default value "checkout" for all rows
-            df["metadata__harper_invoice_type"] = ""
-        else:
-            # Fill NaN values in the existing column with "checkout"
-            df["metadata__harper_invoice_type"].fillna("", inplace=True)
 
         # Check if the column exists
         for field, dtype in self.preserve_fields:
             if field not in df.columns:
-                df[field] = None  # because zettle is rubbish
+                df[field] = None  # because stripe is rubbish
             print(f"aligning column {field} as type {dtype}")
             df[field] = df[field].astype(dtype)
 
