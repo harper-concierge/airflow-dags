@@ -42,7 +42,7 @@ class StripeRefundsToPostgresOperator(
         self.discard_flattened_fields = [
             "source",
             "payment_method_details__card__three_d_secure",
-            "payment_method_details__card__three_d_secure__authentication_fl",
+            "payment_method_details__card__three_d_secure__authentication_flow",
             "payment_method_details__card__three_d_secure__result",
             "payment_method_details__card__three_d_secure__result_reason",
             "payment_method_details__card__three_d_secure__version",
