@@ -116,7 +116,7 @@ concierge_orders AS (
 )
 
 SELECT
-    metric_date AS dim_yearweek_sc,
+    metric_date AS trial_period_ended_at__dim_yearcalendarweek_sc,
     partner_order_name,
     harper_product_type AS product_type,
     partner_name,
@@ -142,7 +142,7 @@ ORDER BY
 WITH NO DATA;
 
 {% if is_modified %}
-CREATE UNIQUE INDEX IF NOT EXISTS rep__weekly_order_transaction_totals_idx ON {{ schema }}.rep__weekly_order_transaction_totals (dim_yearweek_sc, partner_order_name, product_type);
+CREATE UNIQUE INDEX IF NOT EXISTS rep__weekly_order_transaction_totals_idx ON {{ schema }}.rep__weekly_order_transaction_totals (trial_period_ended_at__dim_yearcalendarweek_sc, partner_order_name, product_type);
 {% endif %}
 
 REFRESH MATERIALIZED VIEW {{ schema }}.rep__weekly_order_transaction_totals;

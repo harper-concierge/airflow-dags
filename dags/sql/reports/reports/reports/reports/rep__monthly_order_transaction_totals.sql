@@ -142,7 +142,7 @@ ORDER BY
 WITH NO DATA;
 
 {% if is_modified %}
-CREATE UNIQUE INDEX IF NOT EXISTS rep__monthly_order_transaction_totals_idx ON {{ schema }}.rep__monthly_order_transaction_totals (dim_yearmonth_sc, partner_order_name, product_type);
+CREATE UNIQUE INDEX IF NOT EXISTS rep__monthly_order_transaction_totals_idx ON {{ schema }}.rep__monthly_order_transaction_totals (trial_period_ended_at__dim_yearmonth_sc, partner_order_name, product_type);
 {% endif %}
 
 REFRESH MATERIALIZED VIEW {{ schema }}.rep__monthly_order_transaction_totals;
