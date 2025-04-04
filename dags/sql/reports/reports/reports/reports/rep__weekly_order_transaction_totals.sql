@@ -4,7 +4,7 @@ DROP MATERIALIZED VIEW IF EXISTS {{ schema }}.rep__weekly_order_transaction_tota
 CREATE MATERIALIZED VIEW IF NOT EXISTS {{ schema }}.rep__weekly_order_transaction_totals AS
 WITH try_orders AS (
     SELECT
-        dt.dim_yearweek_sc AS metric_date,
+        trial_period_ended_at__dim_yearcalendarweek_sc AS metric_date,
         partner_order_name,
         harper_product_type,
         sum(
@@ -40,20 +40,18 @@ WITH try_orders AS (
         MAX(commission_percentage) as commission_percentage
     FROM
         {{ schema }}.rep__transactionlog__view t
-    LEFT JOIN {{ schema }}.dim__time dt
-        ON t.createdat::date = dt.dim_date_id
     WHERE
         lineitem_type = 'try_on'
         AND harper_product_type = 'harper_try'
     GROUP BY
-        dt.dim_yearweek_sc,
+        trial_period_ended_at__dim_yearcalendarweek_sc,
         partner_order_name,
         harper_product_type
 ),
 
 concierge_orders AS (
     SELECT
-        dt.dim_yearweek_sc AS metric_date,
+        trial_period_ended_at__dim_yearcalendarweek_sc AS metric_date,
         partner_order_name,
         harper_product_type,
         sum(
@@ -108,13 +106,11 @@ concierge_orders AS (
         MAX(commission_percentage) as commission_percentage
     FROM
         {{ schema }}.rep__transactionlog__view t
-    LEFT JOIN {{ schema }}.dim__time dt
-        ON t.createdat::date = dt.dim_date_id
     WHERE
         lineitem_type <> 'try_on'
         AND harper_product_type = 'harper_concierge'
     GROUP BY
-        dt.dim_yearweek_sc,
+        t.trial_period_ended_at__dim_yearcalendarweek_sc,
         partner_order_name,
         harper_product_type
 )
