@@ -51,7 +51,7 @@ WITH try_orders AS (
 
 concierge_orders AS (
     SELECT
-        transaction_info__payment_at__dim_calendarweek_sc AS metric_date,
+        transaction_info__payment_at__dim_yearcalendarweek_sc AS metric_date,
         partner_order_name,
         harper_product_type,
         sum(
@@ -110,7 +110,7 @@ concierge_orders AS (
         lineitem_type <> 'try_on'
         AND harper_product_type = 'harper_concierge'
     GROUP BY
-        t.transaction_info__payment_at__dim_calendarweek_sc,
+        t.transaction_info__payment_at__dim_yearcalendarweek_sc,
         partner_order_name,
         harper_product_type
 )
