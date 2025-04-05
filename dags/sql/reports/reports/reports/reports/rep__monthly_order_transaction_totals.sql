@@ -51,7 +51,7 @@ WITH try_orders AS (
 
 concierge_orders AS (
     SELECT
-        trial_period_ended_at__dim_yearmonth_sc AS metric_date,
+        transaction_info__payment_at__dim_yearmonth_sc AS metric_date,
         partner_order_name,
         harper_product_type,
         sum(
@@ -110,13 +110,13 @@ concierge_orders AS (
         lineitem_type <> 'try_on'
         AND harper_product_type = 'harper_concierge'
     GROUP BY
-        trial_period_ended_at__dim_yearmonth_sc,
+        transaction_info__payment_at__dim_yearmonth_sc,
         partner_order_name,
         harper_product_type
 )
 
 SELECT
-    metric_date AS trial_period_ended_at__dim_yearmonth_sc,
+    metric_date,
     partner_order_name,
     harper_product_type AS product_type,
     partner_name,
@@ -142,7 +142,7 @@ ORDER BY
 WITH NO DATA;
 
 {% if is_modified %}
-CREATE UNIQUE INDEX IF NOT EXISTS rep__monthly_order_transaction_totals_idx ON {{ schema }}.rep__monthly_order_transaction_totals (trial_period_ended_at__dim_yearmonth_sc, partner_order_name, product_type);
+CREATE UNIQUE INDEX IF NOT EXISTS rep__monthly_order_transaction_totals_idx ON {{ schema }}.rep__monthly_order_transaction_totals (metric_date, partner_order_name, product_type);
 {% endif %}
 
 REFRESH MATERIALIZED VIEW {{ schema }}.rep__monthly_order_transaction_totals;
