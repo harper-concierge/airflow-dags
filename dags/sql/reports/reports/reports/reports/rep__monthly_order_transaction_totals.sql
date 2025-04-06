@@ -116,7 +116,7 @@ concierge_orders AS (
 )
 
 SELECT
-    metric_date,
+    metric_date AS metric_month,
     partner_order_name,
     harper_product_type AS product_type,
     partner_name,
