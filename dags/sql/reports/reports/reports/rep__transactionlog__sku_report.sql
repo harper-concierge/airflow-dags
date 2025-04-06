@@ -42,8 +42,8 @@ select
     t.order_id,
     t.item_info__item_id,
     t.id,
-    COALESCE(t.trial_period_ended_at__dim_yearcalendarweek_sc, t.transaction_info__payment_at__dim_yearcalendarweek_sc) AS metric_week,
-    COALESCE(t.trial_period_ended_at__dim_yearmonth_sc, t.transaction_info__payment_at__dim_yearmonth_sc) AS metric_month
+    COALESCE(tpe.dim_yearcalendarweek_sc, t.transaction_info__payment_at__dim_yearcalendarweek_sc) AS metric_week,
+    COALESCE(tpe.dim_yearmonth_sc, t.transaction_info__payment_at__dim_yearmonth_sc) AS metric_month
 
 FROM rep__transactionlog t
 LEFT JOIN
