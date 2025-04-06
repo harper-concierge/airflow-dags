@@ -142,7 +142,7 @@ ORDER BY
 WITH NO DATA;
 
 {% if is_modified %}
-CREATE UNIQUE INDEX IF NOT EXISTS rep__weekly_order_transaction_totals_idx ON {{ schema }}.rep__weekly_order_transaction_totals (metric_date, partner_order_name, product_type);
+CREATE UNIQUE INDEX IF NOT EXISTS rep__weekly_order_transaction_totals_idx ON {{ schema }}.rep__weekly_order_transaction_totals (metric_week, partner_order_name, product_type);
 {% endif %}
 
 REFRESH MATERIALIZED VIEW {{ schema }}.rep__weekly_order_transaction_totals;
