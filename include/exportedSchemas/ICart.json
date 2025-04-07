@@ -3494,6 +3494,18 @@
             "tstype": "IServiceAvailableForIPSchema",
             "additionalProperties": false
         },
+        "platform_experiment": {
+            "type": "object",
+            "bsonType": "object",
+            "tstype": "IPlatformExperimentSchema",
+            "additionalProperties": false
+        },
+        "cart_attributes": {
+            "type": "object",
+            "bsonType": "object",
+            "tstype": "IPlatformCartAttributesSchema",
+            "additionalProperties": false
+        },
         "__v": {
             "bsonType": [
                 "int"

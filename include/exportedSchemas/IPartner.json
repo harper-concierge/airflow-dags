@@ -1936,12 +1936,6 @@
                 ]
             }
         },
-        "apply_basket_size_limit": {
-            "type": "boolean",
-            "bsonType": [
-                "bool"
-            ]
-        },
         "basket_limit_message": {
             "type": "string",
             "bsonType": [

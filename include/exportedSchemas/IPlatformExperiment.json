@@ -1,0 +1,50 @@
+{
+    "title": "IPlatformExperimentSchema",
+    "type": "object",
+    "bsonType": "object",
+    "properties": {
+        "disableHarperConcierge": {
+            "type": "boolean",
+            "bsonType": "bool"
+        },
+        "disableHarperTry": {
+            "type": "boolean",
+            "bsonType": "bool"
+        },
+        "experimentId": {
+            "type": "string",
+            "bsonType": "string"
+        },
+        "hideCTA": {
+            "type": "boolean",
+            "bsonType": "bool"
+        },
+        "variantId": {
+            "type": "string",
+            "bsonType": "string"
+        },
+        "variantIdName": {
+            "type": "string",
+            "bsonType": "string"
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    },
+    "additionalProperties": false
+}

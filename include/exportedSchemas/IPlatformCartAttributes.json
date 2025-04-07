@@ -1,0 +1,8 @@
+{
+    "title": "IPlatformCartAttributesSchema",
+    "type": "object",
+    "bsonType": [
+        "object"
+    ],
+    "additionalProperties": true
+}
