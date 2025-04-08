@@ -63,6 +63,7 @@ CREATE INDEX IF NOT EXISTS rep__transactionlog_try_commission_chargeable_idx ON 
 CREATE INDEX IF NOT EXISTS rep__transactionlog_is_initiated_sale_idx ON {{ schema }}.rep__transactionlog (is_initiated_sale);
 CREATE INDEX IF NOT EXISTS rep__transactionlog_is_inspire_me_idx ON {{ schema }}.rep__transactionlog (is_inspire_me);
 CREATE INDEX IF NOT EXISTS rep__transactionlog_order_type_idx ON {{ schema }}.rep__transactionlog (order_type);
+CREATE INDEX IF NOT EXISTS rep__transactionlog_item_id ON {{ schema }}.rep__transactionlog (item_id);
 
 {% endif %}
 

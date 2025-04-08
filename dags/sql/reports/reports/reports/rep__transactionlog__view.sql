@@ -2,6 +2,8 @@ DROP VIEW IF EXISTS {{ schema }}.rep__transactionlog__view CASCADE;
 CREATE VIEW {{ schema }}.rep__transactionlog__view AS
 
 SELECT
+    t.transaction_id,
+    t.transactionitem_id,
     t.transaction_info__payment_at__dim_date,
     t.transaction_info__payment_at__dim_yearcalendarweek_sc,
     t.transaction_info__payment_at__dim_yearmonth_sc,
