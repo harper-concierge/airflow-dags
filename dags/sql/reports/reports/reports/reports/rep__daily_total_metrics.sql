@@ -16,21 +16,28 @@ concierge_revenue AS (
                 WHEN revenue_is_service_fee_inclusive=1 THEN lineitem_amount
                 ELSE 0
               END
-
-            -- Handle discounts:
-            WHEN lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount') THEN
+          END
+        )::INTEGER
+        +
+        SUM(
+          CASE
+            WHEN lineitem_category != 'fee' THEN
               CASE
-                WHEN lineitem_type = 'purchase' THEN -lineitem_amount
-                WHEN lineitem_type = 'refund'   THEN lineitem_amount
-                ELSE lineitem_amount
-              END
+                -- Handle discounts:
+                WHEN lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount') THEN
+                  CASE
+                    WHEN lineitem_type = 'purchase' THEN -lineitem_amount
+                    WHEN lineitem_type = 'refund'   THEN lineitem_amount
+                    ELSE lineitem_amount
+                  END
 
-            -- Handle non-discount items:
-            ELSE
-              CASE
-                WHEN lineitem_type = 'purchase' THEN lineitem_amount
-                WHEN lineitem_type = 'refund'   THEN -lineitem_amount
-                ELSE lineitem_amount
+                -- Handle non-discount items:
+                ELSE
+                  CASE
+                    WHEN lineitem_type = 'purchase' THEN lineitem_amount
+                    WHEN lineitem_type = 'refund'   THEN -lineitem_amount
+                    ELSE lineitem_amount
+                  END
               END
           END
           -- Apply VAT correction per row if needed
