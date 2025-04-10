@@ -5601,18 +5601,6 @@
                 "bool"
             ]
         },
-        "createdAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
-        "updatedAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
         "cart_attributes": {
             "type": "object",
             "bsonType": "object",
@@ -5624,6 +5612,128 @@
             "bsonType": "object",
             "tstype": "IPlatformExperimentSchema",
             "additionalProperties": false
+        },
+        "fraud_response": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "signifydId": {
+                    "type": "integer",
+                    "bsonType": [
+                        "int"
+                    ]
+                },
+                "checkoutId": {
+                    "type": "string",
+                    "bsonType": [
+                        "string"
+                    ]
+                },
+                "orderId": {
+                    "type": "string",
+                    "bsonType": [
+                        "string"
+                    ]
+                },
+                "decision": {
+                    "bsonType": "object",
+                    "type": "object",
+                    "properties": {
+                        "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "tsType": "Date",
+                            "bsonType": [
+                                "date"
+                            ]
+                        },
+                        "checkpointAction": {
+                            "type": "string",
+                            "bsonType": [
+                                "string"
+                            ]
+                        },
+                        "checkpointActionReason": {
+                            "type": "string",
+                            "bsonType": [
+                                "string"
+                            ]
+                        },
+                        "checkpointActionPolicy": {
+                            "type": "string",
+                            "bsonType": [
+                                "string"
+                            ]
+                        },
+                        "policies": {
+                            "bsonType": "object",
+                            "type": "object",
+                            "properties": {
+                                "overriding": {
+                                    "type": "array",
+                                    "bsonType": [
+                                        "array"
+                                    ],
+                                    "items": {
+                                        "type": "object",
+                                        "bsonType": [
+                                            "object"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "bsonType": "object",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string",
+                                            "bsonType": [
+                                                "string"
+                                            ]
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "bsonType": [
+                                                "string"
+                                            ]
+                                        },
+                                        "action": {
+                                            "type": "string",
+                                            "bsonType": [
+                                                "string"
+                                            ]
+                                        },
+                                        "reason": {
+                                            "type": "string",
+                                            "bsonType": [
+                                                "string"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "score": {
+                            "type": "number",
+                            "bsonType": [
+                                "double"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
         },
         "__v": {
             "bsonType": [
