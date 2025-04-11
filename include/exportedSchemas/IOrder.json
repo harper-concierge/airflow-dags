@@ -4119,7 +4119,8 @@
                 "in_try_on_period",
                 "in_resolution",
                 "written_off",
-                "rejected"
+                "rejected",
+                "fraudulent"
             ]
         },
         "hold_reason": {

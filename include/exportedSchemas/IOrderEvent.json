@@ -180,6 +180,7 @@
                 "shipDirectOrderCreated",
                 "triggerModuleFunction",
                 "orderFinalised",
+                "orderFraudulent",
                 "triggerPlatformOrderFunction",
                 "orderStatusLogEvent",
                 "triggerPostPurchaseDiscount",
