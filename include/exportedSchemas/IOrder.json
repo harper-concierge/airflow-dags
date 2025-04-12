@@ -5621,7 +5621,7 @@
                 "signifydId": {
                     "type": "integer",
                     "bsonType": [
-                        "int"
+                        "int64"
                     ]
                 },
                 "checkoutId": {
