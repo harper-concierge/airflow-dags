@@ -300,10 +300,8 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
         df = df[
             df["partner"].notna()
             & df["partner_reference"].notna()
-            & df["city"].notna()
             & (df["partner"] != "")
             & (df["partner_reference"] != "")
-            & (df["city"] != "")
         ]
 
         # Log how many records were filtered
