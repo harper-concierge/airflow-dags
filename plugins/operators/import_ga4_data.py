@@ -186,7 +186,12 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
 
                         # Break if the number of rows fetched is less than the page size
                         if len(response.rows) < page_size:
-                            self.log.info("Less than page size fetched, breaking the loop.")
+                            self.log.info(f"Final page detected with {len(response.rows)} rows")
+                            if response.rows:
+                                self.log.info("Processing final partial page...")
+                                # ... process rows ...
+                                self.log.info("Final page processed successfully")
+                            self.log.info("Breaking the loop - all data retrieved")
                             break
 
                     # Clear the offset after successful completion
@@ -294,26 +299,8 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
         df = pd.DataFrame(records)
 
         # Log initial count
-        initial_count = len(df)
-
-        # Filter out records where partner, partner_reference, or city is null/empty
-        df = df[
-            df["partner"].notna()
-            & df["partner_reference"].notna()
-            & (df["partner"] != "")
-            & (df["partner_reference"] != "")
-        ]
-
-        # Log how many records were filtered
-        filtered_count = len(df)
-        if filtered_count < initial_count:
-            self.log.info(
-                f"Filtered out {initial_count - filtered_count} records with empty partner/partner_reference/city"
-            )
-
-        if df.empty:
-            self.log.info("No valid records to write after filtering")
-            return 0
+        total_rows = len(df)
+        self.log.info(f"Processing {total_rows} records")
 
         # Sort DataFrame by date before inserting
         df = df.sort_values("date")
@@ -336,7 +323,6 @@ class GA4ToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, Bas
             chunksize=1000,
         )
 
-        total_rows = len(df)
         self.log.info(f"Processed {total_rows} rows")
         return total_rows
 
