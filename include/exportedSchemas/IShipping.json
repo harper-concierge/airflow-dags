@@ -100,59 +100,82 @@
                 "string"
             ]
         },
-        "price_rule": {
-            "title": "IPriceRuleSchema",
-            "type": "object",
-            "bsonType": "object",
-            "properties": {
-                "_id": {
-                    "type": "string",
-                    "bsonType": "objectId",
-                    "tsType": "MongooseObjectId"
+        "price_rules": {
+            "type": "array",
+            "bsonType": [
+                "array"
+            ],
+            "items": {
+                "title": "IPriceRuleSchema",
+                "type": "object",
+                "bsonType": "object",
+                "properties": {
+                    "_id": {
+                        "type": "string",
+                        "bsonType": "objectId",
+                        "tsType": "MongooseObjectId"
+                    },
+                    "rule_id_name": {
+                        "type": "string",
+                        "bsonType": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "bsonType": "bool"
+                    },
+                    "rule_type": {
+                        "type": "string",
+                        "bsonType": "string",
+                        "enum": [
+                            "enableWhenOrderOver",
+                            "enableWhenFreeDeliveryBenefit"
+                        ]
+                    },
+                    "min_price": {
+                        "type": "integer",
+                        "bsonType": "int"
+                    },
+                    "max_price": {
+                        "type": "integer",
+                        "bsonType": "int"
+                    },
+                    "__v": {
+                        "bsonType": [
+                            "int"
+                        ],
+                        "type": "integer"
+                    },
+                    "createdAt": {
+                        "bsonType": [
+                            "date"
+                        ],
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "bsonType": [
+                            "date"
+                        ],
+                        "type": "string"
+                    }
                 },
-                "enabled": {
-                    "type": "boolean",
-                    "bsonType": "bool"
-                },
-                "rule_type": {
-                    "type": "string",
-                    "bsonType": "string",
-                    "enum": [
-                        "enableWhenOrderOver"
-                    ]
-                },
-                "min_price": {
-                    "type": "integer",
-                    "bsonType": "int"
-                },
-                "max_price": {
-                    "type": "integer",
-                    "bsonType": "int"
-                },
-                "__v": {
-                    "bsonType": [
-                        "int"
-                    ],
-                    "type": "integer"
-                },
-                "createdAt": {
-                    "bsonType": [
-                        "date"
-                    ],
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "bsonType": [
-                        "date"
-                    ],
-                    "type": "string"
-                }
-            },
-            "additionalProperties": false,
-            "required": [
-                "rule_type",
-                "min_price"
-            ]
+                "additionalProperties": false,
+                "required": [
+                    "rule_id_name",
+                    "rule_type"
+                ]
+            }
+        },
+        "disabled_by_price_rules": {
+            "type": "array",
+            "bsonType": [
+                "array"
+            ],
+            "items": {
+                "type": "string",
+                "bsonType": [
+                    "string"
+                ]
+            }
         },
         "carrier_id_name": {
             "type": "string",

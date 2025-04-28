@@ -1,0 +1,162 @@
+{
+    "title": "ILoyaltyDetailsSchema",
+    "type": "object",
+    "bsonType": "object",
+    "properties": {
+        "claimableRewards": {
+            "type": "array",
+            "bsonType": [
+                "array"
+            ],
+            "items": {
+                "type": "object",
+                "bsonType": [
+                    "object"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
+                    "description": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ],
+                        "enum": [
+                            "free_concierge",
+                            "free_standard_delivery",
+                            "free_express_delivery"
+                        ]
+                    },
+                    "action": {
+                        "type": "object",
+                        "bsonType": [
+                            "object"
+                        ],
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ],
+                                "enum": [
+                                    "antavo_claim"
+                                ]
+                            },
+                            "url": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "benefits": {
+            "type": "array",
+            "bsonType": [
+                "array"
+            ],
+            "items": {
+                "type": "object",
+                "bsonType": [
+                    "object"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
+                    "description": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ],
+                        "enum": [
+                            "free_concierge",
+                            "free_standard_delivery",
+                            "free_express_delivery"
+                        ]
+                    },
+                    "action": {
+                        "type": "object",
+                        "bsonType": [
+                            "object"
+                        ],
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            },
+                            "url": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "platformLoyaltyDetails": {
+            "type": "object",
+            "bsonType": [
+                "object"
+            ],
+            "additionalProperties": false
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    },
+    "additionalProperties": false
+}

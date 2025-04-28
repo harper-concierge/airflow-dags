@@ -1,0 +1,185 @@
+{
+    "title": "IPartnerFeatureFlagsSchema",
+    "type": "object",
+    "additionalProperties": false,
+    "bsonType": [
+        "object"
+    ],
+    "properties": {
+        "custom_sku_function": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                },
+                "function": {
+                    "type": "string",
+                    "bsonType": "string",
+                    "enum": [
+                        "paulsmithSizeAppendedSku"
+                    ]
+                }
+            }
+        },
+        "custom_item_viability_function": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                },
+                "function": {
+                    "type": "string",
+                    "bsonType": "string",
+                    "enum": [
+                        "paulsmithIsItemMonogrammed"
+                    ]
+                }
+            }
+        },
+        "ecommerce_gtm_override_function": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                },
+                "function": {
+                    "type": "string",
+                    "bsonType": "string",
+                    "enum": [
+                        "paulsmithEcommerceGtmOverride"
+                    ]
+                }
+            }
+        },
+        "newsletter_signup_function": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                },
+                "function": {
+                    "type": "string",
+                    "bsonType": "string",
+                    "enum": [
+                        "klaviyo/subscribe",
+                        "ometria/subscribe"
+                    ]
+                }
+            }
+        },
+        "delivery_service_fee_override": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                },
+                "function": {
+                    "type": "string",
+                    "bsonType": "string",
+                    "enum": [
+                        "deliveryServiceFeeOverride"
+                    ]
+                },
+                "values": {
+                    "type": "object",
+                    "bsonType": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "return_plugin": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                },
+                "function": {
+                    "type": "string",
+                    "bsonType": "string",
+                    "enum": [
+                        "createWebhooks"
+                    ]
+                },
+                "value": {
+                    "type": "string",
+                    "bsonType": "string",
+                    "enum": [
+                        "zigzag"
+                    ]
+                }
+            }
+        },
+        "use_ingrid_fulfilment_data": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                },
+                "function": {
+                    "type": "string",
+                    "bsonType": "string",
+                    "enum": [
+                        "fetchIngridFulfilmentData"
+                    ]
+                }
+            }
+        },
+        "loyalty_program": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                },
+                "platform_name": {
+                    "type": "string",
+                    "bsonType": "string",
+                    "enum": [
+                        "antavo"
+                    ]
+                }
+            }
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    }
+}

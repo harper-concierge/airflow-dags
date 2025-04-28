@@ -3464,18 +3464,6 @@
                 "bool"
             ]
         },
-        "createdAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
-        "updatedAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
         "cart_pid": {
             "type": "string",
             "bsonType": [
@@ -3489,22 +3477,284 @@
             ]
         },
         "services_available_for_geoip": {
+            "title": "IServiceAvailableForIPSchema",
             "type": "object",
-            "bsonType": "object",
-            "tstype": "IServiceAvailableForIPSchema",
-            "additionalProperties": false
+            "bsonType": [
+                "object"
+            ],
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "country": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "concierge_service_available": {
+                    "type": "boolean",
+                    "bsonType": "boolean"
+                },
+                "try_service_available": {
+                    "type": "boolean",
+                    "bsonType": "boolean"
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "concierge_service_available",
+                "try_service_available"
+            ]
         },
         "platform_experiment": {
+            "title": "IPlatformExperimentSchema",
             "type": "object",
             "bsonType": "object",
-            "tstype": "IPlatformExperimentSchema",
+            "properties": {
+                "disableHarperConcierge": {
+                    "type": "boolean",
+                    "bsonType": "bool"
+                },
+                "disableHarperTry": {
+                    "type": "boolean",
+                    "bsonType": "bool"
+                },
+                "experimentId": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "hideCTA": {
+                    "type": "boolean",
+                    "bsonType": "bool"
+                },
+                "variantId": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "variantIdName": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
             "additionalProperties": false
         },
         "cart_attributes": {
+            "title": "IPlatformCartAttributesSchema",
+            "type": "object",
+            "bsonType": [
+                "object"
+            ],
+            "additionalProperties": true
+        },
+        "loyalty_details": {
+            "title": "ILoyaltyDetailsSchema",
             "type": "object",
             "bsonType": "object",
-            "tstype": "IPlatformCartAttributesSchema",
+            "properties": {
+                "claimableRewards": {
+                    "type": "array",
+                    "bsonType": [
+                        "array"
+                    ],
+                    "items": {
+                        "type": "object",
+                        "bsonType": [
+                            "object"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            },
+                            "name": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            },
+                            "description": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            },
+                            "type": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ],
+                                "enum": [
+                                    "free_concierge",
+                                    "free_standard_delivery",
+                                    "free_express_delivery"
+                                ]
+                            },
+                            "action": {
+                                "type": "object",
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "bsonType": [
+                                            "string"
+                                        ],
+                                        "enum": [
+                                            "antavo_claim"
+                                        ]
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "bsonType": [
+                                            "string"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "benefits": {
+                    "type": "array",
+                    "bsonType": [
+                        "array"
+                    ],
+                    "items": {
+                        "type": "object",
+                        "bsonType": [
+                            "object"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            },
+                            "name": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            },
+                            "description": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ]
+                            },
+                            "type": {
+                                "type": "string",
+                                "bsonType": [
+                                    "string"
+                                ],
+                                "enum": [
+                                    "free_concierge",
+                                    "free_standard_delivery",
+                                    "free_express_delivery"
+                                ]
+                            },
+                            "action": {
+                                "type": "object",
+                                "bsonType": [
+                                    "object"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "bsonType": [
+                                            "string"
+                                        ]
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "bsonType": [
+                                            "string"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "platformLoyaltyDetails": {
+                    "type": "object",
+                    "bsonType": [
+                        "object"
+                    ],
+                    "additionalProperties": false
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
             "additionalProperties": false
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
         },
         "__v": {
             "bsonType": [

@@ -250,59 +250,82 @@
                         "string"
                     ]
                 },
-                "price_rule": {
-                    "title": "IPriceRuleSchema",
-                    "type": "object",
-                    "bsonType": "object",
-                    "properties": {
-                        "_id": {
-                            "type": "string",
-                            "bsonType": "objectId",
-                            "tsType": "MongooseObjectId"
+                "price_rules": {
+                    "type": "array",
+                    "bsonType": [
+                        "array"
+                    ],
+                    "items": {
+                        "title": "IPriceRuleSchema",
+                        "type": "object",
+                        "bsonType": "object",
+                        "properties": {
+                            "_id": {
+                                "type": "string",
+                                "bsonType": "objectId",
+                                "tsType": "MongooseObjectId"
+                            },
+                            "rule_id_name": {
+                                "type": "string",
+                                "bsonType": "string"
+                            },
+                            "enabled": {
+                                "type": "boolean",
+                                "bsonType": "bool"
+                            },
+                            "rule_type": {
+                                "type": "string",
+                                "bsonType": "string",
+                                "enum": [
+                                    "enableWhenOrderOver",
+                                    "enableWhenFreeDeliveryBenefit"
+                                ]
+                            },
+                            "min_price": {
+                                "type": "integer",
+                                "bsonType": "int"
+                            },
+                            "max_price": {
+                                "type": "integer",
+                                "bsonType": "int"
+                            },
+                            "__v": {
+                                "bsonType": [
+                                    "int"
+                                ],
+                                "type": "integer"
+                            },
+                            "createdAt": {
+                                "bsonType": [
+                                    "date"
+                                ],
+                                "type": "string"
+                            },
+                            "updatedAt": {
+                                "bsonType": [
+                                    "date"
+                                ],
+                                "type": "string"
+                            }
                         },
-                        "enabled": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                        },
-                        "rule_type": {
-                            "type": "string",
-                            "bsonType": "string",
-                            "enum": [
-                                "enableWhenOrderOver"
-                            ]
-                        },
-                        "min_price": {
-                            "type": "integer",
-                            "bsonType": "int"
-                        },
-                        "max_price": {
-                            "type": "integer",
-                            "bsonType": "int"
-                        },
-                        "__v": {
-                            "bsonType": [
-                                "int"
-                            ],
-                            "type": "integer"
-                        },
-                        "createdAt": {
-                            "bsonType": [
-                                "date"
-                            ],
-                            "type": "string"
-                        },
-                        "updatedAt": {
-                            "bsonType": [
-                                "date"
-                            ],
-                            "type": "string"
-                        }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "rule_type",
-                        "min_price"
-                    ]
+                        "additionalProperties": false,
+                        "required": [
+                            "rule_id_name",
+                            "rule_type"
+                        ]
+                    }
+                },
+                "disabled_by_price_rules": {
+                    "type": "array",
+                    "bsonType": [
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    }
                 },
                 "carrier_id_name": {
                     "type": "string",
@@ -1753,59 +1776,82 @@
                         "string"
                     ]
                 },
-                "price_rule": {
-                    "title": "IPriceRuleSchema",
-                    "type": "object",
-                    "bsonType": "object",
-                    "properties": {
-                        "_id": {
-                            "type": "string",
-                            "bsonType": "objectId",
-                            "tsType": "MongooseObjectId"
+                "price_rules": {
+                    "type": "array",
+                    "bsonType": [
+                        "array"
+                    ],
+                    "items": {
+                        "title": "IPriceRuleSchema",
+                        "type": "object",
+                        "bsonType": "object",
+                        "properties": {
+                            "_id": {
+                                "type": "string",
+                                "bsonType": "objectId",
+                                "tsType": "MongooseObjectId"
+                            },
+                            "rule_id_name": {
+                                "type": "string",
+                                "bsonType": "string"
+                            },
+                            "enabled": {
+                                "type": "boolean",
+                                "bsonType": "bool"
+                            },
+                            "rule_type": {
+                                "type": "string",
+                                "bsonType": "string",
+                                "enum": [
+                                    "enableWhenOrderOver",
+                                    "enableWhenFreeDeliveryBenefit"
+                                ]
+                            },
+                            "min_price": {
+                                "type": "integer",
+                                "bsonType": "int"
+                            },
+                            "max_price": {
+                                "type": "integer",
+                                "bsonType": "int"
+                            },
+                            "__v": {
+                                "bsonType": [
+                                    "int"
+                                ],
+                                "type": "integer"
+                            },
+                            "createdAt": {
+                                "bsonType": [
+                                    "date"
+                                ],
+                                "type": "string"
+                            },
+                            "updatedAt": {
+                                "bsonType": [
+                                    "date"
+                                ],
+                                "type": "string"
+                            }
                         },
-                        "enabled": {
-                            "type": "boolean",
-                            "bsonType": "bool"
-                        },
-                        "rule_type": {
-                            "type": "string",
-                            "bsonType": "string",
-                            "enum": [
-                                "enableWhenOrderOver"
-                            ]
-                        },
-                        "min_price": {
-                            "type": "integer",
-                            "bsonType": "int"
-                        },
-                        "max_price": {
-                            "type": "integer",
-                            "bsonType": "int"
-                        },
-                        "__v": {
-                            "bsonType": [
-                                "int"
-                            ],
-                            "type": "integer"
-                        },
-                        "createdAt": {
-                            "bsonType": [
-                                "date"
-                            ],
-                            "type": "string"
-                        },
-                        "updatedAt": {
-                            "bsonType": [
-                                "date"
-                            ],
-                            "type": "string"
-                        }
-                    },
-                    "additionalProperties": false,
-                    "required": [
-                        "rule_type",
-                        "min_price"
-                    ]
+                        "additionalProperties": false,
+                        "required": [
+                            "rule_id_name",
+                            "rule_type"
+                        ]
+                    }
+                },
+                "disabled_by_price_rules": {
+                    "type": "array",
+                    "bsonType": [
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    }
                 },
                 "carrier_id_name": {
                     "type": "string",
@@ -2049,59 +2095,82 @@
                             "string"
                         ]
                     },
-                    "price_rule": {
-                        "title": "IPriceRuleSchema",
-                        "type": "object",
-                        "bsonType": "object",
-                        "properties": {
-                            "_id": {
-                                "type": "string",
-                                "bsonType": "objectId",
-                                "tsType": "MongooseObjectId"
+                    "price_rules": {
+                        "type": "array",
+                        "bsonType": [
+                            "array"
+                        ],
+                        "items": {
+                            "title": "IPriceRuleSchema",
+                            "type": "object",
+                            "bsonType": "object",
+                            "properties": {
+                                "_id": {
+                                    "type": "string",
+                                    "bsonType": "objectId",
+                                    "tsType": "MongooseObjectId"
+                                },
+                                "rule_id_name": {
+                                    "type": "string",
+                                    "bsonType": "string"
+                                },
+                                "enabled": {
+                                    "type": "boolean",
+                                    "bsonType": "bool"
+                                },
+                                "rule_type": {
+                                    "type": "string",
+                                    "bsonType": "string",
+                                    "enum": [
+                                        "enableWhenOrderOver",
+                                        "enableWhenFreeDeliveryBenefit"
+                                    ]
+                                },
+                                "min_price": {
+                                    "type": "integer",
+                                    "bsonType": "int"
+                                },
+                                "max_price": {
+                                    "type": "integer",
+                                    "bsonType": "int"
+                                },
+                                "__v": {
+                                    "bsonType": [
+                                        "int"
+                                    ],
+                                    "type": "integer"
+                                },
+                                "createdAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                },
+                                "updatedAt": {
+                                    "bsonType": [
+                                        "date"
+                                    ],
+                                    "type": "string"
+                                }
                             },
-                            "enabled": {
-                                "type": "boolean",
-                                "bsonType": "bool"
-                            },
-                            "rule_type": {
-                                "type": "string",
-                                "bsonType": "string",
-                                "enum": [
-                                    "enableWhenOrderOver"
-                                ]
-                            },
-                            "min_price": {
-                                "type": "integer",
-                                "bsonType": "int"
-                            },
-                            "max_price": {
-                                "type": "integer",
-                                "bsonType": "int"
-                            },
-                            "__v": {
-                                "bsonType": [
-                                    "int"
-                                ],
-                                "type": "integer"
-                            },
-                            "createdAt": {
-                                "bsonType": [
-                                    "date"
-                                ],
-                                "type": "string"
-                            },
-                            "updatedAt": {
-                                "bsonType": [
-                                    "date"
-                                ],
-                                "type": "string"
-                            }
-                        },
-                        "additionalProperties": false,
-                        "required": [
-                            "rule_type",
-                            "min_price"
-                        ]
+                            "additionalProperties": false,
+                            "required": [
+                                "rule_id_name",
+                                "rule_type"
+                            ]
+                        }
+                    },
+                    "disabled_by_price_rules": {
+                        "type": "array",
+                        "bsonType": [
+                            "array"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "bsonType": [
+                                "string"
+                            ]
+                        }
                     },
                     "carrier_id_name": {
                         "type": "string",
@@ -3669,8 +3738,12 @@
             }
         },
         "feature_flags": {
-            "bsonType": "object",
+            "title": "IPartnerFeatureFlagsSchema",
             "type": "object",
+            "additionalProperties": false,
+            "bsonType": [
+                "object"
+            ],
             "properties": {
                 "custom_sku_function": {
                     "bsonType": "object",
@@ -3810,6 +3883,42 @@
                             ]
                         }
                     }
+                },
+                "loyalty_program": {
+                    "bsonType": "object",
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "bsonType": "boolean",
+                            "default": false
+                        },
+                        "platform_name": {
+                            "type": "string",
+                            "bsonType": "string",
+                            "enum": [
+                                "antavo"
+                            ]
+                        }
+                    }
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
                 }
             }
         },
@@ -3820,8 +3929,12 @@
             ]
         },
         "plugins": {
-            "bsonType": "object",
+            "title": "IPartnerPluginsSchema",
             "type": "object",
+            "additionalProperties": false,
+            "bsonType": [
+                "object"
+            ],
             "properties": {
                 "klaviyo": {
                     "title": "IPartnerKlaviyoSchema",
@@ -4093,12 +4206,167 @@
                     "required": [
                         "api_key"
                     ]
+                },
+                "antavo": {
+                    "title": "IPartnerAntavoSchema",
+                    "type": "object",
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "api_key": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "base_url": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "api_secret": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "environment": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "claimable_rewards": {
+                            "type": "array",
+                            "bsonType": "array",
+                            "items": {
+                                "title": "IAntavoClaimableReward",
+                                "type": "object",
+                                "bsonType": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "bsonType": "string"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "bsonType": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "bsonType": "string",
+                                        "enum": [
+                                            "free_concierge",
+                                            "free_standard_delivery",
+                                            "free_express_delivery"
+                                        ]
+                                    },
+                                    "reward_resolution_stage": {
+                                        "type": "string",
+                                        "bsonType": "string",
+                                        "enum": [
+                                            "orderCreated"
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                    "id",
+                                    "type"
+                                ],
+                                "default": []
+                            }
+                        },
+                        "available_benefits": {
+                            "type": "array",
+                            "bsonType": "array",
+                            "items": {
+                                "title": "IAntavoAvailableBenefit",
+                                "type": "object",
+                                "bsonType": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "bsonType": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "bsonType": "string",
+                                        "enum": [
+                                            "free_concierge",
+                                            "free_standard_delivery",
+                                            "free_express_delivery"
+                                        ]
+                                    },
+                                    "tiers": {
+                                        "type": "array",
+                                        "bsonType": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "bsonType": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "__v": {
+                            "bsonType": [
+                                "int"
+                            ],
+                            "type": "integer"
+                        },
+                        "createdAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        },
+                        "updatedAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "api_key",
+                        "base_url",
+                        "api_secret",
+                        "environment"
+                    ]
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
                 }
             }
         },
         "show_full_availability": {
             "type": "boolean",
             "bsonType": "boolean"
+        },
+        "return_fee_type": {
+            "type": "string",
+            "bsonType": "string",
+            "enum": [
+                "every_return",
+                "first_return"
+            ]
+        },
+        "return_fee_amount": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
         },
         "__v": {
             "bsonType": [

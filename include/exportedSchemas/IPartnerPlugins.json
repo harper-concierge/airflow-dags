@@ -1,0 +1,422 @@
+{
+    "title": "IPartnerPluginsSchema",
+    "type": "object",
+    "additionalProperties": false,
+    "bsonType": [
+        "object"
+    ],
+    "properties": {
+        "klaviyo": {
+            "title": "IPartnerKlaviyoSchema",
+            "type": "object",
+            "bsonType": [
+                "object"
+            ],
+            "properties": {
+                "private_api_key": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "public_api_key": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "base_api_url": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "list_id": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "revision": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "base_api_url",
+                "list_id",
+                "revision"
+            ]
+        },
+        "rebound": {
+            "title": "IPartnerReboundSchema",
+            "type": "object",
+            "bsonType": [
+                "object"
+            ],
+            "properties": {
+                "login": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "api_key": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "base_api_url": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "login",
+                "api_key",
+                "base_api_url"
+            ]
+        },
+        "ometria": {
+            "title": "IPartnerOmetriaSchema",
+            "type": "object",
+            "bsonType": [
+                "object"
+            ],
+            "properties": {
+                "private_api_key": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "base_api_url": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "list_id": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "collection_id": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "base_api_url",
+                "list_id",
+                "private_api_key"
+            ]
+        },
+        "zigzag": {
+            "title": "IPartnerZigzagSchema",
+            "type": "object",
+            "bsonType": [
+                "object"
+            ],
+            "properties": {
+                "entity_id": {
+                    "bsonType": "number",
+                    "type": "number"
+                },
+                "user_name": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "password": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "url": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "token_generate_url": {
+                    "bsonType": "string",
+                    "type": "string"
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "entity_id",
+                "user_name",
+                "password",
+                "url"
+            ]
+        },
+        "loop": {
+            "title": "IPartnerLoopSchema",
+            "type": "object",
+            "bsonType": [
+                "object"
+            ],
+            "properties": {
+                "api_key": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "api_key"
+            ]
+        },
+        "reveni": {
+            "title": "IPartnerReveniSchema",
+            "type": "object",
+            "bsonType": [
+                "object"
+            ],
+            "properties": {
+                "api_key": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "api_key"
+            ]
+        },
+        "antavo": {
+            "title": "IPartnerAntavoSchema",
+            "type": "object",
+            "bsonType": [
+                "object"
+            ],
+            "properties": {
+                "api_key": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "base_url": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "api_secret": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "environment": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "claimable_rewards": {
+                    "type": "array",
+                    "bsonType": "array",
+                    "items": {
+                        "title": "IAntavoClaimableReward",
+                        "type": "object",
+                        "bsonType": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "bsonType": "string"
+                            },
+                            "name": {
+                                "type": "string",
+                                "bsonType": "string"
+                            },
+                            "type": {
+                                "type": "string",
+                                "bsonType": "string",
+                                "enum": [
+                                    "free_concierge",
+                                    "free_standard_delivery",
+                                    "free_express_delivery"
+                                ]
+                            },
+                            "reward_resolution_stage": {
+                                "type": "string",
+                                "bsonType": "string",
+                                "enum": [
+                                    "orderCreated"
+                                ]
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                            "id",
+                            "type"
+                        ],
+                        "default": []
+                    }
+                },
+                "available_benefits": {
+                    "type": "array",
+                    "bsonType": "array",
+                    "items": {
+                        "title": "IAntavoAvailableBenefit",
+                        "type": "object",
+                        "bsonType": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "bsonType": "string"
+                            },
+                            "type": {
+                                "type": "string",
+                                "bsonType": "string",
+                                "enum": [
+                                    "free_concierge",
+                                    "free_standard_delivery",
+                                    "free_express_delivery"
+                                ]
+                            },
+                            "tiers": {
+                                "type": "array",
+                                "bsonType": "array",
+                                "items": {
+                                    "type": "string",
+                                    "bsonType": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "__v": {
+                    "bsonType": [
+                        "int"
+                    ],
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "bsonType": [
+                        "date"
+                    ],
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "api_key",
+                "base_url",
+                "api_secret",
+                "environment"
+            ]
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    }
+}

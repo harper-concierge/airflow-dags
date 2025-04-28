@@ -1,0 +1,55 @@
+{
+    "title": "IAppliedLoyaltyRewardSchema",
+    "type": "object",
+    "bsonType": "object",
+    "properties": {
+        "reward_id": {
+            "type": "string",
+            "bsonType": [
+                "string"
+            ]
+        },
+        "reward_action_url": {
+            "type": "string",
+            "bsonType": [
+                "string"
+            ]
+        },
+        "reward_type": {
+            "type": "string",
+            "bsonType": [
+                "string"
+            ],
+            "enum": [
+                "free_concierge",
+                "free_standard_delivery",
+                "free_express_delivery"
+            ]
+        },
+        "reward_platform_name": {
+            "type": "string",
+            "bsonType": [
+                "string"
+            ]
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    },
+    "additionalProperties": false
+}

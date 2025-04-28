@@ -8,6 +8,10 @@
             "bsonType": "objectId",
             "tsType": "MongooseObjectId"
         },
+        "rule_id_name": {
+            "type": "string",
+            "bsonType": "string"
+        },
         "enabled": {
             "type": "boolean",
             "bsonType": "bool"
@@ -16,7 +20,8 @@
             "type": "string",
             "bsonType": "string",
             "enum": [
-                "enableWhenOrderOver"
+                "enableWhenOrderOver",
+                "enableWhenFreeDeliveryBenefit"
             ]
         },
         "min_price": {
@@ -48,7 +53,7 @@
     },
     "additionalProperties": false,
     "required": [
-        "rule_type",
-        "min_price"
+        "rule_id_name",
+        "rule_type"
     ]
 }
