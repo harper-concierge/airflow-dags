@@ -33,7 +33,7 @@ class StripeToPostgresOperator(LastSuccessfulDagrunMixin, DagRunTaskCommsMixin, 
         self.destination_table = destination_table
         self.postgres_conn_id = postgres_conn_id
         self.stripe_conn_id = stripe_conn_id
-        self.discard_fields = ["payment_method_details", "source"]
+        self.discard_fields = ["payment_method_details", "source", "balance_type"]
         self.last_successful_dagrun_xcom_key = "last_successful_dagrun_ts"
         self.last_successful_item_key = "last_successful_transaction_id"
         self.separator = "__"
