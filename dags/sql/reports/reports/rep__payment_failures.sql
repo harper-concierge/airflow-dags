@@ -18,14 +18,6 @@ SELECT
         ELSE 'other'
     END AS failure_stage,
     -- Only count non-checkout failures
-    CASE
-        WHEN oe.message NOT LIKE '%checkout%' THEN
-            ROW_NUMBER() OVER (
-                PARTITION BY oe.order_id
-                ORDER BY oe.createdat
-            )
-        ELSE NULL
-    END AS post_checkout_failure_number,
 	trial_period_actually_started_at,
 	trial_period_actually_ended_at,
 	trial_period_reconciled,
