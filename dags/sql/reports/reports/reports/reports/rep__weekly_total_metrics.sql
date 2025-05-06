@@ -16,12 +16,14 @@ concierge_revenue AS (
                 WHEN revenue_is_service_fee_inclusive=1 THEN lineitem_amount
                 ELSE 0
               END
+            -- Explicitly handle return_fee and refundable_fee as 0
+            WHEN lineitem_category IN ('return_fee', 'refundable_fee') THEN 0
           END
         )::INTEGER
         +
         SUM(
           CASE
-            WHEN lineitem_category != 'fee' THEN
+            WHEN lineitem_category != 'fee' AND lineitem_category NOT IN ('return_fee', 'refundable_fee') THEN
               CASE
                 -- Handle discounts:
                 WHEN lineitem_category IN ('item_discount', 'order_discount', 'harper_item_discount') THEN
