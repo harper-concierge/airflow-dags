@@ -13,11 +13,10 @@ SELECT
     oe.message,
     CASE
         WHEN oe.message LIKE '%%checkout%%' THEN 'checkout' -- TODO: check if theres a more efficient way to identify this
-        WHEN oe.message LIKE '%%trial_end%%' THEN 'trial_end'
+        WHEN oe.message LIKE '%%trial_end %%' THEN 'trial_end'
         WHEN oe.message LIKE '%%trial_end_replacement%%' THEN 'reconciliation'
         ELSE 'other'
     END AS failure_stage,
-    -- Only count non-checkout failures
 	trial_period_actually_started_at,
 	trial_period_actually_ended_at,
 	trial_period_reconciled,
