@@ -106,7 +106,8 @@
                         "enum": [
                             "free_concierge",
                             "free_standard_delivery",
-                            "free_express_delivery"
+                            "free_express_delivery",
+                            "points_reward"
                         ]
                     },
                     "action": {

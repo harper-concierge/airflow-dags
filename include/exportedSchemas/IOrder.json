@@ -597,6 +597,32 @@
                             "date"
                         ]
                     },
+                    "stripe_discount_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_discount_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_item_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_item_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
                     "received_at": {
                         "type": "string",
                         "tsType": "Date",
@@ -1416,6 +1442,32 @@
                             "date"
                         ]
                     },
+                    "stripe_discount_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_discount_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_item_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_item_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
                     "received_at": {
                         "type": "string",
                         "tsType": "Date",
@@ -2223,6 +2275,32 @@
                         "type": "boolean"
                     },
                     "returned_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_discount_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_discount_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_item_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_item_credit_note_issued_at": {
                         "type": "string",
                         "tsType": "Date",
                         "bsonType": [
@@ -3049,6 +3127,32 @@
                         "type": "boolean"
                     },
                     "returned_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_discount_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_discount_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_item_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_item_credit_note_issued_at": {
                         "type": "string",
                         "tsType": "Date",
                         "bsonType": [
@@ -5817,6 +5921,88 @@
                 "date"
             ],
             "type": "string"
+        },
+        "refunds": {
+            "type": "array",
+            "bsonType": [
+                "object"
+            ],
+            "items": {
+                "type": "object",
+                "properties": {
+                    "_id": {
+                        "bsonType": [
+                            "objectId"
+                        ],
+                        "type": "string",
+                        "tsType": "MongooseObjectId"
+                    },
+                    "refund": {
+                        "type": "object",
+                        "bsonType": "object",
+                        "tsType": "IIncomingRefundEventSchema"
+                    },
+                    "total_return_fee": {
+                        "type": "integer",
+                        "bsonType": [
+                            "int64"
+                        ]
+                    },
+                    "charged_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "tsType": "Date | null",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "refund_me": {
+                        "type": "boolean",
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "default": false
+                    },
+                    "refunded_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "tsType": "Date | null",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_purchase_invoice_id": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
+                    "stripe_invoice_lineitem_id": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
+                    "receivedByWarehouseItems": {
+                        "type": "array",
+                        "bsonType": [
+                            "array"
+                        ],
+                        "items": {
+                            "bsonType": [
+                                "objectId"
+                            ],
+                            "type": "string",
+                            "tsType": "MongooseObjectId"
+                        }
+                    }
+                },
+                "required": [
+                    "_id",
+                    "refund"
+                ]
+            },
+            "additionalProperties": false
         },
         "__v": {
             "bsonType": [

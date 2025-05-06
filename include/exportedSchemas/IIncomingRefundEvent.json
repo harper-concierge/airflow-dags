@@ -1,0 +1,146 @@
+{
+    "title": "IIncomingRefundEventSchema",
+    "type": "object",
+    "bsonType": "object",
+    "properties": {
+        "event_id": {
+            "type": "string",
+            "bsonType": "string"
+        },
+        "order_id": {
+            "type": "string",
+            "bsonType": "string"
+        },
+        "integration_order_id": {
+            "bsonType": "string",
+            "type": [
+                "number",
+                "string"
+            ]
+        },
+        "shipping": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "requested_amount": {
+                    "bsonType": "int32",
+                    "type": [
+                        "number"
+                    ]
+                },
+                "refund_reason": {
+                    "bsonType": "string",
+                    "type": "string"
+                }
+            }
+        },
+        "order": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "requested_amount": {
+                    "bsonType": "int32",
+                    "type": [
+                        "number"
+                    ]
+                },
+                "refund_reason": {
+                    "bsonType": "string",
+                    "type": "string"
+                }
+            }
+        },
+        "items": {
+            "type": "array",
+            "bsonType": "array",
+            "items": {
+                "type": "object",
+                "bsonType": "object",
+                "properties": {
+                    "_id": {
+                        "bsonType": "string",
+                        "type": "string"
+                    },
+                    "variant_id": {
+                        "bsonType": [
+                            "string",
+                            "int64"
+                        ],
+                        "type": [
+                            "number",
+                            "string"
+                        ]
+                    },
+                    "quantity": {
+                        "bsonType": "int32",
+                        "type": "number"
+                    },
+                    "sku": {
+                        "bsonType": [
+                            "string",
+                            "int64"
+                        ],
+                        "type": [
+                            "number",
+                            "string"
+                        ]
+                    },
+                    "name": {
+                        "bsonType": "string",
+                        "type": "string"
+                    },
+                    "restocking_fee": {
+                        "bsonType": "int32",
+                        "type": "number"
+                    }
+                }
+            }
+        },
+        "discrepancy": {
+            "bsonType": "int32",
+            "type": "integer"
+        },
+        "return_shipping_fee": {
+            "bsonType": "int32",
+            "type": "integer"
+        },
+        "total_refund_amount": {
+            "bsonType": "int32",
+            "type": "integer"
+        },
+        "created_at": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+                "date"
+            ]
+        },
+        "note": {
+            "bsonType": "string",
+            "type": "string"
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    },
+    "required": [
+        "integration_order_id",
+        "order_id"
+    ],
+    "additionalProperties": false
+}

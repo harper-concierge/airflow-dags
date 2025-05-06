@@ -26,7 +26,8 @@
                 "reconciliation",
                 "ppr",
                 "pp_discount",
-                "shipping_fee_refund"
+                "shipping_fee_refund",
+                "intermediate"
             ]
         },
         "payment_reference_id": {

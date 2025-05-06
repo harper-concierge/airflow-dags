@@ -662,6 +662,32 @@
                             "date"
                         ]
                     },
+                    "stripe_discount_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_discount_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_item_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_item_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
                     "received_at": {
                         "type": "string",
                         "tsType": "Date",
@@ -1470,6 +1496,32 @@
                         "type": "boolean"
                     },
                     "returned_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_discount_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_discount_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_item_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_item_credit_note_issued_at": {
                         "type": "string",
                         "tsType": "Date",
                         "bsonType": [
@@ -2290,6 +2342,32 @@
                             "date"
                         ]
                     },
+                    "stripe_discount_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_discount_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_item_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_item_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
                     "received_at": {
                         "type": "string",
                         "tsType": "Date",
@@ -3104,6 +3182,32 @@
                             "date"
                         ]
                     },
+                    "stripe_discount_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_discount_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
+                    "stripe_item_credit_note_issued": {
+                        "bsonType": [
+                            "bool"
+                        ],
+                        "type": "boolean"
+                    },
+                    "stripe_item_credit_note_issued_at": {
+                        "type": "string",
+                        "tsType": "Date",
+                        "bsonType": [
+                            "date"
+                        ]
+                    },
                     "received_at": {
                         "type": "string",
                         "tsType": "Date",
@@ -3690,7 +3794,8 @@
                                 "enum": [
                                     "free_concierge",
                                     "free_standard_delivery",
-                                    "free_express_delivery"
+                                    "free_express_delivery",
+                                    "points_reward"
                                 ]
                             },
                             "action": {

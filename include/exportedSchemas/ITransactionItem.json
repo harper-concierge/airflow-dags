@@ -56,6 +56,7 @@
             "enum": [
                 "product",
                 "fee",
+                "return_fee",
                 "deposit",
                 "item_discount",
                 "order_discount",

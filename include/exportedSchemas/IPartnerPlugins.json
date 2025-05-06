@@ -359,7 +359,8 @@
                                 "enum": [
                                     "free_concierge",
                                     "free_standard_delivery",
-                                    "free_express_delivery"
+                                    "free_express_delivery",
+                                    "points_reward"
                                 ]
                             },
                             "tiers": {
@@ -369,8 +370,18 @@
                                     "type": "string",
                                     "bsonType": "string"
                                 }
+                            },
+                            "points_multiplier": {
+                                "type": "number",
+                                "bsonType": "number"
                             }
-                        }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                            "name",
+                            "type"
+                        ],
+                        "default": []
                     }
                 },
                 "__v": {
