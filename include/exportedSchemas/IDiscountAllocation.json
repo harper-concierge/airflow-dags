@@ -1,0 +1,52 @@
+{
+    "title": "IDiscountAllocationSchema",
+    "type": "object",
+    "bsonType": [
+        "object"
+    ],
+    "properties": {
+        "title": {
+            "bsonType": [
+                "string"
+            ],
+            "type": "string"
+        },
+        "discount_type": {
+            "bsonType": [
+                "string"
+            ],
+            "type": "string"
+        },
+        "value": {
+            "bsonType": [
+                "number"
+            ],
+            "type": "number"
+        },
+        "value_type": {
+            "bsonType": [
+                "string"
+            ],
+            "type": "string"
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    },
+    "additionalProperties": false
+}
