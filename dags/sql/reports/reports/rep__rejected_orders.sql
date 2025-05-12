@@ -2,35 +2,40 @@ DROP VIEW IF EXISTS {{ schema }}.rep__rejected_orders CASCADE;
 
 CREATE VIEW {{ schema }}.rep__rejected_orders AS
 
+WITH
+stripe_blocked_orders as (
+    SELECT i.metadata__internal_order_id AS id
+    FROM {{ schema }}.stripe__charges c
+    LEFT JOIN {{ schema }}.stripe__invoices i
+        ON c.invoice = i.id
+    WHERE outcome__type ='blocked'
+    )
+
 SELECT
 	DATE(oe.createdat) AS event_date,
     t.dim_year,
+	t.dim_month,
     t.dim_quartal,
     t.dim_yearmonth,
 	brand_name,
 	o.order_type,-- to make joining tables easier
-	oe.message,
-	COUNT(o.id) AS rejections,
-	SUM(COUNT(o.id)) OVER (
-		PARTITION BY brand_name
-		ORDER BY DATE(oe.createdat)
-		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-	) AS running_total_rejections_by_brand
-	FROM {{ schema }}.orderevents oe
+	COUNT(DISTINCT s.id) AS stripe_blocked_orders,
+	SUM(CASE WHEN oe.event_name_id = 'orderRejected' THEN 1 ELSE 0 END) AS rejected_orders,
+	COUNT(DISTINCT oe.order_id) AS total_blocked_orders
+FROM {{ schema }}.orderevents oe
 LEFT JOIN {{ schema }}.orders o
 	ON o.id = oe.order_id
 LEFT JOIN {{ schema }}.dim__time t
 	ON t.dim_date_id = DATE(oe.createdat)
-WHERE oe.event_name_id = 'orderRejected'
-GROUP BY
-	brand_name,
-	DATE(oe.createdat),
-	    t.dim_year,
+LEFT JOIN stripe_blocked_orders s
+	on s.id = o.internal_order_id
+WHERE (oe.event_name_id = 'orderRejected'
+	OR s.id IS NOT NULL)
+group by
+	DATE(oe.createdat) ,
+    t.dim_year,
+	t.dim_month,
     t.dim_quartal,
     t.dim_yearmonth,
-	o.order_type,
-	oe.message
-ORDER BY DATE(oe.createdat),
 	brand_name,
-	order_type,
-	oe.message
+	o.order_type
