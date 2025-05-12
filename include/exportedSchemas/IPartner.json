@@ -2795,6 +2795,12 @@
                                         ]
                                     }
                                 },
+                                "limit_cart_item_quantity": {
+                                    "bsonType": [
+                                        "bool"
+                                    ],
+                                    "type": "boolean"
+                                },
                                 "__v": {
                                     "bsonType": [
                                         "int"
@@ -3273,6 +3279,12 @@
                                             "string"
                                         ]
                                     }
+                                },
+                                "limit_cart_item_quantity": {
+                                    "bsonType": [
+                                        "bool"
+                                    ],
+                                    "type": "boolean"
                                 },
                                 "__v": {
                                     "bsonType": [
@@ -3899,6 +3911,17 @@
                             "enum": [
                                 "antavo"
                             ]
+                        }
+                    }
+                },
+                "shadow_poll_ingrid_fulfilment": {
+                    "bsonType": "object",
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "bsonType": "boolean",
+                            "default": false
                         }
                     }
                 },

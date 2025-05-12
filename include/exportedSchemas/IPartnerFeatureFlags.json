@@ -163,6 +163,17 @@
                 }
             }
         },
+        "shadow_poll_ingrid_fulfilment": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                }
+            }
+        },
         "__v": {
             "bsonType": [
                 "int"

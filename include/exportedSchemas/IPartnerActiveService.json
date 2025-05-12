@@ -369,6 +369,12 @@
                                 ]
                             }
                         },
+                        "limit_cart_item_quantity": {
+                            "bsonType": [
+                                "bool"
+                            ],
+                            "type": "boolean"
+                        },
                         "__v": {
                             "bsonType": [
                                 "int"
@@ -762,6 +768,12 @@
                                     "string"
                                 ]
                             }
+                        },
+                        "limit_cart_item_quantity": {
+                            "bsonType": [
+                                "bool"
+                            ],
+                            "type": "boolean"
                         },
                         "__v": {
                             "bsonType": [
