@@ -41,7 +41,6 @@ from {{ schema }}.stripe__invoices si
 SELECT
 	o.createdat AS order__createdat,
 	i.created AS invoice__createdat,
-	first_charge__createdat,
 	brand_name,
 	metadata__internal_order_id,
 	o.order_name,
