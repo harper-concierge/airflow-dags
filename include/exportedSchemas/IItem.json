@@ -867,6 +867,12 @@
                 "array"
             ]
         },
+        "platform_lineitem_id": {
+            "type": "string",
+            "bsonType": [
+                "string"
+            ]
+        },
         "__v": {
             "bsonType": [
                 "int"

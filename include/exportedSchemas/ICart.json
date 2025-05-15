@@ -1029,6 +1029,12 @@
                             "array"
                         ]
                     },
+                    "platform_lineitem_id": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
                     "__v": {
                         "bsonType": [
                             "int"
@@ -1931,6 +1937,12 @@
                         "type": "array",
                         "bsonType": [
                             "array"
+                        ]
+                    },
+                    "platform_lineitem_id": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
                         ]
                     },
                     "__v": {
@@ -2837,6 +2849,12 @@
                             "array"
                         ]
                     },
+                    "platform_lineitem_id": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
+                        ]
+                    },
                     "__v": {
                         "bsonType": [
                             "int"
@@ -3739,6 +3757,12 @@
                         "type": "array",
                         "bsonType": [
                             "array"
+                        ]
+                    },
+                    "platform_lineitem_id": {
+                        "type": "string",
+                        "bsonType": [
+                            "string"
                         ]
                     },
                     "__v": {

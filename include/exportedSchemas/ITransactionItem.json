@@ -57,6 +57,7 @@
                 "product",
                 "fee",
                 "return_fee",
+                "refundable_fee",
                 "deposit",
                 "item_discount",
                 "order_discount",

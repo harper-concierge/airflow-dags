@@ -27,6 +27,7 @@
                 "ppr",
                 "pp_discount",
                 "shipping_fee_refund",
+                "refundable_fee_refund",
                 "intermediate"
             ]
         },
