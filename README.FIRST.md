@@ -70,11 +70,12 @@ astro dev restart
 
 Now in admin->Connections edit the 'mongo_db_conn_id' connection and change its type from Generic to MongoDB and save.
 
-Now in admin->Pools Create the following pools
+Now in admin->Pools Check the following pools
 
-* sql_single_thread_pool - slots=0
+* sql_single_thread_pool - slots=1
 * shopify_import_pool - slots=5
 * mongo_default_pool - slots=5
+* mongo_rebuild_pool - slots=2
 
 ## restarting your local environment to pickup code changes outside of your plugins/operators directory
 
