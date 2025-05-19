@@ -32,17 +32,31 @@ airflow:
       - pool_name: mongo_default_pool
         pool_slot: 5
         pool_description: "Set the concurrency of calls to production mongoDB"
+      - pool_name: mongo_rebuild_pool
+        pool_slot: 2
+        pool_description: "Set the concurrency of calls to production mongoDB"
     variables:
         - variable_name: REBUILD_MONGO_DATA
           variable_value: "False"
         - variable_name: REFRESH_CONCURRENTLY
           variable_value: "False"
-        - variable_name: SHOPIFY_START_DATE
-          variable_value: "2024-08-01T00:00:00.000Z"
+        - variable_name: REBUILD_SHOPIFY_DATA
+          variable_value: "False"
+        - variable_name: REBUILD_STRIPE_DATA
+          variable_value: "False"
+        - variable_name: SHOPIFY_START_DAYS_AGO
+          variable_value: "60"
+        - variable_name: STRIPE_START_DAYS_AGO
+          variable_value: "60"
         - variable_name: ZETTLE_START_DAYS_AGO
           variable_value: "60"
         - variable_name: MONGO_START_DATE
           variable_value: "2024-08-01T00:00:00.000Z"
+        - variable_name: SHOPIFY_PARTNERS
+          variable_value: "harper_production,shrimps"
+        - variable_name: SLACK_OVERRIDE_CHANNEL
+          variable_value: "#alerts-dev-airflow"
+
 ```
 
 If you wish to wipe your local docker - e.g. when an airflow DB upgrade is needed you can issue the following command
