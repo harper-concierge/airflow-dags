@@ -93,6 +93,7 @@ class StripeInvoicesToPostgresOperator(
             ("last_finalization_error", "string"),
             ("latest_revision", "string"),
             ("livemode", "boolean"),
+            ("metadata__lineitem_amount", "Int32"),
             ("next_payment_attempt", "Int64"),
             ("number", "string"),
             ("on_behalf_of", "string"),
@@ -136,6 +137,7 @@ class StripeInvoicesToPostgresOperator(
             ("metadata__order", "string"),
             ("metadata__payment_country", "string"),
             ("metadata__request_id", "string"),
+            ("metadata__request_id", "int"),
             ("metadata__stripe_device_name", "string"),
         ]
 
