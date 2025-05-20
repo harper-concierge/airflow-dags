@@ -163,7 +163,7 @@
                 }
             }
         },
-        "shadow_poll_ingrid_fulfilment": {
+        "poll_ingrid_fulfilment": {
             "bsonType": "object",
             "type": "object",
             "properties": {
