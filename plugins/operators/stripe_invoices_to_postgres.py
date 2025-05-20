@@ -137,7 +137,6 @@ class StripeInvoicesToPostgresOperator(
             ("metadata__order", "string"),
             ("metadata__payment_country", "string"),
             ("metadata__request_id", "string"),
-            ("metadata__request_id", "int"),
             ("metadata__stripe_device_name", "string"),
         ]
 
