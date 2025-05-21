@@ -94,6 +94,7 @@ class StripeInvoicesToPostgresOperator(
             ("latest_revision", "string"),
             ("livemode", "boolean"),
             ("metadata__lineitem_amount", "Int32"),
+            ("metadata__lineitem_billed_quantity", "Int32"),
             ("next_payment_attempt", "Int64"),
             ("number", "string"),
             ("on_behalf_of", "string"),

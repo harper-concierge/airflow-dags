@@ -57,6 +57,7 @@ WITH NO DATA;
 {% if is_modified %}
 CREATE UNIQUE INDEX IF NOT EXISTS rep__transactionlog_idx ON {{ schema }}.rep__transactionlog (id);
 CREATE INDEX IF NOT EXISTS rep__transactionlog_harper_order_name_idx ON {{ schema }}.rep__transactionlog (harper_order_name);
+CREATE INDEX IF NOT EXISTS rep__transactionlog_harper_order_id_idx ON {{ schema }}.rep__transactionlog (order_id);
 CREATE INDEX IF NOT EXISTS rep__transactionlog_partner_order_name_idx ON {{ schema }}.rep__transactionlog (partner_order_name);
 CREATE INDEX IF NOT EXISTS rep__transactionlog_try_commission_chargeable_idx ON {{ schema }}.rep__transactionlog (try_commission_chargeable);
 
