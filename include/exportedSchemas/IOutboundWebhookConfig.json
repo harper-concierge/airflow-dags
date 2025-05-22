@@ -1,0 +1,107 @@
+{
+    "title": "IOutboundWebhookConfigSchema",
+    "type": "object",
+    "additionalProperties": false,
+    "bsonType": [
+        "object"
+    ],
+    "properties": {
+        "enabled": {
+            "type": "boolean",
+            "bsonType": "boolean"
+        },
+        "concierge_complete_webhook": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "bsonType": "boolean",
+                    "default": false
+                },
+                "url": {
+                    "type": "string",
+                    "bsonType": "string"
+                },
+                "auth": {
+                    "bsonType": "object",
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "bsonType": "string",
+                            "enum": [
+                                "basic",
+                                "bearer",
+                                "oauth",
+                                "api_key"
+                            ]
+                        },
+                        "username": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "password": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "token": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "api_key": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "endpoint": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "client_id": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "client_secret": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "grant_type": {
+                            "type": "string",
+                            "bsonType": "string"
+                        },
+                        "scope": {
+                            "type": "string",
+                            "bsonType": "string"
+                        }
+                    }
+                },
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "bsonType": [
+                        "object"
+                    ],
+                    "tsType": "Record<string, string>"
+                }
+            }
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    }
+}

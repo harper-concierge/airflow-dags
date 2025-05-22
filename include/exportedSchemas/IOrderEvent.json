@@ -88,7 +88,8 @@
                         "sms",
                         "data",
                         "note",
-                        "function"
+                        "function",
+                        "webhook"
                     ]
                 },
                 "data": {
@@ -185,6 +186,7 @@
                 "orderStatusLogEvent",
                 "triggerPostPurchaseDiscount",
                 "sendOrderEmail",
+                "triggerOutboundWebhook",
                 ""
             ]
         },
