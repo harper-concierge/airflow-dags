@@ -4497,14 +4497,13 @@
                 "to_ship",
                 "shipped",
                 "unpurchased_processed",
-                "rejected_high_risk",
-                "rejected_med_risk",
                 "failed",
                 "in_try_on_period",
                 "in_resolution",
                 "written_off",
                 "rejected",
-                "fraudulent"
+                "fraudulent",
+                "fraud_review"
             ]
         },
         "hold_reason": {
@@ -6283,6 +6282,21 @@
                 ]
             },
             "additionalProperties": false
+        },
+        "risk_status": {
+            "type": "string",
+            "bsonType": [
+                "string"
+            ],
+            "enum": [
+                "high_risk",
+                "med_risk",
+                "partner_active_order_limit_hit",
+                "global_active_order_limit_hit",
+                "global_active_order_value_limit_hit",
+                "partner_active_order_value_limit_hit",
+                "none"
+            ]
         },
         "__v": {
             "bsonType": [

@@ -2801,6 +2801,10 @@
                                     ],
                                     "type": "boolean"
                                 },
+                                "max_active_orders_value": {
+                                    "bsonType": "int",
+                                    "type": "number"
+                                },
                                 "__v": {
                                     "bsonType": [
                                         "int"

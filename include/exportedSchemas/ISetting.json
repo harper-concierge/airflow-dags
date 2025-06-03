@@ -330,6 +330,10 @@
                 }
             }
         },
+        "max_active_orders_value": {
+            "bsonType": "int",
+            "type": "number"
+        },
         "__v": {
             "bsonType": [
                 "int"
@@ -368,7 +372,8 @@
         "max_active_try_orders",
         "customer_service",
         "createdAt",
-        "updatedAt"
+        "updatedAt",
+        "max_active_orders_value"
     ],
     "additionalProperties": false
 }
