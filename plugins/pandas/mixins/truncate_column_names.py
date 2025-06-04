@@ -45,6 +45,14 @@ class TruncateColumnNamesMixin:
         if len(name) <= max_length:
             return name
 
+        # First try to abbreviate middle words
+        try:
+            abbreviated = self._abbreviate_middle_words(name, seperator)
+            if len(abbreviated) <= max_length:
+                return abbreviated
+        except Exception:
+            pass
+
         parts = name.split(seperator)
         preserved = []
 
@@ -64,10 +72,10 @@ class TruncateColumnNamesMixin:
             current_part = parts.pop()
             if "_" in current_part:
                 sub_parts = current_part.split("_")
-                abbreviation = "".join(part[0] for part in sub_parts)
-                print("abbreviated length", abbreviation, abbreviated, len(abbreviated))
+                # Take first 3 chars of each sub-part instead of just first char
+                abbreviation = "_".join(part[:3] if len(part) > 3 else part for part in sub_parts)
             else:
-                abbreviation = current_part[0]
+                abbreviation = current_part[:3] if len(current_part) > 3 else current_part
 
             abbreviated.append(abbreviation)
 
@@ -75,48 +83,49 @@ class TruncateColumnNamesMixin:
             remaining_length = self._parts_length(parts, seperator)
             preserved_length = self._parts_length(preserved, seperator)
             parts_left = len(parts)
-            print(
-                "INTERIM",
-                parts_left,
-                abbreviated,
-                abbreviated_length,
-                parts,
-                remaining_length,
-                preserved,
-                preserved_length,
-                len(seperator),
-                (abbreviated_length + remaining_length + preserved_length + len(seperator)),
-            )
-        print("parts_left", parts_left)
 
         if (abbreviated_length + remaining_length + preserved_length + len(seperator)) > max_length:
+            # If still too long, try more aggressive abbreviation
             try:
-                return self._abbreviate_middle_words(name, seperator)
+                parts = name.split(seperator)
+                abbreviated_parts = []
+                for part in parts:
+                    if "_" in part:
+                        sub_parts = part.split("_")
+                        abbreviated = "_".join(p[:2] if len(p) > 2 else p for p in sub_parts)
+                    else:
+                        abbreviated = part[:2] if len(part) > 2 else part
+                    abbreviated_parts.append(abbreviated)
+                result = seperator.join(abbreviated_parts)
+                if len(result) <= max_length:
+                    return result
             except Exception:
-                raise ValueError(f"Could Not truncate Field {name} as the final part is just too long for its prefix")
-
-        print("pre-final abbreviated", abbreviated)
-        # abbreviated.reverse()
-        # if abbreviated and isinstance(abbreviated[-1], str) and abbreviated[-1].endswith("_"):
-        #   abbreviated[-1] = abbreviated[-1][:-1]  # Replace the last element's _ if it ends with _
-
-        print("final abbreviated", abbreviated)
+                pass
+            raise ValueError(f"Could Not truncate Field {name} as the final part is just too long for its prefix")
 
         parts.append(joiner.join(abbreviated))
         parts.reverse()
-
         preserved.extend(parts)
-
         result = f"{seperator}".join(preserved)
+
         if len(result) > max_length:
-            print("parts", parts, parts_left, remaining_length)
-            print("abbreviated", abbreviated, abbreviated_length)
-            print("preserved", preserved, remaining_length)
-            print("lengths", remaining_length, preserved_length, abbreviated_length, max_length)
+            # One final attempt with minimal abbreviation
             try:
-                return self._abbreviate_middle_words(name, seperator)
+                parts = name.split(seperator)
+                abbreviated_parts = []
+                for part in parts:
+                    if "_" in part:
+                        sub_parts = part.split("_")
+                        abbreviated = "_".join(p[0] for p in sub_parts)
+                    else:
+                        abbreviated = part[0]
+                    abbreviated_parts.append(abbreviated)
+                result = seperator.join(abbreviated_parts)
+                if len(result) <= max_length:
+                    return result
             except Exception:
-                raise ValueError(f"Could Not truncate Field {name} as the final part is just too long for its prefix")
+                pass
+            raise ValueError(f"Could Not truncate Field {name} as the final part is just too long for its prefix")
         return result
 
     def squash_column_names(self, df, max_prefix_length=25, max_suffix_length=38):
