@@ -21,17 +21,22 @@ class TruncateColumnNamesMixin:
             for i, word in enumerate(words):
                 if i == 0 or i == len(words) - 1:
                     # Keep first and last words in full
+                    print(f"Keeping word full: {word} (position: {i})")
                     abbreviated_words.append(word)
                 else:
                     # Abbreviate middle words
-                    abbreviated_words.append(word[:3] if len(word) > 3 else word)
+                    abbreviated = word[:3] if len(word) > 3 else word
+                    print(f"Abbreviating word: {word} -> {abbreviated} (position: {i})")
+                    abbreviated_words.append(abbreviated)
 
             # Join the words back with single underscore
             abbreviated_part = "_".join(abbreviated_words)
+            print(f"Part after abbreviation: {abbreviated_part}")
             abbreviated_parts.append(abbreviated_part)
 
         # Join the parts back with double underscore
         result = seperator.join(abbreviated_parts)
+        print(f"Final result: {result}")
         return result
 
     def _truncate_name(self, name, max_length, seperator, joiner="", preserve_parts=0):
