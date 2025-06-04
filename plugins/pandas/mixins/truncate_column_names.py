@@ -8,11 +8,16 @@ class TruncateColumnNamesMixin:
 
     def _abbreviate_middle_words(self, name, seperator):
         """Helper method to abbreviate middle words while keeping first and last words full."""
+        print(f"Using abbreviator for column: {name}")
+        # First split by double underscore
         parts = name.split(seperator)
         abbreviated_parts = []
+
         for part in parts:
+            # Then split by single underscore
             words = part.split("_")
             abbreviated_words = []
+
             for i, word in enumerate(words):
                 if i == 0 or i == len(words) - 1:
                     # Keep first and last words in full
@@ -20,7 +25,12 @@ class TruncateColumnNamesMixin:
                 else:
                     # Abbreviate middle words
                     abbreviated_words.append(word[:3] if len(word) > 3 else word)
-            abbreviated_parts.append("_".join(abbreviated_words))
+
+            # Join the words back with single underscore
+            abbreviated_part = "_".join(abbreviated_words)
+            abbreviated_parts.append(abbreviated_part)
+
+        # Join the parts back with double underscore
         result = seperator.join(abbreviated_parts)
         return result
 
