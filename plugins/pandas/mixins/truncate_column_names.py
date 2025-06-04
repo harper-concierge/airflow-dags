@@ -6,132 +6,48 @@ class TruncateColumnNamesMixin:
         # Calculate the total length of preserved array values plus 1 for each element
         return sum(len(part) + len(seperator) for part in parts)
 
-    def _abbreviate_middle_words(self, name, seperator):
-        """Helper method to abbreviate middle words while keeping first and last words full."""
-        print(f"Using abbreviator for column: {name}")
-        # First split by double underscore
-        parts = name.split(seperator)
-        print(f"Parts after splitting by {seperator}: {parts}")
-        abbreviated_parts = []
-
-        for part in parts:
-            # Then split by single underscore
-            words = part.split("_")
-            print(f"Words in part '{part}': {words}")
-            abbreviated_words = []
-
-            for i, word in enumerate(words):
-                if i == 0 or i == len(words) - 1:
-                    # Keep first and last words in full
-                    print(f"Keeping word full: {word} (position: {i})")
-                    abbreviated_words.append(word)
-                else:
-                    # Abbreviate middle words
-                    abbreviated = word[:3] if len(word) > 3 else word
-                    print(f"Abbreviating word: {word} -> {abbreviated} (position: {i})")
-                    abbreviated_words.append(abbreviated)
-
-            # Join the words back with single underscore
-            abbreviated_part = "_".join(abbreviated_words)
-            print(f"Part after abbreviation: {abbreviated_part}")
-            abbreviated_parts.append(abbreviated_part)
-
-        # Join the parts back with double underscore
-        result = seperator.join(abbreviated_parts)
-        print(f"Final result: {result}")
-        return result
-
     def _truncate_name(self, name, max_length, seperator, joiner="", preserve_parts=0):
         if len(name) <= max_length:
             return name
 
-        # First try to abbreviate middle words
-        try:
-            abbreviated = self._abbreviate_middle_words(name, seperator)
-            if len(abbreviated) <= max_length:
-                return abbreviated
-        except Exception:
-            pass
+        # First split by double underscore to get the main parts
+        main_parts = name.split(seperator)
 
-        parts = name.split(seperator)
-        preserved = []
+        # Keep first part in full
+        first_part = main_parts[0]
+        last_part = main_parts[-1]
 
-        parts.reverse()  # reverse because pop() is efficient pop(0) is not.
-        if preserve_parts:
-            for _ in range(preserve_parts):
-                if len(parts) > 0:
-                    preserved.append(parts.pop())  # Remove and add to preserved
+        if len(main_parts) > 2:
+            # We have middle parts to abbreviate
+            middle_parts = main_parts[1:-1]
 
-        remaining_length = self._parts_length(parts, seperator)
-        preserved_length = self._parts_length(preserved, seperator)
-        abbreviated_length = 0
+            # For each middle part, preserve structure while abbreviating
+            abbreviated_middle = []
+            for part in middle_parts:
+                # Split by double underscore first to preserve structure
+                subparts = part.split(seperator)
+                abbreviated_subparts = []
 
-        parts_left = len(parts)
-        abbreviated = []
-        while parts_left and (remaining_length + preserved_length + abbreviated_length + len(seperator)) > max_length:
-            current_part = parts.pop()
-            if "_" in current_part:
-                sub_parts = current_part.split("_")
-                # Take first 3 chars of each sub-part instead of just first char
-                abbreviation = "_".join(part[:3] if len(part) > 3 else part for part in sub_parts)
-            else:
-                abbreviation = current_part[:3] if len(current_part) > 3 else current_part
+                for subpart in subparts:
+                    # Split by single underscore and abbreviate
+                    words = subpart.split("_")
+                    abbreviated_words = [w[:3] for w in words]
+                    # Join back with single underscore
+                    abbreviated_subparts.append("_".join(abbreviated_words))
 
-            abbreviated.append(abbreviation)
+                # Join subparts back with double underscore
+                abbreviated_middle.append(seperator.join(abbreviated_subparts))
 
-            abbreviated_length = self._parts_length(abbreviated, joiner)
-            remaining_length = self._parts_length(parts, seperator)
-            preserved_length = self._parts_length(preserved, seperator)
-            parts_left = len(parts)
+            result = f"{first_part}__{seperator.join(abbreviated_middle)}__{last_part}"
+        else:
+            # Only two parts, keep them as is
+            result = f"{first_part}__{last_part}"
 
-        if (abbreviated_length + remaining_length + preserved_length + len(seperator)) > max_length:
-            # If still too long, try more aggressive abbreviation
-            try:
-                parts = name.split(seperator)
-                abbreviated_parts = []
-                for part in parts:
-                    if "_" in part:
-                        sub_parts = part.split("_")
-                        abbreviated = "_".join(p[:2] if len(p) > 2 else p for p in sub_parts)
-                    else:
-                        abbreviated = part[:2] if len(part) > 2 else part
-                    abbreviated_parts.append(abbreviated)
-                result = seperator.join(abbreviated_parts)
-                if len(result) <= max_length:
-                    return result
-            except Exception:
-                pass
-            raise ValueError(f"Could Not truncate Field {name} as the final part is just too long for its prefix")
-
-        parts.append(joiner.join(abbreviated))
-        parts.reverse()
-        preserved.extend(parts)
-        result = f"{seperator}".join(preserved)
-
-        if len(result) > max_length:
-            # One final attempt with minimal abbreviation
-            try:
-                parts = name.split(seperator)
-                abbreviated_parts = []
-                for part in parts:
-                    if "_" in part:
-                        sub_parts = part.split("_")
-                        abbreviated = "_".join(p[0] for p in sub_parts)
-                    else:
-                        abbreviated = part[0]
-                    abbreviated_parts.append(abbreviated)
-                result = seperator.join(abbreviated_parts)
-                if len(result) <= max_length:
-                    return result
-            except Exception:
-                pass
-            raise ValueError(f"Could Not truncate Field {name} as the final part is just too long for its prefix")
         return result
 
     def squash_column_names(self, df, max_prefix_length=25, max_suffix_length=38):
         new_columns = []
         total_max_length = max_prefix_length + max_suffix_length
-        seen_names = set()  # Track seen column names to ensure uniqueness
 
         for col in df.columns:
             print(f"my col '{col}'", col)
@@ -143,31 +59,9 @@ class TruncateColumnNamesMixin:
                 print(f"Replacing _id column {col} to m_version")
                 col = col.replace("___id", "__id")
             print(f"Resulting column name is {col} {len(col)}")
-            if len(col) <= total_max_length:
-                new_col = col
-            elif "__" in col:
-                prefix, suffix = col.rsplit("__", 1)
-                truncated_prefix = self._truncate_name(prefix, max_prefix_length, "__", "_", 1)
 
-                available_suffix_length = total_max_length - len(truncated_prefix) - len("__")
-                available_suffix_length = max(0, available_suffix_length)
-                print("prefix", truncated_prefix)
-                print("available_suffix_length", available_suffix_length)
-
-                truncated_suffix = self._truncate_name(suffix, available_suffix_length, "_", "", 0)
-
-                new_col = f"{truncated_prefix}__{truncated_suffix}"
-            else:
-                new_col = self._truncate_name(col, total_max_length, "_", 1)
-
-            # Ensure uniqueness
-            base_col = new_col
-            counter = 1
-            while new_col in seen_names:
-                new_col = f"{base_col}_{counter}"
-                counter += 1
-            seen_names.add(new_col)
-
+            # Just use the total max length for all columns
+            new_col = self._truncate_name(col, total_max_length, "__", "_", 0)
             print(f"{col} --> {new_col} ({len(new_col)})")
             new_columns.append(new_col)
         df.columns = new_columns
