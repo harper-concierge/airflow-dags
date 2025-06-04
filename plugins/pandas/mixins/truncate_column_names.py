@@ -6,8 +6,25 @@ class TruncateColumnNamesMixin:
         # Calculate the total length of preserved array values plus 1 for each element
         return sum(len(part) + len(seperator) for part in parts)
 
-    def _truncate_name(self, name, max_length, seperator, joiner="", preserve_parts=0):
+    def _abbreviate_middle_words(self, name, seperator):
+        """Helper method to abbreviate middle words while keeping first and last words full."""
+        parts = name.split(seperator)
+        abbreviated_parts = []
+        for part in parts:
+            words = part.split("_")
+            abbreviated_words = []
+            for i, word in enumerate(words):
+                if i == 0 or i == len(words) - 1:
+                    # Keep first and last words in full
+                    abbreviated_words.append(word)
+                else:
+                    # Abbreviate middle words
+                    abbreviated_words.append(word[:3] if len(word) > 3 else word)
+            abbreviated_parts.append("_".join(abbreviated_words))
+        result = seperator.join(abbreviated_parts)
+        return result
 
+    def _truncate_name(self, name, max_length, seperator, joiner="", preserve_parts=0):
         if len(name) <= max_length:
             return name
 
@@ -56,7 +73,10 @@ class TruncateColumnNamesMixin:
         print("parts_left", parts_left)
 
         if (abbreviated_length + remaining_length + preserved_length + len(seperator)) > max_length:
-            raise ValueError(f"Could Not truncate Field {name} as the final part is just too long for its prefix")
+            try:
+                return self._abbreviate_middle_words(name, seperator)
+            except Exception:
+                raise ValueError(f"Could Not truncate Field {name} as the final part is just too long for its prefix")
 
         print("pre-final abbreviated", abbreviated)
         # abbreviated.reverse()
@@ -76,7 +96,10 @@ class TruncateColumnNamesMixin:
             print("abbreviated", abbreviated, abbreviated_length)
             print("preserved", preserved, remaining_length)
             print("lengths", remaining_length, preserved_length, abbreviated_length, max_length)
-            raise ValueError(f"Could Not truncate Field {name} as the final result is too long {result} {len(result)}")
+            try:
+                return self._abbreviate_middle_words(name, seperator)
+            except Exception:
+                raise ValueError(f"Could Not truncate Field {name} as the final part is just too long for its prefix")
         return result
 
     def squash_column_names(self, df, max_prefix_length=25, max_suffix_length=38):

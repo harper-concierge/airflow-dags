@@ -7,3 +7,7 @@ airflow_settings.yaml
 __pycache__/
 astro
 .env
+
+donotpush-etl-context
+.xlsx
+.csv
