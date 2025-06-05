@@ -38,9 +38,25 @@ class TruncateColumnNamesMixin:
                 # Join subparts back with double underscore
                 abbreviated_middle.append(seperator.join(abbreviated_subparts))
 
+            # Calculate available length for last part
+            prefix_length = (
+                len(first_part) + len(seperator) + self._parts_length(abbreviated_middle, seperator) + len(seperator)
+            )
+            max_last_part_length = max_length - prefix_length
+
+            # If last part is too long, truncate it
+            if len(last_part) > max_last_part_length:
+                last_part = last_part[:max_last_part_length]
+
             result = f"{first_part}__{seperator.join(abbreviated_middle)}__{last_part}"
         else:
-            # Only two parts, keep them as is
+            # Only two parts, check if we need to truncate either
+            prefix_length = len(first_part) + len(seperator)
+            max_last_part_length = max_length - prefix_length
+
+            if len(last_part) > max_last_part_length:
+                last_part = last_part[:max_last_part_length]
+
             result = f"{first_part}__{last_part}"
 
         return result

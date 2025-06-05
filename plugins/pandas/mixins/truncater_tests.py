@@ -9,6 +9,7 @@ class TestTruncateColumnNames:
         # Example data with multiple DataFrames
         data = [
             {
+                "feature_flags__outbound_webhooks__concierge_complete_webhook__auth": [1, 2],
                 "platform__centra__services__harper_concierge__api_key_with_extra_long_suffix_that_exceeds_limit": [  # noqa
                     1,
                     2,
@@ -55,4 +56,4 @@ class TestTruncateColumnNames:
 
 
 # Run the tests
-# TestTruncateColumnNames.run_tests()
+TestTruncateColumnNames.run_tests()
