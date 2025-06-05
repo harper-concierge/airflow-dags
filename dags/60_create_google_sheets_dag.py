@@ -2,9 +2,11 @@ import os
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.operators.python import ShortCircuitOperator
 from airflow.sensors.external_task import ExternalTaskSensor
 
 from plugins.utils.load_sheet_configs import load_sheet_configs
+from plugins.utils.is_latest_active_dagrun import is_latest_dagrun
 from plugins.utils.send_harper_slack_notification import send_harper_failure_notification
 
 from plugins.operators.postgres_to_google_sheet_operator import PostgresToGoogleSheetOperator
@@ -36,6 +38,15 @@ wait_for_task = ExternalTaskSensor(
     dag=dag,
 )
 
+is_latest_dagrun_task = ShortCircuitOperator(
+    task_id="skip_check",
+    pool="sql_single_thread_pool",
+    python_callable=is_latest_dagrun,
+    depends_on_past=False,
+    dag=dag,
+)
+
+
 sheets = "sheets"
 sheets_abspath = os.path.join(os.path.dirname(os.path.abspath(__file__)), sheets)
 
@@ -59,4 +70,5 @@ for config in sheets_configs:
     # Add the current task to the array
     sheet_tasks.append(task)
 
-wait_for_task >> sheet_tasks
+wait_for_task >> is_latest_dagrun_task
+is_latest_dagrun_task >> sheet_tasks
