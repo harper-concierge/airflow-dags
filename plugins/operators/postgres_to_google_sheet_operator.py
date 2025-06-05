@@ -55,6 +55,14 @@ class PostgresToGoogleSheetOperator(BaseOperator):
 
             self.log.info(f"Number of rows in DataFrame Before processing: {len(df)}")
 
+            # Convert all datetime.date and datetime.datetime objects to ISO strings
+            def convert_datetime(val):
+                if isinstance(val, (datetime.datetime, datetime.date)):
+                    return val.isoformat()
+                return val
+
+            df = df.applymap(convert_datetime)
+
             # Ensure datetime columns are converted to string in ISO format
             for col, dtype in df.dtypes.items():
                 if dtype.kind in ("M", "m"):  # 'M' for datetime-like, 'm' for timedelta
