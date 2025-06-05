@@ -1,4 +1,5 @@
 import re
+import json
 import datetime
 
 import pandas as pd
@@ -78,9 +79,25 @@ class PostgresToGoogleSheetOperator(BaseOperator):
             self.log.info(f"Number of rows in DataFrame after processing: {len(df)}")
 
             # Convert DataFrame to a list of lists (Google Sheets format)
-            data = [df.columns.tolist()] + df.fillna("").values.tolist()
             # Stack overflow answer suggests to_numpy is useful. But stashing this as so far all works....
             # df.fillna("").to_numpy().tolist()
+            data = [df.columns.tolist()] + df.fillna("").values.tolist()
+
+            def is_json_serializable(val):
+                try:
+                    json.dumps(val)
+                    return True
+                except TypeError:
+                    return False
+
+            # Check for non-serializable values in data
+            for row_idx, row in enumerate(data[1:], start=2):  # skip header, start at row 2
+                for col_idx, val in enumerate(row):
+                    if not is_json_serializable(val):
+                        col_name = data[0][col_idx]
+                        raise TypeError(
+                            f"Value '{val}' in column '{col_name}' (row {row_idx}) is not JSON serializable. Type: {type(val)}"  # noqa
+                        )
 
             # Initialize Google Sheets hook
             sheets_hook = GSheetsHook(gcp_conn_id=self.google_conn_id)
