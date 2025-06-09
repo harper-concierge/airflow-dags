@@ -1,0 +1,160 @@
+{
+    "title": "IRiskDecisionSchema",
+    "type": "object",
+    "bsonType": [
+        "object"
+    ],
+    "properties": {
+        "decision_stage": {
+            "type": "string",
+            "enum": [
+                "checkout",
+                "manual"
+            ],
+            "bsonType": "string"
+        },
+        "timestamp": {
+            "type": "string",
+            "tsType": "Date",
+            "bsonType": [
+                "date"
+            ]
+        },
+        "level": {
+            "type": "string",
+            "enum": [
+                "low",
+                "medium",
+                "high"
+            ],
+            "bsonType": "string"
+        },
+        "action": {
+            "type": "string",
+            "enum": [
+                "ACCEPT",
+                "CHALLENGE",
+                "DENY"
+            ],
+            "bsonType": "string"
+        },
+        "factors": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "risk_band_used": {
+                    "title": "IRiskBandSchema",
+                    "type": "object",
+                    "bsonType": [
+                        "object"
+                    ],
+                    "properties": {
+                        "risk_factor_band": {
+                            "type": "number",
+                            "bsonType": [
+                                "int"
+                            ]
+                        },
+                        "signifyd_medium_threshold": {
+                            "type": "number",
+                            "bsonType": [
+                                "int"
+                            ]
+                        },
+                        "signifyd_approval_threshold": {
+                            "type": "number",
+                            "bsonType": [
+                                "int"
+                            ]
+                        },
+                        "harper_medium_threshold": {
+                            "type": "number",
+                            "bsonType": [
+                                "int"
+                            ]
+                        },
+                        "harper_approval_threshold": {
+                            "type": "number",
+                            "bsonType": [
+                                "int"
+                            ]
+                        },
+                        "__v": {
+                            "bsonType": [
+                                "int"
+                            ],
+                            "type": "integer"
+                        },
+                        "createdAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        },
+                        "updatedAt": {
+                            "bsonType": [
+                                "date"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "risk_factor_band",
+                        "signifyd_medium_threshold",
+                        "signifyd_approval_threshold",
+                        "harper_medium_threshold",
+                        "harper_approval_threshold"
+                    ]
+                },
+                "partner_risk_factor": {
+                    "type": "number",
+                    "bsonType": "int32"
+                },
+                "global_risk_level": {
+                    "type": "number",
+                    "bsonType": "int32"
+                },
+                "current_calculated_risk_factor": {
+                    "type": "number",
+                    "bsonType": "int32"
+                }
+            }
+        },
+        "analysis_response": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "signifyd": {
+                    "type": "object",
+                    "bsonType": "object",
+                    "additionalProperties": true
+                },
+                "harper": {
+                    "type": "object",
+                    "bsonType": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    },
+    "additionalProperties": false
+}

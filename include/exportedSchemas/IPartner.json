@@ -4556,6 +4556,16 @@
                 }
             }
         },
+        "risk_settings": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "risk_factor_score": {
+                    "type": "number",
+                    "bsonType": "int"
+                }
+            }
+        },
         "__v": {
             "bsonType": [
                 "int"

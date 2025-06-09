@@ -1,0 +1,65 @@
+{
+    "title": "IRiskBandSchema",
+    "type": "object",
+    "bsonType": [
+        "object"
+    ],
+    "properties": {
+        "risk_factor_band": {
+            "type": "number",
+            "bsonType": [
+                "int"
+            ]
+        },
+        "signifyd_medium_threshold": {
+            "type": "number",
+            "bsonType": [
+                "int"
+            ]
+        },
+        "signifyd_approval_threshold": {
+            "type": "number",
+            "bsonType": [
+                "int"
+            ]
+        },
+        "harper_medium_threshold": {
+            "type": "number",
+            "bsonType": [
+                "int"
+            ]
+        },
+        "harper_approval_threshold": {
+            "type": "number",
+            "bsonType": [
+                "int"
+            ]
+        },
+        "__v": {
+            "bsonType": [
+                "int"
+            ],
+            "type": "integer"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        }
+    },
+    "additionalProperties": false,
+    "required": [
+        "risk_factor_band",
+        "signifyd_medium_threshold",
+        "signifyd_approval_threshold",
+        "harper_medium_threshold",
+        "harper_approval_threshold"
+    ]
+}

@@ -247,18 +247,6 @@
                 }
             }
         },
-        "createdAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
-        "updatedAt": {
-            "bsonType": [
-                "date"
-            ],
-            "type": "string"
-        },
         "max_active_try_orders": {
             "bsonType": "int",
             "type": "number"
@@ -330,9 +318,33 @@
                 }
             }
         },
+        "risk_settings": {
+            "bsonType": "object",
+            "type": "object",
+            "properties": {
+                "risk_level": {
+                    "type": "number",
+                    "bsonType": [
+                        "double"
+                    ]
+                }
+            }
+        },
         "max_active_orders_value": {
             "bsonType": "int",
             "type": "number"
+        },
+        "createdAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
+        },
+        "updatedAt": {
+            "bsonType": [
+                "date"
+            ],
+            "type": "string"
         },
         "__v": {
             "bsonType": [

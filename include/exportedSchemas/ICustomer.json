@@ -24,6 +24,12 @@
                 "string"
             ]
         },
+        "customer_pid": {
+            "type": "string",
+            "bsonType": [
+                "string"
+            ]
+        },
         "password": {
             "type": "string",
             "bsonType": [
