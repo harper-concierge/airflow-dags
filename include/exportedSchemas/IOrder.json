@@ -4263,6 +4263,12 @@
                     ],
                     "type": "string"
                 },
+                "is_whitelisted": {
+                    "type": "boolean",
+                    "bsonType": [
+                        "bool"
+                    ]
+                },
                 "__v": {
                     "bsonType": [
                         "int"
@@ -6320,6 +6326,10 @@
                             "current_calculated_risk_factor": {
                                 "type": "number",
                                 "bsonType": "int32"
+                            },
+                            "customer_whitelisted": {
+                                "type": "boolean",
+                                "bsonType": "bool"
                             }
                         }
                     },

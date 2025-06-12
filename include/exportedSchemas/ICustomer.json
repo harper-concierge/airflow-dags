@@ -312,6 +312,12 @@
             ],
             "type": "string"
         },
+        "is_whitelisted": {
+            "type": "boolean",
+            "bsonType": [
+                "bool"
+            ]
+        },
         "__v": {
             "bsonType": [
                 "int"
