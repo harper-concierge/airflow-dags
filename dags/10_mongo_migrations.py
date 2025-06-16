@@ -67,7 +67,7 @@ wait_for_things_to_exist = ExternalTaskSensor(
     depends_on_past=True,
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
     execution_delta=timedelta(days=1),
-    allowed_states=["success", "skipped"],  # You might need to customize this part
+    allowed_states=["success"],  # You might need to customize this part
     dag=dag,
 )
 
