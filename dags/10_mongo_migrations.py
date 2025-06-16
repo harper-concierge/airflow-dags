@@ -38,6 +38,12 @@ def set_concurrently_var():
     Variable.set("REFRESH_CONCURRENTLY", "False")
 
 
+def prev_day(execution_date, **_):
+    target = execution_date - timedelta(days=1)
+    print(f"[Sensor]{execution_date} waiting on logical_date: {target}")
+    return target
+
+
 # Now load the migrations
 migrations = load_aggregation_configs("aggregations")
 
@@ -66,7 +72,7 @@ wait_for_things_to_exist = ExternalTaskSensor(
     external_dag_id="10_mongo_migrations_dag",  # The ID of the DAG you're waiting for
     depends_on_past=True,
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
-    execution_delta=timedelta(days=2),
+    execution_date_fn=prev_day,
     allowed_states=["success"],  # You might need to customize this part
     dag=dag,
 )
