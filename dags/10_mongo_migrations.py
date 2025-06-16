@@ -66,7 +66,7 @@ wait_for_things_to_exist = ExternalTaskSensor(
     external_dag_id="10_mongo_migrations_dag",  # The ID of the DAG you're waiting for
     depends_on_past=True,
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
-    execution_delta=timedelta(days=1),
+    execution_delta=timedelta(days=2),
     allowed_states=["success"],  # You might need to customize this part
     dag=dag,
 )
