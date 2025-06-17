@@ -69,7 +69,7 @@ dag = DAG(
 
 wait_for_things_to_exist = ExternalTaskSensor(
     task_id="wait_for_things_to_exist",
-    external_dag_id="10_mongo_migrations_dag",  # The ID of the DAG you're waiting for
+    external_dag_id="01_ensure_things_exist",  # The ID of the DAG you're waiting for
     depends_on_past=False,
     external_task_id=None,  # Set to None to wait for the entire DAG to complete
     allowed_states=["success"],  # You might need to customize this part
